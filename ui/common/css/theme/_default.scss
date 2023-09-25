@@ -18,10 +18,7 @@
 @function c-transparent($color, $alpha) {
   $color: adjust-hue($color, 0deg);
   $alpha: if(unitless($alpha), $alpha / 100, $alpha);
-  $hue: hue($color);
-  $saturation: saturation($color);
-  $lightness: lightness($color);
-  @return hsla($hue, $saturation, $lightness, $alpha);
+  @return hsla(hue($color), saturation($color), lightness($color), $alpha);
 }
 
 $c-site-hue: 37;
