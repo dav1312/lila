@@ -53,11 +53,6 @@ function playerTable(ctrl: AnalyseCtrl, color: Color): VNode {
 
   return h('div.advice-summary__side', [
     h('div.advice-summary__player', [h(`i.is.color-icon.${color}`), renderPlayer(ctrl, color)]),
-    ...advices.map(a => error(ctrl, d.analysis![color][a.kind], color, a)),
-    h('div.advice-summary__acpl', [
-      h('strong', sideData.acpl),
-      h('span', ctrl.trans.noarg('averageCentipawnLoss')),
-    ]),
     h('div.advice-summary__accuracy', [
       h('strong', [sideData.accuracy, '%']),
       h('span', [
@@ -72,6 +67,11 @@ function playerTable(ctrl: AnalyseCtrl, color: Color): VNode {
         }),
       ]),
     ]),
+    h('div.advice-summary__acpl', [
+      h('strong', sideData.acpl),
+      h('span', ctrl.trans.noarg('averageCentipawnLoss')),
+    ]),
+    ...advices.map(a => error(ctrl, d.analysis![color][a.kind], color, a)),
   ]);
 }
 
@@ -121,6 +121,7 @@ const doRender = (ctrl: AnalyseCtrl): VNode => {
     },
     [
       playerTable(ctrl, 'white'),
+      playerTable(ctrl, 'black'),
       ctrl.study
         ? null
         : h(
@@ -132,7 +133,6 @@ const doRender = (ctrl: AnalyseCtrl): VNode => {
             },
             ctrl.trans.noarg('learnFromYourMistakes'),
           ),
-      playerTable(ctrl, 'black'),
     ],
   );
 };

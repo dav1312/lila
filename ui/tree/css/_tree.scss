@@ -1,11 +1,26 @@
 @import 'extend';
 
-$c-bg-inaccuracy-hover: c-dimmer($c-inaccuracy, 70%);
-$c-bg-mistake-hover: c-dimmer($c-mistake, 70%);
-$c-bg-blunder-hover: c-dimmer($c-blunder, 70%);
-$c-bg-good-hover: c-dimmer($c-good-move, 70%);
-$c-bg-brilliant-hover: c-dimmer($c-brilliant, 70%);
-$c-bg-interesting-hover: c-dimmer($c-interesting, 70%);
+$c-bg-inaccuracy-hover: c-transparent($c-inaccuracy, 17%);
+$c-bg-mistake-hover: c-transparent($c-mistake, 17%);
+$c-bg-blunder-hover: c-transparent($c-blunder, 17%);
+$c-bg-good-hover: c-transparent($c-good-move, 17%);
+$c-bg-brilliant-hover: c-transparent($c-brilliant, 17%);
+$c-bg-interesting-hover: c-transparent($c-interesting, 17%);
+
+@mixin hoverStyles($color, $bgColor) {
+  color: $color;
+
+  &.active {
+    color: $color;
+    background: $bgColor;
+  }
+
+  &:hover {
+      &, index, eval {
+      background: $color;
+    }
+  }
+}
 
 .tview2 {
   white-space: normal;
@@ -18,6 +33,15 @@ $c-bg-interesting-hover: c-dimmer($c-interesting, 70%);
     @include padding-direction(7px, 3px, 7px, 7px);
   }
 
+  move:not(.empty):hover {
+    &,
+    index,
+    eval {
+      background: $c-primary;
+      color: $c-primary-over !important;
+    }
+  }
+
   move {
     @extend %move;
 
@@ -26,40 +50,22 @@ $c-bg-interesting-hover: c-dimmer($c-interesting, 70%);
     }
 
     &.inaccuracy {
-      color: $c-inaccuracy;
-      &:hover {
-        background: $c-bg-inaccuracy-hover;
-      }
+      @include hoverStyles($c-inaccuracy, $c-bg-inaccuracy-hover);
     }
     &.mistake {
-      color: $c-mistake;
-      &:hover {
-        background: $c-bg-mistake-hover;
-      }
+      @include hoverStyles($c-mistake, $c-bg-mistake-hover);
     }
     &.blunder {
-      color: $c-blunder;
-      &:hover {
-        background: $c-bg-blunder-hover;
-      }
+      @include hoverStyles($c-blunder, $c-bg-blunder-hover);
     }
     &.good {
-      color: $c-good-move;
-      &:hover {
-        background: $c-bg-good-hover;
-      }
+      @include hoverStyles($c-good-move, $c-bg-good-hover);
     }
     &.brilliant {
-      color: $c-brilliant;
-      &:hover {
-        background: $c-bg-brilliant-hover;
-      }
+      @include hoverStyles($c-brilliant, $c-bg-brilliant-hover);
     }
     &.interesting {
-      color: $c-interesting;
-      &:hover {
-        background: $c-bg-interesting-hover;
-      }
+      @include hoverStyles($c-interesting, $c-bg-interesting-hover);
     }
   }
 
@@ -106,17 +112,6 @@ $c-bg-interesting-hover: c-dimmer($c-interesting, 70%);
 
   move.nongame {
     font-style: italic;
-  }
-
-  move:not(.empty):not(.blunder):not(.mistake):not(.inaccuracy):not(.good):not(.brilliant):not(
-      .interesting
-    ):hover {
-    &,
-    index,
-    eval {
-      background: $c-primary;
-      color: $c-primary-over;
-    }
   }
 
   &-inline move:hover {

@@ -15,6 +15,15 @@
   @return rgba(red($color), green($color), blue($color), $alpha);
 }
 
+@function c-transparent($color, $alpha) {
+  $color: adjust-hue($color, 0deg);
+  $alpha: if(unitless($alpha), $alpha / 100, $alpha);
+  $hue: hue($color);
+  $saturation: saturation($color);
+  $lightness: lightness($color);
+  @return hsla($hue, $saturation, $lightness, $alpha);
+}
+
 $c-site-hue: 37;
 
 $c-bg-page: hsl($c-site-hue, 10%, 92%);

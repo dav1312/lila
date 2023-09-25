@@ -13,6 +13,12 @@ $theme-dark: true;
   @return mix(#fff, $color, $weight);
 }
 
+@function c-transparent($color, $alpha) {
+  $color: adjust-hue($color, 0deg);
+  $alpha: if(unitless($alpha), $alpha / 100, $alpha);
+  @return hsla(hue($color), saturation($color), lightness($color), $alpha);
+}
+
 $c-bg-page: hsl($c-site-hue, 10%, 8%);
 $c-bg-high: hsl($c-site-hue, 7%, 14%);
 $c-bg-low: hsl($c-site-hue, 7%, 22%);

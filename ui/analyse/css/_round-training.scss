@@ -18,8 +18,15 @@
   line-height: 1.15em;
   margin-top: 1em;
 
+  &__side {
+    border-bottom: $border;
+    padding-bottom: 0.5em;
+    margin-bottom: 0.5em;
+  }
+
   &__side > div {
     display: flex;
+    text-transform: capitalize;
     i,
     strong {
       flex: 0 1 6ch;
@@ -48,6 +55,10 @@
     }
   }
 
+  &__player {
+    font-weight: bold;
+  }
+
   .color-icon::before {
     vertical-align: text-bottom;
   }
@@ -65,11 +76,6 @@
 
     &__side {
       flex: 0 0 calc(50% - #{$block-gap});
-      margin-#{$start-direction}: $block-gap;
-    }
-
-    > a {
-      order: 1;
     }
   }
 }
