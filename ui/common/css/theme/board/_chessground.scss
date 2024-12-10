@@ -158,24 +158,24 @@ cg-container {
   top: 0;
   right: 0;
 
-  .is2d &:has(.glyph-inaccuracy) square.last-move {
+  &:has(.glyph-inaccuracy) cg-board square.last-move {
     background-color: $c-inaccuracy-bg;
   }
-  .is2d &:has(.glyph-mistake) square.last-move {
+  &:has(.glyph-mistake) cg-board square.last-move {
     background-color: $c-mistake-bg;
   }
-  .is2d &:has(.glyph-blunder) square.last-move,
-  .is2d &:has(.glyph-incorrect) square.last-move {
+  &:has(.glyph-blunder) cg-board square.last-move,
+  &:has(.glyph-incorrect) cg-board square.last-move {
     background-color: $c-blunder-bg;
   }
-  .is2d &:has(.glyph-interesting) square.last-move {
+  &:has(.glyph-interesting) cg-board square.last-move {
     background-color: $c-interesting-bg;
   }
-  .is2d &:has(.glyph-good) square.last-move,
-  .is2d &:has(.glyph-correct) square.last-move {
+  &:has(.glyph-good) cg-board square.last-move,
+  &:has(.glyph-correct) cg-board square.last-move {
     background-color: $c-good-move-bg;
   }
-  .is2d &:has(.glyph-brilliant) square.last-move {
+  &:has(.glyph-brilliant) cg-board square.last-move {
     background-color: $c-brilliant-bg;
   }
 }
