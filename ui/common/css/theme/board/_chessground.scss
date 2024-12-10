@@ -157,6 +157,27 @@ cg-container {
   display: block;
   top: 0;
   right: 0;
+
+  &:has(.glyph-inaccuracy) cg-board square.last-move {
+    background-color: $c-inaccuracy-bg;
+  }
+  &:has(.glyph-mistake) cg-board square.last-move {
+    background-color: $c-mistake-bg;
+  }
+  &:has(.glyph-blunder) cg-board square.last-move,
+  &:has(.glyph-incorrect) cg-board square.last-move {
+    background-color: $c-blunder-bg;
+  }
+  &:has(.glyph-interesting) cg-board square.last-move {
+    background-color: $c-interesting-bg;
+  }
+  &:has(.glyph-good) cg-board square.last-move,
+  &:has(.glyph-correct) cg-board square.last-move {
+    background-color: $c-good-move-bg;
+  }
+  &:has(.glyph-brilliant) cg-board square.last-move {
+    background-color: $c-brilliant-bg;
+  }
 }
 
 cg-container .cg-shapes,
@@ -183,6 +204,26 @@ cg-container .cg-custom-svgs {
 
 cg-container .cg-custom-svgs svg {
   overflow: visible;
+  .glyph-inaccuracy {
+    fill: $c-inaccuracy;
+  }
+  .glyph-mistake {
+    fill: $c-mistake;
+  }
+  .glyph-blunder,
+  .glyph-incorrect {
+    fill: $c-blunder;
+  }
+  .glyph-interesting {
+    fill: $c-interesting;
+  }
+  .glyph-good,
+  .glyph-correct {
+    fill: $c-good;
+  }
+  .glyph-brilliant {
+    fill: $c-brilliant;
+  }
 }
 
 cg-auto-pieces {
