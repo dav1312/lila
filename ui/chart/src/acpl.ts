@@ -193,9 +193,9 @@ export default async function (
 
 type Advice = 'blunder' | 'mistake' | 'inaccuracy';
 const glyphProperties = (node: Tree.Node): { advice?: Advice; color?: string } => {
-  if (node.glyphs?.some(g => g.id === 4)) return { advice: 'blunder', color: '#db3031' };
-  else if (node.glyphs?.some(g => g.id === 2)) return { advice: 'mistake', color: '#e69d00' };
-  else if (node.glyphs?.some(g => g.id === 6)) return { advice: 'inaccuracy', color: '#4da3d5' };
+  if (node.glyphs?.some(g => g.id === 4)) return { advice: 'blunder', color: '#fa5252' };
+  else if (node.glyphs?.some(g => g.id === 2)) return { advice: 'mistake', color: '#fd7e17' };
+  else if (node.glyphs?.some(g => g.id === 6)) return { advice: 'inaccuracy', color: '#f0a905' };
   else return { advice: undefined, color: undefined };
 };
 

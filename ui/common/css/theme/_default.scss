@@ -8,6 +8,11 @@
   @return mix(#000, $color, $weight);
 }
 
+@function _opacity($color, $alpha) {
+  $color: adjust-hue($color, 0deg);
+  @return hsla(hue($color), saturation($color), lightness($color), $alpha);
+}
+
 $site-hue: 37;
 
 // top level $c-variables must be valid css format (rgba, hsla, hex) and are mixable by ui/build
@@ -27,12 +32,12 @@ $c-bad: hsl(0, 60%, 50%);
 $c-brag: hsl(37, 74%, 43%);
 $c-clas: rgb(127, 90, 240);
 $c-shade: hsl(0, 0%, 30%);
-$c-inaccuracy: hsl(202, 78%, 62%);
-$c-mistake: hsl(41, 100%, 45%);
-$c-blunder: hsl(0, 69%, 60%);
-$c-good: hsl(88, 62%, 37%);
-$c-brilliant: hsl(129, 71%, 45%);
-$c-interesting: hsl(307, 80%, 70%);
+$c-inaccuracy: hsl(42, 96%, 48%);
+$c-mistake: hsl(27, 98%, 54%);
+$c-blunder: hsl(0, 94%, 65%);
+$c-good: hsl(162, 82%, 40%);
+$c-brilliant: hsl(187, 80%, 42%);
+$c-interesting: hsl(307, 70%, 61%);
 $c-paper: hsl(60, 56%, 91%);
 $c-white: #fff;
 $c-dark: #333;
@@ -99,7 +104,7 @@ $c-clearer: #fff;
   --c-brag: #{$c-brag};
   --c-contours: #{mix($c-brag, $c-shade, 80%)};
   --c-accent-dim: #{_dim($c-accent)};
-  --c-accent-faint: hsla(22, 100%, 42%, 0.4);
+  --c-accent-faint: #{_opacity($c-accent, 0.4)};
   --c-accent-clear: #{_dim($c-accent)};
 
   --c-dasher: #{$c-secondary};
@@ -122,6 +127,12 @@ $c-clearer: #fff;
   --c-good-move: #{$c-good};
   --c-brilliant: #{$c-brilliant};
   --c-interesting: #{$c-interesting};
+  --c-inaccuracy-bg: #{_opacity($c-inaccuracy, 0.41)};
+  --c-mistake-bg: #{_opacity($c-mistake, 0.41)};
+  --c-blunder-bg: #{_opacity($c-blunder, 0.41)};
+  --c-good-move-bg: #{_opacity($c-good, 0.41)};
+  --c-brilliant-bg: #{_opacity($c-brilliant, 0.41)};
+  --c-interesting-bg: #{_opacity($c-interesting, 0.41)};
   --c-pool-button: #{hsla($site-hue, 7%, 19%, 66%)};
   --c-paper: #{$c-paper};
 }

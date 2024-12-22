@@ -67,7 +67,7 @@
       }
     }
     &.good {
-      color: $c-good;
+      color: $c-good-move;
       &.active {
         background: $m-good_bg--mix-25;
       }
@@ -75,7 +75,7 @@
         &,
         index,
         eval {
-          background: $c-good;
+          background: $c-good-move;
         }
       }
     }
