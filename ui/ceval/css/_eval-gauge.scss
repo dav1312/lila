@@ -1,7 +1,12 @@
 .eval-gauge {
-  width: $block-gap;
+  @extend %box-neat;
+
+  width: 80%;
   position: relative;
-  background: #a0a0a0;
+  background: $c-font-clear;
+  margin-left: auto;
+  margin-right: auto;
+  border: 1px solid $c-border;
   @include if-light {
     background: #fff;
   }
@@ -18,43 +23,28 @@
     transform: rotateX(180deg);
   }
 
-  &::after {
-    content: '';
-    display: block;
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.7) inset;
-  }
-
   tick {
     position: absolute;
     top: 0;
     @include inline-start(0);
     width: 100%;
-    border-bottom: 2px ridge #a0a0a0;
-    @include if-light {
-      border-bottom: 2px ridge #eee;
-    }
     opacity: 0.4;
   }
 
   tick.zero {
     top: 6px;
     opacity: 1;
-    border-bottom: 7px solid $m-accent--fade-50 !important;
+    border-bottom: 7px solid $c-border !important;
     margin-top: -3px;
   }
 
   .black {
     width: 100%;
     height: 50%;
-    background: #666;
+    background: $c-bg-page;
     @include if-light {
-      background: #888;
+      background: $c-font;
     }
-    transition: height 1s;
+    transition: height 0.5s;
   }
 }
