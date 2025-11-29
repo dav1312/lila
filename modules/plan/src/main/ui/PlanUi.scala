@@ -30,6 +30,7 @@ final class PlanUi(helpers: Helpers)(style: PlanStyle, contactEmail: EmailAddres
     val localeParam = lila.plan.PayPalClient.locale(ctx.lang).so { l => s"&locale=$l" }
     Page(trans.patron.becomePatron.txt())
       .css("bits.plan")
+      .i18n(_.patron)
       .iife:
         ctx.isAuth.option(
           frag(
@@ -213,6 +214,13 @@ final class PlanUi(helpers: Helpers)(style: PlanStyle, contactEmail: EmailAddres
                       )
                     ),
                     div(cls := "service")(
+                      div(cls := "cover-fees")(
+                        input(tpe := "checkbox", id := "cover_fees", cls := "cover-fees-checkbox"),
+                        label(`for` := "cover_fees") {
+                          val fee = math.max(0.35, (0.04 * pricing.default.amount).toDouble)
+                          trp.coverFees.txt(s"${pricing.currency} ${"%.2f".format(fee)}")
+                        }
+                      ),
                       div(cls := "buttons")(
                         if ctx.isAuth then
                           frag(
