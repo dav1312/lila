@@ -134,87 +134,89 @@ final class PlanUi(helpers: Helpers)(style: PlanStyle, contactEmail: EmailAddres
                         )
                       )
                     },
-                    ctx.isAuth.option(frag(
-                      div(cls := "gift complete-parent none")(
-                        st.input(
-                          name := "giftUsername",
-                          value := "",
-                          cls := "user-autocomplete",
-                          placeholder := trans.clas.lichessUsername.txt(),
-                          autocomplete := "off",
-                          spellcheck := false,
-                          dataTag := "span",
-                          autofocus
-                        )
-                      ),
-                      st.group(cls := "radio buttons freq")(
-                        div(
-                          st.title := trp.singleDonation.txt(),
-                          input(
-                            tpe := "radio",
-                            name := "freq",
-                            id := "freq_onetime",
-                            value := "onetime"
-                          ),
-                          label(`for` := "freq_onetime")(trp.onetime())
+                    ctx.isAuth.option(
+                      frag(
+                        div(cls := "gift complete-parent none")(
+                          st.input(
+                            name := "giftUsername",
+                            value := "",
+                            cls := "user-autocomplete",
+                            placeholder := trans.clas.lichessUsername.txt(),
+                            autocomplete := "off",
+                            spellcheck := false,
+                            dataTag := "span",
+                            autofocus
+                          )
                         ),
-                        div(
-                          st.title := trp.recurringBilling.txt(),
-                          input(
-                            tpe := "radio",
-                            name := "freq",
-                            id := "freq_monthly",
-                            checked,
-                            value := "monthly"
+                        st.group(cls := "radio buttons freq")(
+                          div(
+                            st.title := trp.singleDonation.txt(),
+                            input(
+                              tpe := "radio",
+                              name := "freq",
+                              id := "freq_onetime",
+                              value := "onetime"
+                            ),
+                            label(`for` := "freq_onetime")(trp.onetime())
                           ),
-                          label(`for` := "freq_monthly")(trp.monthly())
+                          div(
+                            st.title := trp.recurringBilling.txt(),
+                            input(
+                              tpe := "radio",
+                              name := "freq",
+                              id := "freq_monthly",
+                              checked,
+                              value := "monthly"
+                            ),
+                            label(`for` := "freq_monthly")(trp.monthly())
+                          ),
+                          div(
+                            st.title := trp.payLifetimeOnce.txt(pricing.lifetime.display),
+                            input(
+                              tpe := "radio",
+                              name := "freq",
+                              id := "freq_lifetime",
+                              ctx.me.exists(_.plan.lifetime).option(disabled),
+                              value := "lifetime",
+                              cls := List("lifetime-check" -> ctx.me.exists(_.plan.lifetime))
+                            ),
+                            label(`for` := "freq_lifetime")(trp.lifetime())
+                          )
                         ),
-                        div(
-                          st.title := trp.payLifetimeOnce.txt(pricing.lifetime.display),
-                          input(
-                            tpe := "radio",
-                            name := "freq",
-                            id := "freq_lifetime",
-                            ctx.me.exists(_.plan.lifetime).option(disabled),
-                            value := "lifetime",
-                            cls := List("lifetime-check" -> ctx.me.exists(_.plan.lifetime))
-                          ),
-                          label(`for` := "freq_lifetime")(trp.lifetime())
-                        )
-                      ),
-                      div(cls := "amount_choice")(
-                        st.group(cls := "radio buttons amount")(
-                          pricing.suggestions.map { money =>
-                            val id = s"plan_${money.code}"
-                            div(
-                              input(
-                                cls := (money == pricing.default).option("default"),
-                                tpe := "radio",
-                                name := "plan",
-                                st.id := id,
-                                (money == pricing.default).option(checked),
-                                value := money.amount,
-                                attr("data-amount") := money.amount
-                              ),
-                              label(`for` := id)(money.display)
+                        div(cls := "amount_choice")(
+                          st.group(cls := "radio buttons amount")(
+                            pricing.suggestions.map { money =>
+                              val id = s"plan_${money.code}"
+                              div(
+                                input(
+                                  cls := (money == pricing.default).option("default"),
+                                  tpe := "radio",
+                                  name := "plan",
+                                  st.id := id,
+                                  (money == pricing.default).option(checked),
+                                  value := money.amount,
+                                  attr("data-amount") := money.amount
+                                ),
+                                label(`for` := id)(money.display)
+                              )
+                            },
+                            div(cls := "other")(
+                              input(tpe := "radio", name := "plan", id := "plan_other", value := "other"),
+                              label(
+                                `for` := "plan_other",
+                                title := trp.pleaseEnterAmountInX.txt(pricing.currencyCode),
+                                attr("data-trans-other") := trp.otherAmount.txt()
+                              )(trp.otherAmount())
                             )
-                          },
-                          div(cls := "other")(
-                            input(tpe := "radio", name := "plan", id := "plan_other", value := "other"),
-                            label(
-                              `for` := "plan_other",
-                              title := trp.pleaseEnterAmountInX.txt(pricing.currencyCode),
-                              attr("data-trans-other") := trp.otherAmount.txt()
-                            )(trp.otherAmount())
+                          )
+                        ),
+                        div(cls := "amount_fixed none")(
+                          st.group(cls := "radio buttons amount")(
+                            div(label(`for` := s"plan_${pricing.lifetime.code}")(pricing.lifetime.display))
                           )
                         )
-                      ),
-                      div(cls := "amount_fixed none")(
-                        st.group(cls := "radio buttons amount")(
-                          div(label(`for` := s"plan_${pricing.lifetime.code}")(pricing.lifetime.display))
-                        )
                       )
-                    )),
+                    ),
                     div(cls := "service")(
                       ctx.isAuth.option(
                         div(cls := "cover-fees")(
