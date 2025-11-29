@@ -29,9 +29,11 @@ const showErrorThenReload = (error: string) => {
 export function initModule({
   stripePublicKey,
   pricing,
+  isZeroDecimal,
 }: {
   stripePublicKey: string;
   pricing: Pricing;
+  isZeroDecimal: boolean;
 }): void {
   contactEmail();
 
@@ -47,7 +49,11 @@ export function initModule({
   if (!$checkout.find('.amount_choice group.amount input:checked').data('amount'))
     $checkout.find('input.default').trigger('click');
 
-  const calculateFee = (amount: number) => Math.max(0.35, 0.04 * amount);
+  const calculateFee = (amount: number) => {
+    let fee = Math.max(0.35, 0.04 * amount);
+    if (isZeroDecimal) fee = Math.round(fee);
+    return fee;
+  };
 
   const getCurrentRawAmount = (): number => {
     const freq = getFreq();
@@ -61,7 +67,7 @@ export function initModule({
   const updateFeeLabel = () => {
     const amount = getCurrentRawAmount();
     const fee = calculateFee(amount);
-    const feeStr = `${pricing.currency} ${fee.toFixed(2)}`;
+    const feeStr = `${pricing.currency} ${fee.toFixed(isZeroDecimal ? 0 : 2)}`;
     $coverFeesLabel.text(i18n.patron.coverFees(feeStr));
   };
 
@@ -161,7 +167,7 @@ export function initModule({
 
     if ($coverFees.prop('checked')) {
       const fee = calculateFee(base);
-      return parseFloat((base + fee).toFixed(2));
+      return parseFloat((base + fee).toFixed(isZeroDecimal ? 0 : 2));
     }
     return base;
   };
