@@ -52,6 +52,7 @@ final class PlanUi(helpers: Helpers)(style: PlanStyle, contactEmail: EmailAddres
       .js:
         ctx.isAuth.option:
           esmInitObj("bits.checkout", "stripePublicKey" -> stripePublicKey, "pricing" -> pricing)
+      .js(esmInit("chart.budget"))
       .js(infiniteScrollEsmInit)
       .graph(
         title = trans.patron.becomePatron.txt(),
@@ -253,6 +254,7 @@ final class PlanUi(helpers: Helpers)(style: PlanStyle, contactEmail: EmailAddres
               p(id := "error")(),
               p(cls := "small_team")(trp.weAreSmallTeam()),
               faq,
+              budget,
               div(cls := "best_patrons")(
                 h2(trp.celebratedPatrons()),
                 topPatrons(bestScores)
@@ -270,6 +272,15 @@ final class PlanUi(helpers: Helpers)(style: PlanStyle, contactEmail: EmailAddres
 
   private def showCurrency(cur: Currency)(using ctx: Context) =
     s"${cur.getSymbol(ctx.lang.locale)} ${cur.getDisplayName(ctx.lang.locale)}"
+
+  private def budget =
+    div(cls := "budget")(
+      h2("Annual Budget Breakdown"),
+      h3(id := "totalDisplay")("Total: $0"),
+      div(cls := "chart-container")(
+        canvas(id := "budgetChart")
+      )
+    )
 
   private def faq(using Translate) =
     div(cls := "faq")(
