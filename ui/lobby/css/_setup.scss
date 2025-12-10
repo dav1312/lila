@@ -1,81 +1,87 @@
+/* ui/lobby/css/_setup.scss */
 @import '../../lib/css/setup/colorChoice';
 
 $c-setup: $c-secondary;
-$c-slider: $c-setup;
+$c-bg-modal: #33312e;
+$c-bg-header: #262421;
+$c-bg-element: #3d3b38;
+$c-border: #4a4845;
+$c-primary: #629924;
+$c-primary-hover: #72ad2a;
+
+// Utility to hide elements (fix for dots)
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
 
 .game-setup {
-  width: 30em;
+  width: 42rem;
   max-width: 96vw;
   padding: 0;
-  text-align: center;
+  background: $c-bg-modal;
+  border-radius: 0.75rem;
+  overflow: hidden;
 
   h2 {
-    margin: 1.5rem 0;
+    display: none;
+  }
+
+  // Custom Header
+  > h2 {
+    display: block;
+    margin: 0;
+    padding: 1.25rem;
+    background: $c-bg-header;
+    border-bottom: 1px solid $c-border;
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: 600;
   }
 
   .setup-content {
-    @extend %flex-column;
-    border-block: $border;
-    padding: 1.5rem 1rem;
-    gap: 1.2rem;
-    background: $c-bg-zebra;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    background: transparent;
+    max-height: 70vh;
+    overflow-y: auto;
   }
 
-  .disabled {
-    opacity: 0.4;
-    cursor: default !important;
+  .setup-content::-webkit-scrollbar {
+    width: 6px;
   }
-
-  group.radio {
-    width: 70%;
-    align-self: center;
-
-    input:checked + label {
-      background: $c-setup;
-    }
+  .setup-content::-webkit-scrollbar-track {
+    background: $c-bg-header;
   }
-
-  > div {
-    @extend %flex-column;
-  }
-
-  .config-group {
-    @extend %flex-column;
-    gap: 0.5rem;
-  }
-
-  .fen__form {
-    @extend %flex-center-nowrap;
-  }
-
-  .fen__board {
-    display: block;
-    width: 50%;
-    margin-inline: auto;
-  }
-  #fen-input {
-    flex: 1 1 100%;
-  }
-
-  .failure {
-    background: $m-bad_bg--mix-20;
-    box-shadow: 0 0 13px 6px $m-bad_bg--mix-20;
-    border-radius: 0.5rem;
-  }
-
-  group.radio.color-picker {
-    width: auto;
-    margin: 0;
-    justify-content: center;
+  .setup-content::-webkit-scrollbar-thumb {
+    background: $c-border;
+    border-radius: 10px;
   }
 
   .footer {
-    @extend %flex-center;
-    position: relative;
+    padding: 1rem;
+    background: $c-bg-header;
+    border-top: 1px solid $c-border;
+    display: flex;
     justify-content: center;
-    padding: 1.5rem;
+    position: relative;
+
+    .spinner {
+      position: absolute;
+      width: 56px;
+      height: 56px;
+    }
   }
 
+  // Original button style restored
   .lobby__start__button {
     height: 3rem;
     padding-inline: 1rem 1.2rem;
@@ -85,105 +91,344 @@ $c-slider: $c-setup;
     &::before {
       color: $c-setup !important;
     }
+
+    &.disabled {
+      opacity: 0.5;
+      cursor: default !important;
+    }
   }
 
-  .footer .spinner {
+  // --- Components ---
+
+  .card-radio {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: $c-bg-element;
+    border: 1px solid $c-border;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      border-color: #6b6966;
+    }
+    &.selected {
+      background: $c-primary;
+      border-color: $c-primary;
+      color: #fff;
+      .icon::before,
+      .text,
+      .num {
+        color: #fff;
+      }
+    }
+  }
+
+  // Variant Picker
+  .variant-picker-split {
+    .split-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 4.5rem; // Changed from height to min-height for safety on small screens
+
+      button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: $c-bg-element;
+        border: 1px solid $c-border;
+        color: #bababa;
+        text-align: left;
+        padding: 0 1rem;
+
+        &.std-btn {
+          border-radius: 0.5rem 0 0 0.5rem;
+        }
+        &.other-btn {
+          border-radius: 0 0.5rem 0.5rem 0;
+          border-left: none;
+        }
+
+        &:hover {
+          background: $c-bg-header;
+        }
+        &.selected {
+          background: $c-primary;
+          color: #fff;
+          border-color: $c-primary;
+          .text span {
+            color: #fff;
+          }
+        }
+
+        .icon {
+          font-size: 1.5rem;
+          margin-right: 0.75rem;
+        }
+        .text {
+          display: flex;
+          flex-direction: column;
+          .name {
+            font-weight: 600;
+            font-size: 0.9rem;
+          }
+          .desc {
+            font-size: 0.75rem;
+            opacity: 0.8;
+          }
+        }
+      }
+    }
+  }
+
+  .variant-modal-overlay {
     position: absolute;
-    width: 56px;
-    height: 56px;
-  }
-
-  .radio-pane {
-    @extend %flex-center-nowrap;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 10;
+    display: flex;
+    align-items: center;
     justify-content: center;
-    gap: 0.8rem;
+    padding: 1rem;
+
+    .variant-modal {
+      background: $c-bg-modal;
+      width: 100%;
+      max-width: 36rem;
+      max-height: 90%;
+      border-radius: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+
+      header {
+        padding: 1rem;
+        border-bottom: 1px solid $c-border;
+        background: $c-bg-header;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        h3 {
+          margin: 0;
+          color: #fff;
+        }
+        .close {
+          background: none;
+          border: none;
+          font-size: 1.2rem;
+          color: #999;
+          cursor: pointer;
+        }
+      }
+
+      .variant-grid {
+        padding: 1rem;
+        overflow-y: auto;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+
+        .variant-card {
+          @extend .card-radio;
+          padding: 0.75rem;
+          border-radius: 0.5rem;
+          justify-content: flex-start;
+          text-align: left;
+          height: auto;
+
+          .icon {
+            font-size: 1.5rem;
+            margin-right: 0.75rem;
+          }
+          .text {
+            display: flex;
+            flex-direction: column;
+            .name {
+              font-weight: 600;
+              font-size: 0.9rem;
+            }
+            .desc {
+              font-size: 0.75rem;
+              opacity: 0.8;
+            }
+          }
+        }
+      }
+    }
   }
 
-  .range {
-    span {
-      font-weight: bold;
+  // Time Control
+  .time-control-tabs {
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid $c-border;
+      margin-bottom: 1rem;
+
+      .tab-btn {
+        padding: 0.5rem 1rem;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: #9ca3af;
+        font-weight: 500;
+        cursor: pointer;
+
+        &:hover {
+          color: #fff;
+        }
+        &.active {
+          color: $c-primary;
+          border-color: $c-primary;
+        }
+      }
     }
 
-    input {
-      font-size: 1.5rem;
-      margin-top: 0.2rem;
-      padding: 0;
-      width: 90%;
+    .time-panel {
+      .presets {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+
+        .preset-btn {
+          padding: 0.35rem 0.6rem;
+          font-size: 0.8rem;
+          background: $c-bg-element;
+          color: #e5e7eb;
+          border-radius: 0.25rem;
+          border: none;
+          cursor: pointer;
+          &:hover {
+            background: #4a4845;
+          }
+        }
+      }
+
+      .sliders-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+
+      .slider-container.full-width {
+        grid-column: 1 / -1;
+      }
+
+      .slider-container,
+      .sliders-grid > div {
+        .label-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 0.5rem;
+          font-size: 0.9rem;
+
+          .val-box {
+            background: $c-bg-header;
+            padding: 0.1rem 0.5rem;
+            border-radius: 0.25rem;
+            font-weight: bold;
+            color: #fff;
+          }
+        }
+
+        input[type='range'] {
+          width: 100%;
+          padding: 0;
+        }
+      }
     }
   }
 
-  .rating-range {
-    @extend %flex-center-nowrap;
-    justify-content: center;
-    font-size: 1.25rem;
-
-    .rating-min,
-    .rating-max {
-      font-weight: bold;
-      flex: 0 0 5.5ch;
+  // Level Selector
+  .level-selector {
+    .label {
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #fff;
     }
-    input {
-      font-size: 1.5rem;
-      padding: 0;
-      width: 30%;
+    .level-cards {
+      display: flex;
+      border-radius: 0.5rem;
+      overflow: hidden;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+
+      .card-radio {
+        flex: 1;
+        padding: 0.6rem 0;
+        border-radius: 0;
+        border: 1px solid $c-border;
+        border-right: none;
+
+        &:first-child {
+          border-radius: 0.5rem 0 0 0.5rem;
+        }
+        &:last-child {
+          border-radius: 0 0.5rem 0.5rem 0;
+          border-right: 1px solid $c-border;
+        }
+
+        .num {
+          font-weight: bold;
+          font-size: 1.1rem;
+        }
+      }
     }
   }
 
-  .time-choice,
-  .days-choice {
-    margin-top: 0.5rem;
+  // Color Selector
+  .color-selector {
+    .label {
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #fff;
+    }
+    .color-cards {
+      display: flex;
+      gap: 0;
+
+      .card-radio {
+        flex: 1;
+        padding: 0.75rem;
+        flex-direction: column;
+        border-radius: 0;
+        border-right: none;
+
+        &:first-child {
+          border-radius: 0.5rem 0 0 0.5rem;
+        }
+        &:last-child {
+          border-radius: 0 0.5rem 0.5rem 0;
+          border-right: 1px solid $c-border;
+        }
+
+        .text {
+          font-size: 0.85rem;
+          margin-top: 0.5rem;
+          font-weight: 500;
+        }
+
+        .color-picker__button {
+          width: auto !important;
+          height: auto !important;
+          padding: 0 !important;
+          background: none !important;
+          border: none !important;
+
+          i {
+            margin: 0 auto;
+          }
+        }
+      }
+    }
   }
 
-  .ratings {
-    width: 100%;
-    text-align: center;
-    strong {
-      margin-inline-end: 0.25rem;
+  @media (max-width: 600px) {
+    .time-control-tabs .time-panel .sliders-grid {
+      grid-template-columns: 1fr;
     }
-  }
-
-  .label-select {
-    @extend %flex-center;
-
-    &.variant {
-      padding-bottom: 0;
+    .variant-modal .variant-grid {
+      grid-template-columns: 1fr;
     }
-
-    label {
-      flex: 0 0 33%;
-      text-align: end;
-    }
-
-    select {
-      margin-inline-start: 0.8rem;
-      font-weight: bold;
-    }
-  }
-
-  @media (max-height: at-most(900px)) {
-    h2 {
-      margin-block: 1.1rem;
-    }
-    .footer {
-      padding: 1.1rem;
-    }
-    .setup-content {
-      padding: 1.25rem 0.75rem;
-    }
-    .fen__board {
-      width: 40%;
-    }
-    &:has(.increment-choice) .fen__board {
-      width: 30%;
-    }
-  }
-}
-
-@media (pointer: coarse) {
-  .game-setup select {
-    font-size: 1.2rem;
-  }
-  .game-setup .lobby__start__button {
-    border: 2px solid $c-setup;
   }
 }

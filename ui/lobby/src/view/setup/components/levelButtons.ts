@@ -1,3 +1,4 @@
+// ui/lobby/src/view/setup/components/levelButtons.ts
 import { h } from 'snabbdom';
 import type LobbyController from '@/ctrl';
 import { option } from 'lib/setup/option';
@@ -20,13 +21,13 @@ export const levelButtons = (ctrl: LobbyController) => {
         ),
       ]
     : h('div.config-group', [
-        h('div.radio-pane', [
-          i18n.site.strength,
+        h('div.level-selector', [
+          h('div.label', i18n.site.strength),
           h(
-            'group.radio',
+            'div.level-cards',
             levels.map(level =>
-              h('div', [
-                h(`input#sf_level_${level}`, {
+              h('label.card-radio', { class: { selected: level === setupCtrl.aiLevel() } }, [
+                h('input.sr-only', {
                   attrs: {
                     name: 'level',
                     type: 'radio',
@@ -37,7 +38,7 @@ export const levelButtons = (ctrl: LobbyController) => {
                     change: (e: Event) => setupCtrl.aiLevel(parseInt((e.target as HTMLInputElement).value)),
                   },
                 }),
-                h('label', { attrs: { for: `sf_level_${level}` } }, level),
+                h('span.num', level.toString()),
               ]),
             ),
           ),
