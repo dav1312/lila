@@ -2,12 +2,7 @@
 @import '../../lib/css/setup/colorChoice';
 
 $c-setup: $c-secondary;
-$c-bg-modal: #33312e;
-$c-bg-header: #262421;
-$c-bg-element: #3d3b38;
-$c-border: #4a4845;
-$c-primary: #629924;
-$c-primary-hover: #72ad2a;
+$c-slider: $c-setup;
 
 // Utility to hide elements (fix for dots)
 .sr-only {
@@ -25,76 +20,128 @@ $c-primary-hover: #72ad2a;
   width: 42rem;
   max-width: 96vw;
   padding: 0;
-  background: $c-bg-modal;
-  border-radius: 0.75rem;
   overflow: hidden;
 
   h2 {
-    display: none;
-  }
-
-  // Custom Header
-  > h2 {
-    display: block;
-    margin: 0;
-    padding: 1.25rem;
-    background: $c-bg-header;
-    border-bottom: 1px solid $c-border;
-    color: #fff;
-    font-size: 1.25rem;
-    font-weight: 600;
+    margin: 1.5rem 0;
   }
 
   .setup-content {
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    background: transparent;
-    max-height: 70vh;
-    overflow-y: auto;
+    @extend %flex-column;
+    border-block: $border;
+    padding: 1.5rem 1rem;
+    gap: 1.2rem;
+    background: $c-bg-zebra;
+  }
+
+  .disabled {
+    opacity: 0.4;
+    cursor: default !important;
+  }
+
+  group.radio input:checked + label {
+    background: $c-setup;
   }
 
   .setup-content::-webkit-scrollbar {
     width: 6px;
   }
   .setup-content::-webkit-scrollbar-track {
-    background: $c-bg-header;
+    background: rgba(0, 0, 0, 0.1);
   }
   .setup-content::-webkit-scrollbar-thumb {
     background: $c-border;
     border-radius: 10px;
   }
 
-  .footer {
-    padding: 1rem;
-    background: $c-bg-header;
-    border-top: 1px solid $c-border;
-    display: flex;
-    justify-content: center;
-    position: relative;
-
-    .spinner {
-      position: absolute;
-      width: 56px;
-      height: 56px;
-    }
+  // Restored Layout Helpers
+  .config-group {
+    @extend %flex-column;
+    gap: 0.5rem;
   }
 
-  // Original button style restored
+  // Restored FEN Styles
+  .fen__form {
+    @extend %flex-center-nowrap;
+  }
+
+  .fen__board {
+    display: block;
+    width: 50%;
+    margin-inline: auto;
+  }
+  #fen-input {
+    flex: 1 1 100%;
+  }
+
+  .failure {
+    background: $m-bad_bg--mix-20;
+    box-shadow: 0 0 13px 6px $m-bad_bg--mix-20;
+    border-radius: 0.5rem;
+  }
+
+  .footer {
+    @extend %flex-center;
+    position: relative;
+    justify-content: center;
+    padding: 1.5rem;
+  }
+
   .lobby__start__button {
     height: 3rem;
     padding-inline: 1rem 1.2rem;
     gap: 0.8rem;
     color: $c-font;
-    border: $border;
+    border: $c-border;
+
     &::before {
       color: $c-setup !important;
     }
+  }
 
-    &.disabled {
-      opacity: 0.5;
-      cursor: default !important;
+  .footer .spinner {
+    position: absolute;
+    width: 56px;
+    height: 56px;
+  }
+
+  // Restored Range/Slider Styles
+  .range {
+    span {
+      font-weight: bold;
+    }
+
+    input {
+      font-size: 1.5rem;
+      margin-top: 0.2rem;
+      padding: 0;
+      width: 90%;
+    }
+  }
+
+  // Restored Rating Range Styles
+  .rating-range {
+    @extend %flex-center-nowrap;
+    justify-content: center;
+    font-size: 1.25rem;
+
+    .rating-min,
+    .rating-max {
+      font-weight: bold;
+      flex: 0 0 5.5ch;
+    }
+    input {
+      font-size: 1.5rem;
+      padding: 0;
+      width: 30%;
+    }
+  }
+
+  .ratings {
+    width: 100%;
+    text-align: center;
+    strong {
+      margin-inline-end: 0.25rem;
     }
   }
 
@@ -104,18 +151,22 @@ $c-primary-hover: #72ad2a;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: $c-bg-element;
+    @extend %metal;
     border: 1px solid $c-border;
     cursor: pointer;
     transition: all 0.2s;
 
     &:hover {
-      border-color: #6b6966;
+      @extend %metal-hover;
+      border-color: $c-border-light;
     }
     &.selected {
-      background: $c-primary;
-      border-color: $c-primary;
+      background: $c-setup;
+      @extend %active-inset-shadow;
+      //border-color: darken($c-secondary, 5%);
       color: #fff;
+      text-shadow: 0 1px 1px #000 !important;
+
       .icon::before,
       .text,
       .num {
@@ -129,15 +180,15 @@ $c-primary-hover: #72ad2a;
     .split-buttons {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      min-height: 4.5rem; // Changed from height to min-height for safety on small screens
+      min-height: 4.5rem;
 
       button {
         display: flex;
         align-items: center;
         justify-content: center;
-        background: $c-bg-element;
+        @extend %metal;
         border: 1px solid $c-border;
-        color: #bababa;
+        color: $c-font-dim;
         text-align: left;
         padding: 0 1rem;
 
@@ -150,12 +201,14 @@ $c-primary-hover: #72ad2a;
         }
 
         &:hover {
-          background: $c-bg-header;
+          @extend %metal-hover;
         }
         &.selected {
-          background: $c-primary;
+          background: $c-setup;
+          @extend %active-inset-shadow;
           color: #fff;
-          border-color: $c-primary;
+          //border-color: darken($c-secondary, 5%);
+          text-shadow: 0 1px 1px #000 !important;
           .text span {
             color: #fff;
           }
@@ -192,32 +245,35 @@ $c-primary-hover: #72ad2a;
     padding: 1rem;
 
     .variant-modal {
-      background: $c-bg-modal;
+      background: $c-bg-popup;
       width: 100%;
       max-width: 36rem;
       max-height: 90%;
       border-radius: 0.75rem;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      @extend %popup-shadow;
 
       header {
         padding: 1rem;
         border-bottom: 1px solid $c-border;
-        background: $c-bg-header;
+        @extend %metal-dark;
         display: flex;
         justify-content: space-between;
         align-items: center;
         h3 {
           margin: 0;
-          color: #fff;
+          color: $c-font;
         }
         .close {
           background: none;
           border: none;
           font-size: 1.2rem;
-          color: #999;
+          color: $c-font-dim;
           cursor: pointer;
+          &:hover {
+            color: $c-font;
+          }
         }
       }
 
@@ -269,16 +325,16 @@ $c-primary-hover: #72ad2a;
         background: none;
         border: none;
         border-bottom: 2px solid transparent;
-        color: #9ca3af;
+        color: $c-font-dim;
         font-weight: 500;
         cursor: pointer;
 
         &:hover {
-          color: #fff;
+          color: $c-font;
         }
         &.active {
-          color: $c-primary;
-          border-color: $c-primary;
+          color: $c-setup;
+          border-color: $c-setup;
         }
       }
     }
@@ -293,13 +349,13 @@ $c-primary-hover: #72ad2a;
         .preset-btn {
           padding: 0.35rem 0.6rem;
           font-size: 0.8rem;
-          background: $c-bg-element;
-          color: #e5e7eb;
+          @extend %metal;
+          color: $c-font;
           border-radius: 0.25rem;
-          border: none;
+          border: 1px solid $c-border;
           cursor: pointer;
           &:hover {
-            background: #4a4845;
+            @extend %metal-hover;
           }
         }
       }
@@ -324,11 +380,11 @@ $c-primary-hover: #72ad2a;
           font-size: 0.9rem;
 
           .val-box {
-            background: $c-bg-header;
+            background: $c-bg-low;
             padding: 0.1rem 0.5rem;
             border-radius: 0.25rem;
             font-weight: bold;
-            color: #fff;
+            color: $c-font;
           }
         }
 
@@ -336,6 +392,13 @@ $c-primary-hover: #72ad2a;
           width: 100%;
           padding: 0;
         }
+      }
+
+      .unlimited-msg {
+        text-align: center;
+        font-weight: bold;
+        padding: 2rem;
+        color: $c-font;
       }
     }
   }
@@ -345,13 +408,13 @@ $c-primary-hover: #72ad2a;
     .label {
       margin-bottom: 0.5rem;
       font-weight: 600;
-      color: #fff;
+      color: $c-font;
     }
     .level-cards {
       display: flex;
       border-radius: 0.5rem;
       overflow: hidden;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      @extend %button-shadow;
 
       .card-radio {
         flex: 1;
@@ -381,11 +444,13 @@ $c-primary-hover: #72ad2a;
     .label {
       margin-bottom: 0.5rem;
       font-weight: 600;
-      color: #fff;
+      color: $c-font;
     }
     .color-cards {
       display: flex;
-      gap: 0;
+      border-radius: 0.5rem;
+      overflow: hidden;
+      @extend %button-shadow;
 
       .card-radio {
         flex: 1;
@@ -430,5 +495,32 @@ $c-primary-hover: #72ad2a;
     .variant-modal .variant-grid {
       grid-template-columns: 1fr;
     }
+  }
+
+  @media (max-height: at-most(900px)) {
+    h2 {
+      margin-block: 1.1rem;
+    }
+    .footer {
+      padding: 1.1rem;
+    }
+    .setup-content {
+      padding: 1.25rem 0.75rem;
+    }
+    .fen__board {
+      width: 40%;
+    }
+    &:has(.increment-choice) .fen__board {
+      width: 30%;
+    }
+  }
+}
+
+@media (pointer: coarse) {
+  .game-setup select {
+    font-size: 1.2rem;
+  }
+  .game-setup .lobby__start__button {
+    border: 2px solid $c-setup;
   }
 }
