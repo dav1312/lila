@@ -1,3 +1,4 @@
+// ui/lobby/src/view/setup/modal.ts
 import { hl, type VNode, type LooseVNodes } from 'lib/view';
 import { snabDialog, spinnerVdom } from 'lib/view';
 import type LobbyController from '@/ctrl';
@@ -55,21 +56,28 @@ export default function setupModal(ctrl: LobbyController): VNode | null {
 const views = {
   hook: (ctrl: LobbyController): LooseVNodes => [
     variantPicker(ctrl),
-    timePickerAndSliders(ctrl.setupCtrl.timeControl),
+    fenInput(ctrl),
+    timePickerAndSliders(ctrl.setupCtrl.timeControl, 0, ctrl.setupCtrl.variant()),
     gameModeButtons(ctrl),
     ratingView(ctrl),
     ratingDifferenceSliders(ctrl),
     colorButtons(ctrl),
   ],
   friend: (ctrl: LobbyController): LooseVNodes => [
-    hl('div.config-group', [variantPicker(ctrl), fenInput(ctrl)]),
-    timePickerAndSliders(ctrl.setupCtrl.timeControl),
+    variantPicker(ctrl),
+    fenInput(ctrl),
+    timePickerAndSliders(ctrl.setupCtrl.timeControl, 0, ctrl.setupCtrl.variant()),
     gameModeButtons(ctrl),
     colorButtons(ctrl),
   ],
   ai: (ctrl: LobbyController): LooseVNodes => [
-    hl('div.config-group', [variantPicker(ctrl), fenInput(ctrl)]),
-    timePickerAndSliders(ctrl.setupCtrl.timeControl, ctrl.setupCtrl.minimumTimeIfReal()),
+    variantPicker(ctrl),
+    fenInput(ctrl),
+    timePickerAndSliders(
+      ctrl.setupCtrl.timeControl,
+      ctrl.setupCtrl.minimumTimeIfReal(),
+      ctrl.setupCtrl.variant(),
+    ),
     levelButtons(ctrl),
     colorButtons(ctrl),
   ],
