@@ -1,3 +1,4 @@
+// ui/lobby/src/setupCtrl.ts
 import { type Prop, propWithEffect } from 'lib';
 import { debounce } from 'lib/async';
 import * as xhr from 'lib/xhr';
@@ -35,6 +36,8 @@ export default class SetupController {
   ratingMin: Prop<number>;
   ratingMax: Prop<number>;
   aiLevel: Prop<number>;
+
+  variantMenuOpen = false;
 
   timeControl: TimeControl;
 
@@ -173,10 +176,16 @@ export default class SetupController {
     this.fenError = false;
     this.lastValidFen = '';
     this.friendUser = friendUser || '';
+    this.variantMenuOpen = false;
     this.loadPropsFromStore(forceOptions);
   };
 
   closeModal?: () => void; // managed by view/setup/modal.ts
+
+  toggleVariantMenu = () => {
+    this.variantMenuOpen = !this.variantMenuOpen;
+    this.root.redraw();
+  };
 
   validateFen = debounce(() => {
     const fen = this.fen();

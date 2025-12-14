@@ -298,7 +298,9 @@
   <string name="gameAborted">Game aborted</string>
   <string name="standard">Standard</string>
   <string name="customPosition">Custom position</string>
+  <string name="otherDescription">More ways to play</string>
   <string name="unlimited">Unlimited</string>
+  <string name="unlimitedDesc">Take all the time you need</string>
   <string name="mode">Mode</string>
   <string name="casual">Casual</string>
   <string name="rated">Rated</string>

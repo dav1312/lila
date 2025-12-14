@@ -3977,6 +3977,8 @@ interface I18n {
     orUploadPgnFile: string;
     /** Other */
     other: string;
+    /** More ways to play */
+    otherDescription: string;
     /** other players */
     otherPlayers: string;
     /** Our tips for organising events */
@@ -4473,6 +4475,8 @@ interface I18n {
     unknownDueToRounding: string;
     /** Unlimited */
     unlimited: string;
+    /** Take all the time you need */
+    unlimitedDesc: string;
     /** Unsubscribe */
     unsubscribe: string;
     /** Until */
@@ -5865,6 +5869,10 @@ interface I18n {
     crazyhouse: string;
     /** Captured pieces can be dropped back on the board instead of moving a piece. */
     crazyhouseTitle: string;
+    /** From Position */
+    fromPosition: string;
+    /** Standard chess from a custom position */
+    fromPositionTitle: string;
     /** Horde */
     horde: string;
     /** One side has a large number of pawns, the other has a normal army. */

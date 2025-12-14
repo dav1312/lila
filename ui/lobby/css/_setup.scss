@@ -1,13 +1,14 @@
+/* ui/lobby/css/_setup.scss */
 @import '../../lib/css/setup/colorChoice';
 
 $c-setup: $c-secondary;
 $c-slider: $c-setup;
 
 .game-setup {
-  width: 30em;
+  width: 42rem;
   max-width: 96vw;
   padding: 0;
-  text-align: center;
+  overflow: hidden;
 
   h2 {
     margin: 1.5rem 0;
@@ -26,22 +27,19 @@ $c-slider: $c-setup;
     cursor: default !important;
   }
 
-  group.radio {
-    width: 70%;
-    align-self: center;
-
-    input:checked + label {
-      background: $c-setup;
-    }
-  }
-
-  > div {
-    @extend %flex-column;
+  group.radio input:checked + label {
+    background: $c-setup;
   }
 
   .config-group {
     @extend %flex-column;
     gap: 0.5rem;
+
+    .label {
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: $c-font;
+    }
   }
 
   .fen__form {
@@ -61,12 +59,6 @@ $c-slider: $c-setup;
     background: $m-bad_bg--mix-20;
     box-shadow: 0 0 13px 6px $m-bad_bg--mix-20;
     border-radius: 0.5rem;
-  }
-
-  group.radio.color-picker {
-    width: auto;
-    margin: 0;
-    justify-content: center;
   }
 
   .footer {
@@ -91,12 +83,6 @@ $c-slider: $c-setup;
     position: absolute;
     width: 56px;
     height: 56px;
-  }
-
-  .radio-pane {
-    @extend %flex-center-nowrap;
-    justify-content: center;
-    gap: 0.8rem;
   }
 
   .range {
@@ -129,11 +115,6 @@ $c-slider: $c-setup;
     }
   }
 
-  .time-choice,
-  .days-choice {
-    margin-top: 0.5rem;
-  }
-
   .ratings {
     width: 100%;
     text-align: center;
@@ -142,21 +123,129 @@ $c-slider: $c-setup;
     }
   }
 
-  .label-select {
-    @extend %flex-center;
+  .variant-picker-split {
+    group.radio {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 4.5rem;
 
-    &.variant {
-      padding-bottom: 0;
+      label {
+        flex-wrap: nowrap;
+        .icon {
+          font-size: 1.5rem;
+          margin-right: 0.75rem;
+        }
+        .text {
+          flex: 0 1 auto;
+          text-align: start;
+          display: flex;
+          flex-direction: column;
+          .name {
+            font-weight: 600;
+            font-size: 0.9rem;
+          }
+          .desc {
+            font-size: 0.75rem;
+            opacity: 0.8;
+          }
+        }
+      }
+    }
+  }
+
+  .time-control-tabs {
+    .tabs {
+      display: flex;
+      border-bottom: $border;
+      margin-bottom: 1rem;
+
+      .tab-btn {
+        padding: 0.5rem 1rem;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: $c-font-dim;
+        font-weight: 500;
+        cursor: pointer;
+
+        &:hover {
+          color: $c-font;
+        }
+        &.active {
+          color: $c-setup;
+          border-color: $c-setup;
+        }
+      }
     }
 
-    label {
-      flex: 0 0 33%;
-      text-align: end;
-    }
+    .time-panel {
+      .presets {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
 
-    select {
-      margin-inline-start: 0.8rem;
-      font-weight: bold;
+        .preset-btn {
+          padding: 0.35rem 0.6rem;
+          font-size: 0.8rem;
+          @extend %metal;
+          border-radius: 0.25rem;
+          border: $border;
+          &:hover {
+            @extend %metal-hover;
+          }
+        }
+      }
+
+      .sliders-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+
+      .slider-container {
+        .label-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 0.5rem;
+
+          .val-box {
+            background: $c-bg-low;
+            padding: 0.1rem 0.5rem;
+            border-radius: 0.25rem;
+            font-weight: bold;
+            color: $c-font;
+          }
+        }
+
+        input[type='range'] {
+          width: 100%;
+          padding: 0;
+        }
+      }
+    }
+  }
+
+  .color-cards {
+    @extend %button-shadow;
+
+    .card-radio {
+      flex: 1;
+      padding: 0.75rem;
+      flex-direction: column;
+
+      .text {
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        font-weight: 500;
+      }
+    }
+  }
+
+  @media (max-width: 600px) {
+    .time-control-tabs .time-panel .sliders-grid {
+      grid-template-columns: 1fr;
     }
   }
 
@@ -175,6 +264,76 @@ $c-slider: $c-setup;
     }
     &:has(.increment-choice) .fen__board {
       width: 30%;
+    }
+  }
+}
+
+.variant-selector {
+  width: 40rem;
+  max-width: 90vw;
+  max-height: 90%;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: 6px;
+  overflow: hidden;
+
+  h2 {
+    margin: 1.5rem 0;
+    text-align: center;
+  }
+
+  .variant-grid {
+    background: $c-bg-zebra;
+    border-top: $border;
+
+    padding: 1rem;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+
+    .variant-card {
+      display: flex;
+      align-items: center;
+      @extend %metal;
+      border: $border;
+      cursor: pointer;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      text-align: left;
+
+      .icon {
+        font-size: 1.5rem;
+        margin-right: 0.75rem;
+      }
+      .text {
+        display: flex;
+        flex-direction: column;
+        .name {
+          font-weight: 600;
+        }
+        .desc {
+          font-size: 0.75rem;
+          opacity: 0.8;
+        }
+      }
+
+      &:hover {
+        @extend %metal-hover;
+      }
+      &.selected {
+        background: $c-setup;
+        @extend %active-inset-shadow;
+        color: #fff;
+        text-shadow: 0 1px 1px #000 !important;
+
+        .icon::before,
+        .text,
+        .num {
+          color: #fff;
+        }
+      }
     }
   }
 }

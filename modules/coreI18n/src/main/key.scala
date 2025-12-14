@@ -1746,7 +1746,9 @@ object I18nKey:
     val `gameAborted`: I18nKey = "gameAborted"
     val `standard`: I18nKey = "standard"
     val `customPosition`: I18nKey = "customPosition"
+    val `otherDescription`: I18nKey = "otherDescription"
     val `unlimited`: I18nKey = "unlimited"
+    val `unlimitedDesc`: I18nKey = "unlimitedDesc"
     val `mode`: I18nKey = "mode"
     val `casual`: I18nKey = "casual"
     val `rated`: I18nKey = "rated"
@@ -2993,6 +2995,8 @@ object I18nKey:
     val `racingKingsTitle`: I18nKey = "variant:racingKingsTitle"
     val `crazyhouse`: I18nKey = "variant:crazyhouse"
     val `crazyhouseTitle`: I18nKey = "variant:crazyhouseTitle"
+    val `fromPosition`: I18nKey = "variant:fromPosition"
+    val `fromPositionTitle`: I18nKey = "variant:fromPositionTitle"
 
   object video:
     val `chessVideos`: I18nKey = "video:chessVideos"
