@@ -1,13 +1,14 @@
+/* ui/lobby/css/_setup.scss */
 @import '../../lib/css/setup/colorChoice';
 
 $c-setup: $c-secondary;
 $c-slider: $c-setup;
 
 .game-setup {
-  width: 30em;
+  width: 42rem;
   max-width: 96vw;
   padding: 0;
-  text-align: center;
+  overflow: hidden;
 
   h2 {
     margin: 1.5rem 0;
@@ -26,24 +27,33 @@ $c-slider: $c-setup;
     cursor: default !important;
   }
 
-  group.radio {
-    width: 70%;
-    align-self: center;
-
-    input:checked + label {
-      background: $c-setup;
-    }
+  group.radio input:checked + label {
+    background: $c-setup;
   }
 
-  > div {
-    @extend %flex-column;
+  .setup-content::-webkit-scrollbar {
+    width: 6px;
+  }
+  .setup-content::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+  }
+  .setup-content::-webkit-scrollbar-thumb {
+    background: $c-border;
+    border-radius: 10px;
   }
 
   .config-group {
     @extend %flex-column;
     gap: 0.5rem;
+
+    .label {
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: $c-font;
+    }
   }
 
+  // Restored FEN Styles
   .fen__form {
     @extend %flex-center-nowrap;
   }
@@ -61,12 +71,6 @@ $c-slider: $c-setup;
     background: $m-bad_bg--mix-20;
     box-shadow: 0 0 13px 6px $m-bad_bg--mix-20;
     border-radius: 0.5rem;
-  }
-
-  group.radio.color-picker {
-    width: auto;
-    margin: 0;
-    justify-content: center;
   }
 
   .footer {
@@ -91,12 +95,6 @@ $c-slider: $c-setup;
     position: absolute;
     width: 56px;
     height: 56px;
-  }
-
-  .radio-pane {
-    @extend %flex-center-nowrap;
-    justify-content: center;
-    gap: 0.8rem;
   }
 
   .range {
@@ -129,11 +127,6 @@ $c-slider: $c-setup;
     }
   }
 
-  .time-choice,
-  .days-choice {
-    margin-top: 0.5rem;
-  }
-
   .ratings {
     width: 100%;
     text-align: center;
@@ -142,21 +135,260 @@ $c-slider: $c-setup;
     }
   }
 
-  .label-select {
-    @extend %flex-center;
+  .variant-picker-split {
+    .split-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 4.5rem;
 
-    &.variant {
-      padding-bottom: 0;
+      button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        @extend %metal;
+        border: 1px solid $c-border;
+        color: $c-font-dim;
+        text-align: left;
+        padding: 0 1rem;
+
+        &.std-btn {
+          border-radius: 0.5rem 0 0 0.5rem;
+        }
+        &.other-btn {
+          border-radius: 0 0.5rem 0.5rem 0;
+          border-left: none;
+        }
+
+        &:hover {
+          @extend %metal-hover;
+        }
+        &.selected {
+          background: $c-setup;
+          @extend %active-inset-shadow;
+          color: #fff;
+          text-shadow: 0 1px 1px #000 !important;
+          .text span {
+            color: #fff;
+          }
+        }
+
+        .icon {
+          font-size: 1.5rem;
+          margin-right: 0.75rem;
+        }
+        .text {
+          display: flex;
+          flex-direction: column;
+          .name {
+            font-weight: 600;
+            font-size: 0.9rem;
+          }
+          .desc {
+            font-size: 0.75rem;
+            opacity: 0.8;
+          }
+        }
+      }
+    }
+  }
+
+  .variant-modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+
+    .variant-modal {
+      width: 100%;
+      /*max-width: 36rem;*/
+      max-width: 40rem;
+      max-height: 90%;
+      display: flex;
+      flex-direction: column;
+
+      header {
+        padding: 1rem;
+        border-bottom: 1px solid $c-border;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        h3 {
+          margin: 0;
+          color: $c-font;
+        }
+        .close {
+          background: none;
+          border: none;
+          font-size: 1.2rem;
+          color: $c-font-dim;
+          cursor: pointer;
+          &:hover {
+            color: $c-font;
+          }
+        }
+      }
+
+      .variant-grid {
+        background: $c-bg-zebra;
+
+        padding: 1rem;
+        overflow-y: auto;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+
+        .variant-card {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          @extend %metal;
+          border: 1px solid $c-border;
+          cursor: pointer;
+          padding: 0.75rem;
+          border-radius: 0.5rem;
+          justify-content: flex-start;
+          text-align: left;
+          height: auto;
+
+          .icon {
+            font-size: 1.5rem;
+            margin-right: 0.75rem;
+          }
+          .text {
+            display: flex;
+            flex-direction: column;
+            .name {
+              font-weight: 600;
+              /*font-size: 0.9rem;*/
+            }
+            .desc {
+              font-size: 0.75rem;
+              opacity: 0.8;
+            }
+          }
+
+          &:hover {
+            @extend %metal-hover;
+          }
+          &.selected {
+            background: $c-setup;
+            @extend %active-inset-shadow;
+            color: #fff;
+            text-shadow: 0 1px 1px #000 !important;
+
+            .icon::before,
+            .text,
+            .num {
+              color: #fff;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .time-control-tabs {
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid $c-border;
+      margin-bottom: 1rem;
+
+      .tab-btn {
+        padding: 0.5rem 1rem;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: $c-font-dim;
+        font-weight: 500;
+        cursor: pointer;
+
+        &:hover {
+          color: $c-font;
+        }
+        &.active {
+          color: $c-setup;
+          border-color: $c-setup;
+        }
+      }
     }
 
-    label {
-      flex: 0 0 33%;
-      text-align: end;
-    }
+    .time-panel {
+      .presets {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
 
-    select {
-      margin-inline-start: 0.8rem;
-      font-weight: bold;
+        .preset-btn {
+          padding: 0.35rem 0.6rem;
+          font-size: 0.8rem;
+          @extend %metal;
+          color: $c-font;
+          border-radius: 0.25rem;
+          border: 1px solid $c-border;
+          cursor: pointer;
+          &:hover {
+            @extend %metal-hover;
+          }
+        }
+      }
+
+      .sliders-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+
+      .slider-container {
+        .label-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 0.5rem;
+
+          .val-box {
+            background: $c-bg-low;
+            padding: 0.1rem 0.5rem;
+            border-radius: 0.25rem;
+            font-weight: bold;
+            color: $c-font;
+          }
+        }
+
+        input[type='range'] {
+          width: 100%;
+          padding: 0;
+        }
+      }
+    }
+  }
+
+  .color-cards {
+    @extend %button-shadow;
+
+    .card-radio {
+      flex: 1;
+      padding: 0.75rem;
+      flex-direction: column;
+
+      .text {
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        font-weight: 500;
+      }
+    }
+  }
+
+  @media (max-width: 600px) {
+    .time-control-tabs .time-panel .sliders-grid {
+      grid-template-columns: 1fr;
+    }
+    .variant-modal .variant-grid {
+      grid-template-columns: 1fr;
     }
   }
 
