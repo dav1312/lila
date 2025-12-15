@@ -130,6 +130,7 @@ $c-slider: $c-setup;
       min-height: 4.5rem;
 
       label {
+        flex-wrap: nowrap;
         .icon {
           font-size: 1.5rem;
           margin-right: 0.75rem;
