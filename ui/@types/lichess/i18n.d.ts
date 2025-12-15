@@ -3033,8 +3033,6 @@ interface I18n {
     anonymous: string;
     /** Another was %s */
     anotherWasX: I18nFormat;
-    /** Lose all your pieces or get stalemated */
-    antichessDesc: string;
     /** Submit */
     apply: string;
     /** as black */
@@ -3043,8 +3041,6 @@ interface I18n {
     askYourChessTeacherAboutLiftingKidMode: string;
     /** as white */
     asWhite: string;
-    /** Captures cause explosions */
-    atomicDesc: string;
     /** Automatically proceed to next game after moving */
     automaticallyProceedToNextGameAfterMoving: string;
     /** Auto switch */
@@ -3199,8 +3195,6 @@ interface I18n {
     checkSpamFolder: string;
     /** Check your Email */
     checkYourEmail: string;
-    /** Randomized starting position */
-    chess960Desc: string;
     /** Chess960 start position: %s */
     chess960StartPosition: I18nFormat;
     /** Chess basics */
@@ -3285,8 +3279,6 @@ interface I18n {
     countryRegion: string;
     /** CPUs */
     cpus: string;
-    /** Captured pieces can be dropped back */
-    crazyhouseDesc: string;
     /** Create */
     create: string;
     /** Create a game */
@@ -3515,8 +3507,6 @@ interface I18n {
     friends: string;
     /** From position */
     fromPosition: string;
-    /** Standard chess from a custom position */
-    fromPositionDesc: string;
     /** Game aborted */
     gameAborted: string;
     /** Game as GIF */
@@ -3553,8 +3543,6 @@ interface I18n {
     help: string;
     /** Hide best move */
     hideBestMove: string;
-    /** White has a horde of pawns */
-    hordeDesc: string;
     /** Host */
     host: string;
     /** Host a new simul */
@@ -3675,8 +3663,6 @@ interface I18n {
     kidModeIsEnabled: string;
     /** King in the centre */
     kingInTheCenter: string;
-    /** Get your king to the center */
-    kingOfTheHillDesc: string;
     /** Language */
     language: string;
     /** Last post */
@@ -4087,8 +4073,6 @@ interface I18n {
     quickPairing: string;
     /** Race finished */
     raceFinished: string;
-    /** Race your king to the eighth rank */
-    racingKingsDesc: string;
     /** Random side */
     randomColor: string;
     /** Rank */
@@ -4313,8 +4297,6 @@ interface I18n {
     stalemate: string;
     /** Standard */
     standard: string;
-    /** Classic chess rules */
-    standardDesc: string;
     /** Stand by %s, pairing players, get ready! */
     standByX: I18nFormat;
     /** Standings */
@@ -4381,8 +4363,6 @@ interface I18n {
     thisTopicIsArchived: string;
     /** This topic is now closed. */
     thisTopicIsNowClosed: string;
-    /** Check the opponent three times */
-    threeCheckDesc: string;
     /** Three checks */
     threeChecks: string;
     /** Threefold repetition */
