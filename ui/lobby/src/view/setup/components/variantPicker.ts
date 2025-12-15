@@ -5,16 +5,17 @@ import type LobbyController from '@/ctrl';
 import { variants, variantsForGameType } from '@/options';
 
 const variantConfig: Record<string, { icon: string; desc: string }> = {
-  standard: { icon: '', desc: i18n.site.standard },
-  crazyhouse: { icon: '', desc: 'Captured pieces can be dropped back' },
-  chess960: { icon: '', desc: 'Randomized starting position' },
-  kingOfTheHill: { icon: '', desc: 'Get your king to the center' },
-  threeCheck: { icon: '', desc: 'Check the opponent three times' },
-  antichess: { icon: '', desc: 'Lose all your pieces or get stalemated' },
-  atomic: { icon: '', desc: 'Captures cause explosions' },
-  horde: { icon: '', desc: 'White has a horde of pawns' },
-  racingKings: { icon: '', desc: 'Race your king to the eighth rank' },
-  fromPosition: { icon: '', desc: 'Standard chess from a custom position' },
+  standard: { icon: '', desc: i18n.site.standardDesc },
+  other: { icon: '', desc: i18n.site.otherDesc },
+  crazyhouse: { icon: '', desc: i18n.site.crazyhouseDesc },
+  chess960: { icon: '', desc: i18n.site.chess960Desc },
+  kingOfTheHill: { icon: '', desc: i18n.site.kingOfTheHillDesc },
+  threeCheck: { icon: '', desc: i18n.site.threeCheckDesc },
+  antichess: { icon: '', desc: i18n.site.antichessDesc },
+  atomic: { icon: '', desc: i18n.site.atomicDesc },
+  horde: { icon: '', desc: i18n.site.hordeDesc },
+  racingKings: { icon: '', desc: i18n.site.racingKingsDesc },
+  fromPosition: { icon: '', desc: i18n.site.fromPositionDesc },
 };
 
 export const variantPicker = (ctrl: LobbyController) => {
@@ -23,11 +24,11 @@ export const variantPicker = (ctrl: LobbyController) => {
   const isStandard = currentVariant === 'standard';
 
   const otherVariantKey = isStandard ? 'standard' : currentVariant;
-  const otherIcon = isStandard ? '' : variantConfig[otherVariantKey]?.icon || '';
+  const otherIcon = isStandard ? variantConfig.other.icon : variantConfig[otherVariantKey]?.icon || variantConfig.other.icon;
   const otherName = isStandard
     ? i18n.site.other
-    : variants.find(v => v.key === currentVariant)?.name || 'Other';
-  const otherDesc = isStandard ? 'More ways to play' : variantConfig[currentVariant]?.desc || '';
+    : variants.find(v => v.key === currentVariant)?.name || i18n.site.other;
+  const otherDesc = isStandard ? i18n.site.otherDesc : variantConfig[currentVariant]?.desc || '';
 
   const availableVariants = variantsForGameType(variants, setupCtrl.gameType!).filter(
     v => v.key !== 'standard',
