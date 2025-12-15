@@ -4,16 +4,16 @@ import * as licon from 'lib/licon';
 import type { GameMode, GameType, Variant } from './interfaces';
 
 export const variants: Variant[] = [
-  { id: 1, icon: licon.CrownElite, key: 'standard', name: 'Standard', desc: i18n.site.standardDesc }, // Should be i18n.variant.standardTitle
-  { id: 10, icon: licon.Crazyhouse, key: 'crazyhouse', name: 'Crazyhouse', desc: i18n.site.crazyhouseDesc },
-  { id: 2, icon: licon.DieSix, key: 'chess960', name: 'Chess960', desc: i18n.site.chess960Desc },
-  { id: 4, icon: licon.FlagKingHill, key: 'kingOfTheHill', name: 'King of the Hill', desc: i18n.site.kingOfTheHillDesc },
-  { id: 5, icon: licon.ThreeCheckStack, key: 'threeCheck', name: 'Three-check', desc: i18n.site.threeCheckDesc },
-  { id: 6, icon: licon.Antichess, key: 'antichess', name: 'Antichess', desc: i18n.site.antichessDesc },
-  { id: 7, icon: licon.Atom, key: 'atomic', name: 'Atomic', desc: i18n.site.atomicDesc },
-  { id: 8, icon: licon.Keypad, key: 'horde', name: 'Horde', desc: i18n.site.hordeDesc },
-  { id: 9, icon: licon.FlagRacingKings, key: 'racingKings', name: 'Racing Kings', desc: i18n.site.racingKingsDesc },
-  { id: 3, icon: licon.Pencil, key: 'fromPosition', name: 'From Position', desc: i18n.site.fromPositionDesc },
+  { id: 1, icon: licon.CrownElite, key: 'standard', name: i18n.variant.standard, desc: i18n.variant.standardTitle },
+  { id: 10, icon: licon.Crazyhouse, key: 'crazyhouse', name: i18n.variant.crazyhouse, desc: i18n.variant.crazyhouseTitle },
+  { id: 2, icon: licon.DieSix, key: 'chess960', name: i18n.variant.chess960, desc: i18n.variant.chess960Title },
+  { id: 4, icon: licon.FlagKingHill, key: 'kingOfTheHill', name: i18n.variant.kingOfTheHill, desc: i18n.variant.kingOfTheHillTitle },
+  { id: 5, icon: licon.ThreeCheckStack, key: 'threeCheck', name: i18n.variant.threeCheck, desc: i18n.variant.threeCheckTitle },
+  { id: 6, icon: licon.Antichess, key: 'antichess', name: i18n.variant.antichess, desc: i18n.variant.antichessTitle },
+  { id: 7, icon: licon.Atom, key: 'atomic', name: i18n.variant.atomic, desc: i18n.variant.atomicTitle },
+  { id: 8, icon: licon.Keypad, key: 'horde', name: i18n.variant.horde, desc: i18n.variant.hordeTitle },
+  { id: 9, icon: licon.FlagRacingKings, key: 'racingKings', name: i18n.variant.racingKings, desc: i18n.variant.racingKingsTitle },
+  { id: 3, icon: licon.Pencil, key: 'fromPosition', name: i18n.variant.fromPosition, desc: i18n.variant.fromPositionTitle },
 ];
 
 export const variantsForGameType = (baseVariants: Variant[], gameType: GameType): Variant[] =>
