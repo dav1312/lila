@@ -146,7 +146,7 @@ $c-slider: $c-setup;
         align-items: center;
         justify-content: center;
         @extend %metal;
-        border: 1px solid $c-border;
+        border: $border;
         color: $c-font-dim;
         text-align: left;
         padding: 0 1rem;
@@ -192,99 +192,70 @@ $c-slider: $c-setup;
     }
   }
 
-  .variant-modal-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.7);
-    z-index: 10;
+  .variant-selector {
+    width: 40rem;
+    max-width: 90vw;
+    max-height: 90%;
+    padding: 0;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
+    flex-direction: column;
+    border-radius: 6px;
+    overflow: hidden;
 
-    .variant-modal {
-      width: 100%;
-      /*max-width: 36rem;*/
-      max-width: 40rem;
-      max-height: 90%;
-      display: flex;
-      flex-direction: column;
+    h2 {
+      margin: 1.5rem 0;
+      text-align: center;
+    }
 
-      header {
-        padding: 1rem;
-        border-bottom: 1px solid $c-border;
+    .variant-grid {
+      background: $c-bg-zebra;
+      border-top: $border;
+
+      padding: 1rem;
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+
+      .variant-card {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        h3 {
-          margin: 0;
-          color: $c-font;
+        @extend %metal;
+        border: $border;
+        cursor: pointer;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        text-align: left;
+
+        .icon {
+          font-size: 1.5rem;
+          margin-right: 0.75rem;
         }
-        .close {
-          background: none;
-          border: none;
-          font-size: 1.2rem;
-          color: $c-font-dim;
-          cursor: pointer;
-          &:hover {
-            color: $c-font;
-          }
-        }
-      }
-
-      .variant-grid {
-        background: $c-bg-zebra;
-
-        padding: 1rem;
-        overflow-y: auto;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.75rem;
-
-        .variant-card {
+        .text {
           display: flex;
-          align-items: center;
-          justify-content: center;
-          @extend %metal;
-          border: 1px solid $c-border;
-          cursor: pointer;
-          padding: 0.75rem;
-          border-radius: 0.5rem;
-          justify-content: flex-start;
-          text-align: left;
-          height: auto;
+          flex-direction: column;
+          .name {
+            font-weight: 600;
+          }
+          .desc {
+            font-size: 0.75rem;
+            opacity: 0.8;
+          }
+        }
 
-          .icon {
-            font-size: 1.5rem;
-            margin-right: 0.75rem;
-          }
-          .text {
-            display: flex;
-            flex-direction: column;
-            .name {
-              font-weight: 600;
-              /*font-size: 0.9rem;*/
-            }
-            .desc {
-              font-size: 0.75rem;
-              opacity: 0.8;
-            }
-          }
+        &:hover {
+          @extend %metal-hover;
+        }
+        &.selected {
+          background: $c-setup;
+          @extend %active-inset-shadow;
+          color: #fff;
+          text-shadow: 0 1px 1px #000 !important;
 
-          &:hover {
-            @extend %metal-hover;
-          }
-          &.selected {
-            background: $c-setup;
-            @extend %active-inset-shadow;
+          .icon::before,
+          .text,
+          .num {
             color: #fff;
-            text-shadow: 0 1px 1px #000 !important;
-
-            .icon::before,
-            .text,
-            .num {
-              color: #fff;
-            }
           }
         }
       }
@@ -294,7 +265,7 @@ $c-slider: $c-setup;
   .time-control-tabs {
     .tabs {
       display: flex;
-      border-bottom: 1px solid $c-border;
+      border-bottom: $border;
       margin-bottom: 1rem;
 
       .tab-btn {
@@ -329,7 +300,7 @@ $c-slider: $c-setup;
           @extend %metal;
           color: $c-font;
           border-radius: 0.25rem;
-          border: 1px solid $c-border;
+          border: $border;
           cursor: pointer;
           &:hover {
             @extend %metal-hover;
@@ -387,7 +358,7 @@ $c-slider: $c-setup;
     .time-control-tabs .time-panel .sliders-grid {
       grid-template-columns: 1fr;
     }
-    .variant-modal .variant-grid {
+    .variant-selector .variant-grid {
       grid-template-columns: 1fr;
     }
   }

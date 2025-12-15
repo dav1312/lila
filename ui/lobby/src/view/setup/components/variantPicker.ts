@@ -1,5 +1,6 @@
 // ui/lobby/src/view/setup/components/variantPicker.ts
 import { h } from 'snabbdom';
+import { snabDialog } from 'lib/view';
 import type LobbyController from '@/ctrl';
 import { variants, variantsForGameType } from '@/options';
 
@@ -32,51 +33,45 @@ export const variantPicker = (ctrl: LobbyController) => {
     v => v.key !== 'standard',
   );
 
+  const close = () => {
+    setupCtrl.variantMenuOpen = false;
+    setupCtrl.root.redraw();
+  };
+
   const variantModal = setupCtrl.variantMenuOpen
-    ? h(
-        'div.variant-modal-overlay',
-        {
-          on: {
-            click: (e: Event) => {
-              if (e.target === e.currentTarget) setupCtrl.toggleVariantMenu();
-            },
-          },
-        },
-        [
-          h('dialog.variant-modal', [
-            h('header', [
-              h('h3', i18n.site.variant),
-              h(
-                'button.close',
-                { on: { click: setupCtrl.toggleVariantMenu } },
-                h('span', { attrs: { 'data-icon': '' } }),
-              ),
-            ]),
-            h(
-              'div.variant-grid',
-              availableVariants.map(v => {
-                const conf = variantConfig[v.key] || { icon: '', desc: '' };
-                return h(
-                  'button.variant-card',
-                  {
-                    class: { selected: currentVariant === v.key },
-                    on: {
-                      click: () => {
-                        setupCtrl.variant(v.key);
-                        setupCtrl.toggleVariantMenu();
-                      },
+    ? snabDialog({
+        attrs: { dialog: { 'aria-label': i18n.site.variant } },
+        class: 'variant-selector',
+        modal: true,
+        onClose: close,
+        vnodes: [
+          h('h2', i18n.site.variant),
+          h(
+            'div.variant-grid',
+            availableVariants.map(v => {
+              const conf = variantConfig[v.key] || { icon: '', desc: '' };
+              return h(
+                'button.variant-card',
+                {
+                  class: { selected: currentVariant === v.key },
+                  on: {
+                    click: (e: Event) => {
+                      e.stopPropagation();
+                      setupCtrl.variant(v.key);
+                      close();
                     },
                   },
-                  [
-                    h('span.icon', { attrs: { 'data-icon': conf.icon } }),
-                    h('div.text', [h('span.name', v.name), h('span.desc', conf.desc)]),
-                  ],
-                );
-              }),
-            ),
-          ]),
+                },
+                [
+                  h('span.icon', { attrs: { 'data-icon': conf.icon } }),
+                  h('div.text', [h('span.name', v.name), h('span.desc', conf.desc)]),
+                ],
+              );
+            }),
+          ),
         ],
-      )
+        onInsert: d => d.show(),
+      })
     : null;
 
   return h('div.variant-picker-split', [
