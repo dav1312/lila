@@ -24,7 +24,9 @@ export const variantPicker = (ctrl: LobbyController) => {
   const isStandard = currentVariant === 'standard';
 
   const otherVariantKey = isStandard ? 'standard' : currentVariant;
-  const otherIcon = isStandard ? variantConfig.other.icon : variantConfig[otherVariantKey]?.icon || variantConfig.other.icon;
+  const otherIcon = isStandard
+    ? variantConfig.other.icon
+    : variantConfig[otherVariantKey]?.icon || variantConfig.other.icon;
   const otherName = isStandard
     ? i18n.site.other
     : variants.find(v => v.key === currentVariant)?.name || i18n.site.other;
@@ -124,18 +126,22 @@ export const variantPicker = (ctrl: LobbyController) => {
             },
           },
         }),
-        h('label', {
-          attrs: { for: 'variant_other' },
-          on: {
-            click: (e: Event) => {
-              e.preventDefault();
-              setupCtrl.toggleVariantMenu();
+        h(
+          'label',
+          {
+            attrs: { for: 'variant_other' },
+            on: {
+              click: (e: Event) => {
+                e.preventDefault();
+                setupCtrl.toggleVariantMenu();
+              },
             },
           },
-        }, [
-          h('span.icon', { attrs: { 'data-icon': otherIcon } }),
-          h('div.text', [h('span.name', otherName), h('span.desc', otherDesc)]),
-        ]),
+          [
+            h('span.icon', { attrs: { 'data-icon': otherIcon } }),
+            h('div.text', [h('span.name', otherName), h('span.desc', otherDesc)]),
+          ],
+        ),
       ]),
     ]),
     variantModal,

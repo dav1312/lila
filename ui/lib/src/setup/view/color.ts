@@ -23,12 +23,10 @@ export const colorButtons = (colorProp: ColorProp): VNode =>
       colors.map(({ key, name }) =>
         hl('div', [
           hl(`input#color-picker-${key}`, {
-            attrs: { name: 'color', type: 'radio', value: key, checked: colorProp() === key, },
+            attrs: { name: 'color', type: 'radio', value: key, checked: colorProp() === key },
             on: { change: () => colorProp(key) },
           }),
-          hl(
-            `label.card-radio`,
-            { attrs: { for: `color-picker-${key}` } }, [
+          hl(`label.card-radio`, { attrs: { for: `color-picker-${key}` } }, [
             hl('div.color-picker__button', { class: { [key]: true } }, hl('i')),
             hl('span.text', name),
           ]),
