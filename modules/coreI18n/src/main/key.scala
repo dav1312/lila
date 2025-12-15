@@ -1758,6 +1758,7 @@ object I18nKey:
     val `racingKingsDesc`: I18nKey = "racingKingsDesc"
     val `fromPositionDesc`: I18nKey = "fromPositionDesc"
     val `unlimited`: I18nKey = "unlimited"
+    val `unlimitedDesc`: I18nKey = "unlimitedDesc"
     val `mode`: I18nKey = "mode"
     val `casual`: I18nKey = "casual"
     val `rated`: I18nKey = "rated"

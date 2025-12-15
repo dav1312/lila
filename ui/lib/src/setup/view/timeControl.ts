@@ -211,7 +211,7 @@ export const timePickerAndSliders = (
       ]),
     ]);
   } else if (activeMode === 'unlimited') {
-    panelContent = hl('div.time-panel', i18n.site.unlimited);
+    panelContent = hl('div.time-panel', i18n.site.unlimitedDesc);
   }
 
   return hl('div.config-group.time-control-tabs', [tabs, panelContent]);

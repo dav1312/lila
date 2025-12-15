@@ -310,6 +310,7 @@
   <string name="racingKingsDesc">Race your king to the eighth rank</string>
   <string name="fromPositionDesc">Standard chess from a custom position</string>
   <string name="unlimited">Unlimited</string>
+  <string name="unlimitedDesc">Take all the time you need</string>
   <string name="mode">Mode</string>
   <string name="casual">Casual</string>
   <string name="rated">Rated</string>

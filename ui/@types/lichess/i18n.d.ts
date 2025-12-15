@@ -4495,6 +4495,8 @@ interface I18n {
     unknownDueToRounding: string;
     /** Unlimited */
     unlimited: string;
+    /** Take all the time you need */
+    unlimitedDesc: string;
     /** Unsubscribe */
     unsubscribe: string;
     /** Until */
