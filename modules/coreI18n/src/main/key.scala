@@ -3005,6 +3005,8 @@ object I18nKey:
     val `racingKingsTitle`: I18nKey = "variant:racingKingsTitle"
     val `crazyhouse`: I18nKey = "variant:crazyhouse"
     val `crazyhouseTitle`: I18nKey = "variant:crazyhouseTitle"
+    val `fromPosition`: I18nKey = "variant:fromPosition"
+    val `fromPositionTitle`: I18nKey = "variant:fromPositionTitle"
 
   object video:
     val `chessVideos`: I18nKey = "video:chessVideos"

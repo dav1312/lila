@@ -5,20 +5,6 @@ import type LobbyController from '@/ctrl';
 import { variants, variantsForGameType } from '@/options';
 import { option } from 'lib/setup/option';
 
-const variantConfig: Record<string, { icon: string; desc: string }> = {
-  standard: { icon: '', desc: i18n.site.standardDesc },
-  other: { icon: '', desc: i18n.site.otherDesc },
-  crazyhouse: { icon: '', desc: i18n.site.crazyhouseDesc },
-  chess960: { icon: '', desc: i18n.site.chess960Desc },
-  kingOfTheHill: { icon: '', desc: i18n.site.kingOfTheHillDesc },
-  threeCheck: { icon: '', desc: i18n.site.threeCheckDesc },
-  antichess: { icon: '', desc: i18n.site.antichessDesc },
-  atomic: { icon: '', desc: i18n.site.atomicDesc },
-  horde: { icon: '', desc: i18n.site.hordeDesc },
-  racingKings: { icon: '', desc: i18n.site.racingKingsDesc },
-  fromPosition: { icon: '', desc: i18n.site.fromPositionDesc },
-};
-
 export const variantPicker = (ctrl: LobbyController) => {
   const { setupCtrl } = ctrl;
 
@@ -39,13 +25,13 @@ export const variantPicker = (ctrl: LobbyController) => {
     ]);
   }
 
-  const currentVariant = setupCtrl.variant();
-  const isStandard = currentVariant === 'standard' || !variants.some(v => v.key === currentVariant);
-  const otherKey = isStandard ? 'other' : currentVariant;
-  const otherConf = variantConfig[otherKey] || variantConfig.other;
-  const otherName = isStandard
-    ? i18n.site.other
-    : variants.find(v => v.key === currentVariant)?.name || i18n.site.other;
+  const currentVariantKey = setupCtrl.variant();
+  const isStandard = currentVariantKey === 'standard';
+  const stdVariant = variants.find(v => v.key === 'standard')!;
+  const activeVariant = !isStandard ? variants.find(v => v.key === currentVariantKey) : null;
+  const otherDisplay = activeVariant
+    ? { icon: activeVariant.icon, name: activeVariant.name, desc: activeVariant.desc }
+    : { icon: '', name: i18n.site.other, desc: i18n.site.otherDescription };
 
   return h('div.variant-picker-split', [
     h('group.radio', [
@@ -72,8 +58,8 @@ export const variantPicker = (ctrl: LobbyController) => {
           on: { change: () => setupCtrl.variant('standard') },
         }),
         h('label', { attrs: { for: 'variant_std' } }, [
-          h('span.icon', { attrs: { 'data-icon': variantConfig.standard.icon } }),
-          h('div.text', [h('span.name', i18n.site.standard), h('span.desc', variantConfig.standard.desc)]),
+          h('span.icon', { attrs: { 'data-icon': stdVariant.icon } }),
+          h('div.text', [h('span.name', i18n.site.standard), h('span.desc', stdVariant.desc)]),
         ]),
       ]),
       h('div', [
@@ -108,8 +94,8 @@ export const variantPicker = (ctrl: LobbyController) => {
             },
           },
           [
-            h('span.icon', { attrs: { 'data-icon': otherConf.icon } }),
-            h('div.text', [h('span.name', otherName), h('span.desc', otherConf.desc)]),
+            h('span.icon', { attrs: { 'data-icon': otherDisplay.icon } }),
+            h('div.text', [h('span.name', otherDisplay.name), h('span.desc', otherDisplay.desc)]),
           ],
         ),
       ]),
@@ -144,7 +130,6 @@ export const variantModal = (ctrl: LobbyController) => {
       h(
         'div.variant-grid',
         availableVariants.map(v => {
-          const conf = variantConfig[v.key] || { icon: '', desc: '' };
           return h(
             'button.variant-card',
             {
@@ -158,8 +143,8 @@ export const variantModal = (ctrl: LobbyController) => {
               },
             },
             [
-              h('span.icon', { attrs: { 'data-icon': conf.icon } }),
-              h('div.text', [h('span.name', v.name), h('span.desc', conf.desc)]),
+              h('span.icon', { attrs: { 'data-icon': v.icon } }),
+              h('div.text', [h('span.name', v.name), h('span.desc', v.desc)]),
             ],
           );
         }),

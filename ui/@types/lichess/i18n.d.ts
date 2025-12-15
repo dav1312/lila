@@ -3992,7 +3992,7 @@ interface I18n {
     /** Other */
     other: string;
     /** More ways to play */
-    otherDesc: string;
+    otherDescription: string;
     /** other players */
     otherPlayers: string;
     /** Our tips for organising events */
@@ -5889,6 +5889,10 @@ interface I18n {
     crazyhouse: string;
     /** Captured pieces can be dropped back on the board instead of moving a piece. */
     crazyhouseTitle: string;
+    /** From Position */
+    fromPosition: string;
+    /** Standard chess from a custom position */
+    fromPositionTitle: string;
     /** Horde */
     horde: string;
     /** One side has a large number of pawns, the other has a normal army. */

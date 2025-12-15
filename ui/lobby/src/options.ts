@@ -1,18 +1,19 @@
+// ui/lobby/src/options.ts
 import * as licon from 'lib/licon';
 
 import type { GameMode, GameType, Variant } from './interfaces';
 
 export const variants: Variant[] = [
-  { id: 1, icon: licon.Crown, key: 'standard', name: 'Standard' },
-  { id: 10, icon: licon.Crazyhouse, key: 'crazyhouse', name: 'Crazyhouse' },
-  { id: 2, icon: licon.DieSix, key: 'chess960', name: 'Chess960' },
-  { id: 4, icon: licon.FlagKingHill, key: 'kingOfTheHill', name: 'King of the Hill' },
-  { id: 5, icon: licon.ThreeCheckStack, key: 'threeCheck', name: 'Three-check' },
-  { id: 6, icon: licon.Antichess, key: 'antichess', name: 'Antichess' },
-  { id: 7, icon: licon.Atom, key: 'atomic', name: 'Atomic' },
-  { id: 8, icon: licon.Keypad, key: 'horde', name: 'Horde' },
-  { id: 9, icon: licon.FlagRacingKings, key: 'racingKings', name: 'Racing Kings' },
-  { id: 3, icon: licon.Crown, key: 'fromPosition', name: 'From Position' },
+  { id: 1, icon: licon.CrownElite, key: 'standard', name: 'Standard', desc: i18n.site.standardDesc }, // Should be i18n.variant.standardTitle
+  { id: 10, icon: licon.Crazyhouse, key: 'crazyhouse', name: 'Crazyhouse', desc: i18n.site.crazyhouseDesc },
+  { id: 2, icon: licon.DieSix, key: 'chess960', name: 'Chess960', desc: i18n.site.chess960Desc },
+  { id: 4, icon: licon.FlagKingHill, key: 'kingOfTheHill', name: 'King of the Hill', desc: i18n.site.kingOfTheHillDesc },
+  { id: 5, icon: licon.ThreeCheckStack, key: 'threeCheck', name: 'Three-check', desc: i18n.site.threeCheckDesc },
+  { id: 6, icon: licon.Antichess, key: 'antichess', name: 'Antichess', desc: i18n.site.antichessDesc },
+  { id: 7, icon: licon.Atom, key: 'atomic', name: 'Atomic', desc: i18n.site.atomicDesc },
+  { id: 8, icon: licon.Keypad, key: 'horde', name: 'Horde', desc: i18n.site.hordeDesc },
+  { id: 9, icon: licon.FlagRacingKings, key: 'racingKings', name: 'Racing Kings', desc: i18n.site.racingKingsDesc },
+  { id: 3, icon: licon.Pencil, key: 'fromPosition', name: 'From Position', desc: i18n.site.fromPositionDesc },
 ];
 
 export const variantsForGameType = (baseVariants: Variant[], gameType: GameType): Variant[] =>

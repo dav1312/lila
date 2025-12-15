@@ -11,6 +11,7 @@ export interface Variant {
   key: VariantKey;
   name: string;
   icon: string;
+  desc: string;
 }
 
 export interface Hook {
