@@ -270,10 +270,8 @@ $c-slider: $c-setup;
           padding: 0.35rem 0.6rem;
           font-size: 0.8rem;
           @extend %metal;
-          color: $c-font;
           border-radius: 0.25rem;
           border: $border;
-          cursor: pointer;
           &:hover {
             @extend %metal-hover;
           }
