@@ -40,16 +40,12 @@ export const variantPicker = (ctrl: LobbyController) => {
   }
 
   const currentVariant = setupCtrl.variant();
-  const isStandard = currentVariant === 'standard';
-
-  const otherVariantKey = isStandard ? 'standard' : currentVariant;
-  const otherIcon = isStandard
-    ? variantConfig.other.icon
-    : variantConfig[otherVariantKey]?.icon || variantConfig.other.icon;
+  const isStandard = currentVariant === 'standard' || !variants.some(v => v.key === currentVariant);
+  const otherKey = isStandard ? 'other' : currentVariant;
+  const otherConf = variantConfig[otherKey] || variantConfig.other;
   const otherName = isStandard
     ? i18n.site.other
     : variants.find(v => v.key === currentVariant)?.name || i18n.site.other;
-  const otherDesc = isStandard ? i18n.site.otherDesc : variantConfig[currentVariant]?.desc || '';
 
   return h('div.variant-picker-split', [
     h('group.radio', [
@@ -112,8 +108,8 @@ export const variantPicker = (ctrl: LobbyController) => {
             },
           },
           [
-            h('span.icon', { attrs: { 'data-icon': otherIcon } }),
-            h('div.text', [h('span.name', otherName), h('span.desc', otherDesc)]),
+            h('span.icon', { attrs: { 'data-icon': otherConf.icon } }),
+            h('div.text', [h('span.name', otherName), h('span.desc', otherConf.desc)]),
           ],
         ),
       ]),
@@ -131,16 +127,18 @@ export const variantModal = (ctrl: LobbyController) => {
     v => v.key !== 'standard',
   );
 
-  const close = () => {
+  const onClose = () => {
     setupCtrl.variantMenuOpen = false;
     setupCtrl.root.redraw();
   };
+
+  let dialog: any;
 
   return snabDialog({
     attrs: { dialog: { 'aria-label': i18n.site.variant } },
     class: 'variant-selector',
     modal: true,
-    onClose: close,
+    onClose,
     vnodes: [
       h('h2', i18n.site.variant),
       h(
@@ -155,7 +153,7 @@ export const variantModal = (ctrl: LobbyController) => {
                 click: (e: Event) => {
                   e.stopPropagation();
                   setupCtrl.variant(v.key);
-                  close();
+                  dialog?.close();
                 },
               },
             },
@@ -167,6 +165,9 @@ export const variantModal = (ctrl: LobbyController) => {
         }),
       ),
     ],
-    onInsert: d => d.show(),
+    onInsert: d => {
+      dialog = d;
+      d.show();
+    },
   });
 };
