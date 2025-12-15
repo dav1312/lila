@@ -76,29 +76,67 @@ export const variantPicker = (ctrl: LobbyController) => {
     : null;
 
   return h('div.variant-picker-split', [
-    h('div.split-buttons', [
-      h(
-        'button.std-btn',
-        {
-          class: { selected: isStandard },
-          on: { click: () => setupCtrl.variant('standard') },
-        },
-        [
+    h('group.radio', [
+      h('div', [
+        h('input#variant_std', {
+          attrs: {
+            type: 'radio',
+            name: 'variant',
+            value: 'standard',
+            checked: isStandard,
+          },
+          props: {
+            checked: isStandard,
+          },
+          // Force update the checked property to fix desync with native radio behavior
+          hook: {
+            update: (_: any, vnode: any) => {
+              if (vnode.elm) vnode.elm.checked = isStandard;
+            },
+            insert: (vnode: any) => {
+              if (vnode.elm) vnode.elm.checked = isStandard;
+            },
+          },
+          on: { change: () => setupCtrl.variant('standard') },
+        }),
+        h('label', { attrs: { for: 'variant_std' } }, [
           h('span.icon', { attrs: { 'data-icon': variantConfig.standard.icon } }),
           h('div.text', [h('span.name', i18n.site.standard), h('span.desc', variantConfig.standard.desc)]),
-        ],
-      ),
-      h(
-        'button.other-btn',
-        {
-          class: { selected: !isStandard },
-          on: { click: setupCtrl.toggleVariantMenu },
-        },
-        [
+        ]),
+      ]),
+      h('div', [
+        h('input#variant_other', {
+          attrs: {
+            type: 'radio',
+            name: 'variant',
+            value: 'other',
+            checked: !isStandard,
+          },
+          props: {
+            checked: !isStandard,
+          },
+          hook: {
+            update: (_: any, vnode: any) => {
+              if (vnode.elm) vnode.elm.checked = !isStandard;
+            },
+            insert: (vnode: any) => {
+              if (vnode.elm) vnode.elm.checked = !isStandard;
+            },
+          },
+        }),
+        h('label', {
+          attrs: { for: 'variant_other' },
+          on: {
+            click: (e: Event) => {
+              e.preventDefault();
+              setupCtrl.toggleVariantMenu();
+            },
+          },
+        }, [
           h('span.icon', { attrs: { 'data-icon': otherIcon } }),
           h('div.text', [h('span.name', otherName), h('span.desc', otherDesc)]),
-        ],
-      ),
+        ]),
+      ]),
     ]),
     variantModal,
   ]);

@@ -136,47 +136,19 @@ $c-slider: $c-setup;
   }
 
   .variant-picker-split {
-    .split-buttons {
+    group.radio {
       display: grid;
       grid-template-columns: 1fr 1fr;
       min-height: 4.5rem;
 
-      button {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        @extend %metal;
-        border: $border;
-        color: $c-font-dim;
-        text-align: left;
-        padding: 0 1rem;
-
-        &.std-btn {
-          border-radius: 0.5rem 0 0 0.5rem;
-        }
-        &.other-btn {
-          border-radius: 0 0.5rem 0.5rem 0;
-          border-left: none;
-        }
-
-        &:hover {
-          @extend %metal-hover;
-        }
-        &.selected {
-          background: $c-setup;
-          @extend %active-inset-shadow;
-          color: #fff;
-          text-shadow: 0 1px 1px #000 !important;
-          .text span {
-            color: #fff;
-          }
-        }
-
+      label {
         .icon {
           font-size: 1.5rem;
           margin-right: 0.75rem;
         }
         .text {
+          flex: 0 1 auto;
+          text-align: start;
           display: flex;
           flex-direction: column;
           .name {
