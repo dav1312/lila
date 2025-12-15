@@ -51,51 +51,6 @@ export const variantPicker = (ctrl: LobbyController) => {
     : variants.find(v => v.key === currentVariant)?.name || i18n.site.other;
   const otherDesc = isStandard ? i18n.site.otherDesc : variantConfig[currentVariant]?.desc || '';
 
-  const availableVariants = variantsForGameType(variants, setupCtrl.gameType!).filter(
-    v => v.key !== 'standard',
-  );
-
-  const close = () => {
-    setupCtrl.variantMenuOpen = false;
-    setupCtrl.root.redraw();
-  };
-
-  const variantModal = setupCtrl.variantMenuOpen
-    ? snabDialog({
-        attrs: { dialog: { 'aria-label': i18n.site.variant } },
-        class: 'variant-selector',
-        modal: true,
-        onClose: close,
-        vnodes: [
-          h('h2', i18n.site.variant),
-          h(
-            'div.variant-grid',
-            availableVariants.map(v => {
-              const conf = variantConfig[v.key] || { icon: '', desc: '' };
-              return h(
-                'button.variant-card',
-                {
-                  class: { selected: currentVariant === v.key },
-                  on: {
-                    click: (e: Event) => {
-                      e.stopPropagation();
-                      setupCtrl.variant(v.key);
-                      close();
-                    },
-                  },
-                },
-                [
-                  h('span.icon', { attrs: { 'data-icon': conf.icon } }),
-                  h('div.text', [h('span.name', v.name), h('span.desc', conf.desc)]),
-                ],
-              );
-            }),
-          ),
-        ],
-        onInsert: d => d.show(),
-      })
-    : null;
-
   return h('div.variant-picker-split', [
     h('group.radio', [
       h('div', [
@@ -163,6 +118,55 @@ export const variantPicker = (ctrl: LobbyController) => {
         ),
       ]),
     ]),
-    variantModal,
   ]);
+};
+
+export const variantModal = (ctrl: LobbyController) => {
+  const { setupCtrl } = ctrl;
+
+  if (!setupCtrl.variantMenuOpen) return null;
+
+  const currentVariant = setupCtrl.variant();
+  const availableVariants = variantsForGameType(variants, setupCtrl.gameType!).filter(
+    v => v.key !== 'standard',
+  );
+
+  const close = () => {
+    setupCtrl.variantMenuOpen = false;
+    setupCtrl.root.redraw();
+  };
+
+  return snabDialog({
+    attrs: { dialog: { 'aria-label': i18n.site.variant } },
+    class: 'variant-selector',
+    modal: true,
+    onClose: close,
+    vnodes: [
+      h('h2', i18n.site.variant),
+      h(
+        'div.variant-grid',
+        availableVariants.map(v => {
+          const conf = variantConfig[v.key] || { icon: '', desc: '' };
+          return h(
+            'button.variant-card',
+            {
+              class: { selected: currentVariant === v.key },
+              on: {
+                click: (e: Event) => {
+                  e.stopPropagation();
+                  setupCtrl.variant(v.key);
+                  close();
+                },
+              },
+            },
+            [
+              h('span.icon', { attrs: { 'data-icon': conf.icon } }),
+              h('div.text', [h('span.name', v.name), h('span.desc', conf.desc)]),
+            ],
+          );
+        }),
+      ),
+    ],
+    onInsert: d => d.show(),
+  });
 };

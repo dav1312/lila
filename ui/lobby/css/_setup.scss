@@ -152,76 +152,6 @@ $c-slider: $c-setup;
     }
   }
 
-  .variant-selector {
-    width: 40rem;
-    max-width: 90vw;
-    max-height: 90%;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    border-radius: 6px;
-    overflow: hidden;
-
-    h2 {
-      margin: 1.5rem 0;
-      text-align: center;
-    }
-
-    .variant-grid {
-      background: $c-bg-zebra;
-      border-top: $border;
-
-      padding: 1rem;
-      overflow-y: auto;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.75rem;
-
-      .variant-card {
-        display: flex;
-        align-items: center;
-        @extend %metal;
-        border: $border;
-        cursor: pointer;
-        padding: 0.75rem;
-        border-radius: 0.5rem;
-        text-align: left;
-
-        .icon {
-          font-size: 1.5rem;
-          margin-right: 0.75rem;
-        }
-        .text {
-          display: flex;
-          flex-direction: column;
-          .name {
-            font-weight: 600;
-          }
-          .desc {
-            font-size: 0.75rem;
-            opacity: 0.8;
-          }
-        }
-
-        &:hover {
-          @extend %metal-hover;
-        }
-        &.selected {
-          background: $c-setup;
-          @extend %active-inset-shadow;
-          color: #fff;
-          text-shadow: 0 1px 1px #000 !important;
-
-          .icon::before,
-          .text,
-          .num {
-            color: #fff;
-          }
-        }
-      }
-    }
-  }
-
   .time-control-tabs {
     .tabs {
       display: flex;
@@ -316,9 +246,6 @@ $c-slider: $c-setup;
     .time-control-tabs .time-panel .sliders-grid {
       grid-template-columns: 1fr;
     }
-    .variant-selector .variant-grid {
-      grid-template-columns: 1fr;
-    }
   }
 
   @media (max-height: at-most(900px)) {
@@ -336,6 +263,76 @@ $c-slider: $c-setup;
     }
     &:has(.increment-choice) .fen__board {
       width: 30%;
+    }
+  }
+}
+
+.variant-selector {
+  width: 40rem;
+  max-width: 90vw;
+  max-height: 90%;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: 6px;
+  overflow: hidden;
+
+  h2 {
+    margin: 1.5rem 0;
+    text-align: center;
+  }
+
+  .variant-grid {
+    background: $c-bg-zebra;
+    border-top: $border;
+
+    padding: 1rem;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+
+    .variant-card {
+      display: flex;
+      align-items: center;
+      @extend %metal;
+      border: $border;
+      cursor: pointer;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      text-align: left;
+
+      .icon {
+        font-size: 1.5rem;
+        margin-right: 0.75rem;
+      }
+      .text {
+        display: flex;
+        flex-direction: column;
+        .name {
+          font-weight: 600;
+        }
+        .desc {
+          font-size: 0.75rem;
+          opacity: 0.8;
+        }
+      }
+
+      &:hover {
+        @extend %metal-hover;
+      }
+      &.selected {
+        background: $c-setup;
+        @extend %active-inset-shadow;
+        color: #fff;
+        text-shadow: 0 1px 1px #000 !important;
+
+        .icon::before,
+        .text,
+        .num {
+          color: #fff;
+        }
+      }
     }
   }
 }
