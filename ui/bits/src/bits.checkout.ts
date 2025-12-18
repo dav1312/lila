@@ -3,6 +3,8 @@ import { spinnerHtml, prompt } from 'lib/view';
 import { contactEmail } from './bits';
 import { myUserId } from 'lib';
 
+declare const i18n: any;
+
 export interface Pricing {
   currency: string;
   default: number;
@@ -27,13 +29,17 @@ const showErrorThenReload = (error: string) => {
 export function initModule({
   stripePublicKey,
   pricing,
+  isZeroDecimal,
 }: {
   stripePublicKey: string;
   pricing: Pricing;
+  isZeroDecimal: boolean;
 }): void {
   contactEmail();
 
   const hasLifetime = $('#freq_lifetime').prop('disabled');
+  const $coverFees = $('#cover_fees');
+  const $coverFeesLabel = $('label[for="cover_fees"]');
 
   const toggleInput = ($input: Cash, enable: boolean) =>
     $input.prop('disabled', !enable).toggleClass('disabled', !enable);
@@ -43,6 +49,28 @@ export function initModule({
   if (!$checkout.find('.amount_choice group.amount input:checked').data('amount'))
     $checkout.find('input.default').trigger('click');
 
+  const calculateFee = (amount: number) => {
+    let fee = Math.max(0.35, 0.04 * amount);
+    if (isZeroDecimal) fee = Math.round(fee);
+    return fee;
+  };
+
+  const getCurrentRawAmount = (): number => {
+    const freq = getFreq();
+    if (freq === 'lifetime') return pricing.lifetime;
+
+    const $input = $checkout.find('group.amount input:checked');
+    const val = parseFloat($input.data('amount'));
+    return isNaN(val) ? pricing.default : val;
+  };
+
+  const updateFeeLabel = () => {
+    const amount = getCurrentRawAmount();
+    const fee = calculateFee(amount);
+    const feeStr = `${pricing.currency} ${fee.toFixed(isZeroDecimal ? 0 : 2)}`;
+    $coverFeesLabel.text(i18n.patron.coverFees(feeStr));
+  };
+
   const onFreqChange = function () {
     const freq = getFreq();
     $checkout.find('.amount_fixed').toggleClass('none', freq !== 'lifetime');
@@ -50,10 +78,13 @@ export function initModule({
     const sub = freq === 'monthly';
     $checkout.find('.paypal--order').toggle(!sub);
     $checkout.find('.paypal--subscription').toggle(sub);
+    updateFeeLabel();
   };
   onFreqChange();
 
   $checkout.find('group.freq input').on('change', onFreqChange);
+
+  $checkout.find('group.amount input').on('change', updateFeeLabel);
 
   $checkout.find('group.dest input').on('change', () => {
     const isGift = getDest() === 'gift';
@@ -81,6 +112,7 @@ export function initModule({
     if (!amount) {
       $(this).text($(this).data('trans-other'));
       $checkout.find('input.default').trigger('click');
+      updateFeeLabel();
       return false;
     }
     const isGift = !!$checkout.find('.gift input').val();
@@ -88,6 +120,7 @@ export function initModule({
     amount = Math.max(min, Math.min(pricing.max, amount));
     $(this).text(`${pricing.currency} ${amount}`);
     ($(this).siblings('input').data('amount', amount)[0] as HTMLInputElement).checked = true;
+    updateFeeLabel();
   });
 
   const $userInput = $checkout.find('input.user-autocomplete');
@@ -128,6 +161,17 @@ export function initModule({
     return amount;
   };
 
+  const getTotalToCharge = () => {
+    const base = getAmountToCharge();
+    if (!base) return undefined;
+
+    if ($coverFees.prop('checked')) {
+      const fee = calculateFee(base);
+      return parseFloat((base + fee).toFixed(isZeroDecimal ? 0 : 2));
+    }
+    return base;
+  };
+
   const $currencyForm = $('form.currency');
   $('.currency-toggle').one('click', () => $currencyForm.toggleClass('none'));
   $currencyForm.find('select').on('change', () => {
@@ -150,11 +194,12 @@ export function initModule({
       $(`input[name=${name}]`).val(queryParams.get(name)!.replace(/[^a-z0-9_-]/gi, ''));
   }
 
+  updateFeeLabel();
   toggleCheckout();
 
-  payPalOrderStart($checkout, pricing, getAmountToCharge);
-  payPalSubscriptionStart($checkout, pricing, getAmountToCharge);
-  stripeStart($checkout, stripePublicKey, pricing, getAmountToCharge);
+  payPalOrderStart($checkout, pricing, getTotalToCharge);
+  payPalSubscriptionStart($checkout, pricing, getTotalToCharge);
+  stripeStart($checkout, stripePublicKey, pricing, getTotalToCharge);
 }
 
 const xhrFormData = ($checkout: Cash, amount: number) =>
