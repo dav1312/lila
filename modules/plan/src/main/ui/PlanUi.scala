@@ -227,7 +227,10 @@ final class PlanUi(helpers: Helpers)(style: PlanStyle, contactEmail: EmailAddres
                         div(cls := "cover-fees")(
                           input(tpe := "checkbox", id := "cover_fees", cls := "cover-fees-checkbox"),
                           label(`for` := "cover_fees") {
-                            val rawFee = math.max(0.35, (0.04 * pricing.default.amount).toDouble)
+                            val rawFee = math.max(
+                              pricing.feeFixed.amount.toDouble,
+                              (pricing.feeRate * pricing.default.amount).toDouble
+                            )
                             val feeStr =
                               if isZeroDecimal then "%.0f".format(rawFee) else "%.2f".format(rawFee)
                             trp.coverFees.txt(s"${pricing.currency} $feeStr")

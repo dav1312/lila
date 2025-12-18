@@ -12,6 +12,8 @@ export interface Pricing {
   max: number;
   lifetime: number;
   giftMin: number;
+  feeRate: number;
+  feeFixed: number;
 }
 
 const $checkout = $('div.plan_checkout');
@@ -50,12 +52,12 @@ export function initModule({
     $checkout.find('input.default').trigger('click');
 
   const calculateFee = (amount: number) => {
-    let fee = Math.max(0.35, 0.04 * amount);
+    let fee = Math.max(pricing.feeFixed, pricing.feeRate * amount);
     if (isZeroDecimal) fee = Math.round(fee);
     return fee;
   };
 
-  const getCurrentRawAmount = (): number => {
+  const getBaseAmount = (): number => {
     const freq = getFreq();
     if (freq === 'lifetime') return pricing.lifetime;
 
@@ -65,7 +67,7 @@ export function initModule({
   };
 
   const updateFeeLabel = () => {
-    const amount = getCurrentRawAmount();
+    const amount = getBaseAmount();
     const fee = calculateFee(amount);
     const feeStr = `${pricing.currency} ${fee.toFixed(isZeroDecimal ? 0 : 2)}`;
     $coverFeesLabel.text(i18n.patron.coverFees(feeStr));
@@ -140,36 +142,36 @@ export function initModule({
 
   $userInput.on('change', toggleCheckout).on('input', toggleCheckout);
 
-  const getAmountToCharge = () => {
-    const freq = getFreq(),
-      amount =
-        freq === 'lifetime'
-          ? pricing.lifetime
-          : parseFloat($checkout.find('group.amount input:checked').data('amount'));
+  const getTotalToCharge = (): number | undefined => {
+    const base = getBaseAmount();
     const isGift = !!$checkout.find('.gift input').val();
     const min = isGift ? pricing.giftMin : pricing.min;
-    if (amount < min && isGift) {
-      alert(`Minimum gift amount is ${pricing.currency} ${pricing.giftMin}`);
-      return undefined;
-    } else if (amount < min && !isGift) {
-      alert(`Minimum amount is ${pricing.currency} ${pricing.giftMin}`);
-      return undefined;
-    } else if (amount > pricing.max) {
-      alert(`Maximum amount is ${pricing.currency} ${pricing.max}`);
+
+    // Validate the BASE amount against the MINIMUM
+    if (base < min) {
+      const message = isGift
+        ? `Minimum gift amount is ${pricing.currency} ${min}`
+        : `Minimum amount is ${pricing.currency} ${min}`;
+      alert(message);
       return undefined;
     }
-    return amount;
-  };
 
-  const getTotalToCharge = () => {
-    const base = getAmountToCharge();
-    if (!base) return undefined;
+    // Calculate the TOTAL amount to be charged
+    const total = $coverFees.prop('checked')
+      ? parseFloat((base + calculateFee(base)).toFixed(isZeroDecimal ? 0 : 2))
+      : base;
 
-    if ($coverFees.prop('checked')) {
-      const fee = calculateFee(base);
-      return parseFloat((base + fee).toFixed(isZeroDecimal ? 0 : 2));
+    // Validate the TOTAL amount against the MAXIMUM
+    if (total > pricing.max) {
+      alert(
+        `Including fees, the total amount of ${pricing.currency} ${total.toFixed(2)} exceeds the maximum of ${
+          pricing.currency
+        } ${pricing.max}.`,
+      );
+      return undefined;
     }
-    return base;
+
+    return total;
   };
 
   const $currencyForm = $('form.currency');
