@@ -5,7 +5,15 @@ import play.api.libs.json.*
 import lila.memo.CacheApi
 import lila.memo.CacheApi.buildAsyncTimeout
 
-case class PlanPricing(suggestions: List[Money], min: Money, max: Money, lifetime: Money, giftMin: Money):
+case class PlanPricing(
+    suggestions: List[Money],
+    min: Money,
+    max: Money,
+    lifetime: Money,
+    giftMin: Money,
+    feeRate: Double,
+    feeFixed: Money
+):
 
   val default = suggestions.lift(1).orElse(suggestions.headOption).getOrElse(min)
 
@@ -29,7 +37,9 @@ final class PlanPricingApi(currencyApi: CurrencyApi, cacheApi: CacheApi)(using E
     min = Money(1, USD),
     max = Money(10000, USD),
     lifetime = Money(250, USD),
-    giftMin = Money(2, USD)
+    giftMin = Money(2, USD),
+    feeRate = PlanPricingApi.FeeRate,
+    feeFixed = Money(0.35, USD)
   )
 
   val eurPricing = PlanPricing(
@@ -37,7 +47,9 @@ final class PlanPricingApi(currencyApi: CurrencyApi, cacheApi: CacheApi)(using E
     min = Money(1, EUR),
     max = Money(10000, EUR),
     lifetime = Money(250, EUR),
-    giftMin = Money(2, EUR)
+    giftMin = Money(2, EUR),
+    feeRate = PlanPricingApi.FeeRate,
+    feeFixed = Money(0.35, EUR)
   )
 
   def pricingFor(currency: Currency): Fu[Option[PlanPricing]] =
@@ -50,7 +62,11 @@ final class PlanPricingApi(currencyApi: CurrencyApi, cacheApi: CacheApi)(using E
         max <- convertAndRound(usdPricing.max, currency)
         lifetime <- convertAndRound(usdPricing.lifetime, currency)
         giftMin <- convertAndRound(usdPricing.giftMin, currency)
-      yield (allSuggestions.sequence, min, max, lifetime, giftMin).mapN(PlanPricing.apply)
+        feeFixed <- convertAndRound(usdPricing.feeFixed, currency)
+      yield (allSuggestions.sequence, min, max, lifetime, giftMin, feeFixed).mapN {
+        (sugs, min, max, life, gift, fee) =>
+          PlanPricing(sugs, min, max, life, gift, PlanPricingApi.FeeRate, fee)
+      }
 
   def pricingOrDefault(currency: Currency): Fu[PlanPricing] = pricingFor(currency).dmap(_ | usdPricing)
 
@@ -82,6 +98,8 @@ final class PlanPricingApi(currencyApi: CurrencyApi, cacheApi: CacheApi)(using E
 
 object PlanPricingApi:
 
+  private val FeeRate = 0.04 // 4%
+
   def nicelyRound(amount: BigDecimal): BigDecimal = {
     val double = amount.toDouble
     val scale = math.floor(math.log10(double))
@@ -98,5 +116,7 @@ object PlanPricingApi:
       "lifetime" -> p.lifetime.amount,
       "giftMin" -> p.giftMin.amount,
       "default" -> p.default.amount,
-      "suggestions" -> p.suggestions.map(_.amount)
+      "suggestions" -> p.suggestions.map(_.amount),
+      "feeRate" -> p.feeRate,
+      "feeFixed" -> p.feeFixed.amount
     )
