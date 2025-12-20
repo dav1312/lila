@@ -28,6 +28,7 @@ final class PlanUi(helpers: Helpers)(style: PlanStyle, contactEmail: EmailAddres
       pricing: PlanPricing
   )(using ctx: Context) =
     val localeParam = lila.plan.PayPalClient.locale(ctx.lang).so { l => s"&locale=$l" }
+    val isZeroDecimal = CurrencyApi.zeroDecimalCurrencies contains pricing.currency
     Page(trans.patron.becomePatron.txt())
       .css("bits.plan")
       .append:
@@ -50,7 +51,12 @@ final class PlanUi(helpers: Helpers)(style: PlanStyle, contactEmail: EmailAddres
           )
       .js:
         ctx.isAuth.option:
-          esmInitObj("bits.checkout", "stripePublicKey" -> stripePublicKey, "pricing" -> pricing)
+          esmInitObj(
+            "bits.checkout",
+            "stripePublicKey" -> stripePublicKey,
+            "pricing" -> pricing,
+            "isZeroDecimal" -> isZeroDecimal
+          )
       .js(infiniteScrollEsmInit)
       .graph(
         title = trans.patron.becomePatron.txt(),

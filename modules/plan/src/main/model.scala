@@ -18,6 +18,11 @@ case class Money(amount: BigDecimal, currency: Currency):
   def display(locale: Locale): String =
     val format = NumberFormat.getCurrencyInstance(locale)
     format.setCurrency(currency)
+    // Ensure digits follow currency rules instead of locale defaults
+    // In en_US, JPY would show 2 decimal places and in ja_JP, USD would show no decimal places
+    val digits = math.max(0, currency.getDefaultFractionDigits)
+    format.setMinimumFractionDigits(digits)
+    format.setMaximumFractionDigits(digits)
     format.format(amount)
   def display(using lang: Lang): String = display(lang.locale)
   def currencyCode = currency.getCurrencyCode
