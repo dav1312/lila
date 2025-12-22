@@ -45,26 +45,28 @@ final class FideUi(helpers: Helpers)(menu: String => Context ?=> Frag):
       page("FIDE federations", "federations")(
         cls := "fide-federations",
         boxTop(h1(trb.fideFederations())),
-        table(cls := "slist slist-pad")(
-          thead:
-            tr(
-              th(trs.name()),
-              th(trs.players()),
-              th(trs.classical()),
-              th(trs.rapid()),
-              th(trs.blitz())
+        div(cls := "slist-wrapper")(
+          table(cls := "slist slist-pad")(
+            thead:
+              tr(
+                th(trs.name()),
+                th(trs.players()),
+                th(trs.classical()),
+                th(trs.rapid()),
+                th(trs.blitz())
+              )
+            ,
+            tbody(cls := "infinite-scroll")(
+              feds.currentPageResults.map: fed =>
+                tr(cls := "paginated")(
+                  td(a(href := routes.Fide.federation(fed.slug))(flag(fed.id, none), fed.name)),
+                  td(fed.nbPlayers.localize),
+                  ratingCell(fed.standard),
+                  ratingCell(fed.rapid),
+                  ratingCell(fed.blitz)
+                ),
+              pagerNextTable(feds, np => routes.Fide.federations(np).url)
             )
-          ,
-          tbody(cls := "infinite-scroll")(
-            feds.currentPageResults.map: fed =>
-              tr(cls := "paginated")(
-                td(a(href := routes.Fide.federation(fed.slug))(flag(fed.id, none), fed.name)),
-                td(fed.nbPlayers.localize),
-                ratingCell(fed.standard),
-                ratingCell(fed.rapid),
-                ratingCell(fed.blitz)
-              ),
-            pagerNextTable(feds, np => routes.Fide.federations(np).url)
           )
         )
       )

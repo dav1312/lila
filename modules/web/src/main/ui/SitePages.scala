@@ -211,33 +211,35 @@ final class SitePages(helpers: Helpers):
         frag(
           st.section(cls := "box")(
             h1(cls := "box__top")(title),
-            table(cls := "slist slist-pad", id := "version")(
-              thead(
-                tr(
-                  th(colspan := 3)("Current versions"),
-                  th(colspan := 2)("Last boot: ", momentFromNow(lila.common.Uptime.startedAt))
-                )
-              ),
-              tbody(
-                version.map: v =>
+            div(cls := "slist-wrapper")(
+              table(cls := "slist slist-pad", id := "version")(
+                thead(
                   tr(
-                    td("Server"),
-                    td(v.date),
-                    td:
-                      a(href := s"https://github.com/lichess-org/lila/commits/${v.commit}"):
-                        pre(v.commit.take(7))
-                    ,
-                    td(v.message),
-                    td:
-                      a(href := s"https://github.com/lichess-org/lila/compare/${v.commit}...master"):
-                        pre("...")
-                  ),
-                tr(
-                  td("Assets"),
-                  td(id := "asset-version-date"),
-                  td(a(id := "asset-version-commit")(pre)),
-                  td(id := "asset-version-message"),
-                  td(a(id := "asset-version-upcoming")(pre("...")))
+                    th(colspan := 3)("Current versions"),
+                    th(colspan := 2)("Last boot: ", momentFromNow(lila.common.Uptime.startedAt))
+                  )
+                ),
+                tbody(
+                  version.map: v =>
+                    tr(
+                      td("Server"),
+                      td(v.date),
+                      td:
+                        a(href := s"https://github.com/lichess-org/lila/commits/${v.commit}"):
+                          pre(v.commit.take(7))
+                      ,
+                      td(v.message),
+                      td:
+                        a(href := s"https://github.com/lichess-org/lila/compare/${v.commit}...master"):
+                          pre("...")
+                    ),
+                  tr(
+                    td("Assets"),
+                    td(id := "asset-version-date"),
+                    td(a(id := "asset-version-commit")(pre)),
+                    td(id := "asset-version-message"),
+                    td(a(id := "asset-version-upcoming")(pre("...")))
+                  )
                 )
               )
             )

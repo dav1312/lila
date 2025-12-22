@@ -57,9 +57,13 @@
   }
 }
 
+main {
+  min-width: 0;
+}
+
 .slist-wrapper {
   overflow-x: auto;
-  max-width: calc(100vw - var(---box-padding) * 2);
+  width: 100%;
 
   .slist {
     @media (max-width: at-most($x-small)) {
