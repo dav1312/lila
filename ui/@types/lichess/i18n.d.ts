@@ -4021,6 +4021,8 @@ interface I18n {
     performance: string;
     /** Rating: %s */
     perfRatingX: I18nFormat;
+    /** Piece maneuver arrows */
+    pieceManeuverArrows: string;
     /** Piece set */
     pieceSet: string;
     /** Play */
