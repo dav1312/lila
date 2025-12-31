@@ -63,30 +63,28 @@ function interferingArrow(from: Key, to: Key, occupied: Uint8Array): boolean {
   return false;
 }
 
-function drawManeuver(
-  ctrl: AnalyseCtrl,
-  color: Color,
-  moves: Uci[],
-  brush: string,
-  shapes: DrawShape[],
-) {
+function drawManeuver(ctrl: AnalyseCtrl, color: Color, moves: Uci[], brush: string, shapes: DrawShape[]) {
   if (ctrl.showManeuverMoveArrowsProp()) {
     const maxPairs = Math.min(moves.length, MAX_MANEUVER_ARROWS * 2);
     const occupied = new Uint8Array(64);
+
     for (let i = 0; i < maxPairs; i += 2) {
       const uci = moves[i];
       const move = parseUci(uci);
       if (!move) break;
       const to = makeSquare(move.to);
+
       if (i > 0) {
         const prevMove = parseUci(moves[i - 2])!;
         if (makeSquare(prevMove.to) !== (isDrop(move) ? '' : makeSquare(move.from))) break;
       }
+
       if (isDrop(move)) {
         const toIdx = getIdx(to);
         if (occupied[toIdx]) break;
         occupied[toIdx] = 1;
       } else if (interferingArrow(makeSquare(move.from), to, occupied)) break;
+
       makeShapesFromUci(color, uci, brush).forEach(s => shapes.push(s));
     }
   } else if (moves[0]) makeShapesFromUci(color, moves[0], brush).forEach(s => shapes.push(s));
