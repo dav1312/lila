@@ -19,9 +19,9 @@ const pieceDrop = (key: Key, role: Role, color: Color): DrawShape => ({
 
 const MAX_MANEUVER_ARROWS = 3;
 
-const getIdx = (s: string) => s.charCodeAt(0) - 97 + (s.charCodeAt(1) - 49) * 8;
+const getIdx = (key: Key) => key.charCodeAt(0) - 97 + (key.charCodeAt(1) - 49) * 8;
 
-function interferingArrow(from: string, to: string, occupied: Uint8Array): boolean {
+function interferingArrow(from: Key, to: Key, occupied: Uint8Array): boolean {
   const fromIdx = getIdx(from);
   const toIdx = getIdx(to);
 
@@ -34,6 +34,7 @@ function interferingArrow(from: string, to: string, occupied: Uint8Array): boole
     fromY = fromIdx >> 3;
   const toX = toIdx % 8,
     toY = toIdx >> 3;
+
   const deltaX = Math.abs(toX - fromX);
   const deltaY = Math.abs(toY - fromY);
 
@@ -60,6 +61,35 @@ function interferingArrow(from: string, to: string, occupied: Uint8Array): boole
   }
 
   return false;
+}
+
+function drawManeuver(
+  ctrl: AnalyseCtrl,
+  color: Color,
+  moves: Uci[],
+  brush: string,
+  shapes: DrawShape[],
+) {
+  if (ctrl.showManeuverMoveArrowsProp()) {
+    const maxPairs = Math.min(moves.length, MAX_MANEUVER_ARROWS * 2);
+    const occupied = new Uint8Array(64);
+    for (let i = 0; i < maxPairs; i += 2) {
+      const uci = moves[i];
+      const move = parseUci(uci);
+      if (!move) break;
+      const to = makeSquare(move.to);
+      if (i > 0) {
+        const prevMove = parseUci(moves[i - 2])!;
+        if (makeSquare(prevMove.to) !== (isDrop(move) ? '' : makeSquare(move.from))) break;
+      }
+      if (isDrop(move)) {
+        const toIdx = getIdx(to);
+        if (occupied[toIdx]) break;
+        occupied[toIdx] = 1;
+      } else if (interferingArrow(makeSquare(move.from), to, occupied)) break;
+      makeShapesFromUci(color, uci, brush).forEach(s => shapes.push(s));
+    }
+  } else if (moves[0]) makeShapesFromUci(color, moves[0], brush).forEach(s => shapes.push(s));
 }
 
 export function makeShapesFromUci(
@@ -128,21 +158,7 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
       const nextBest = bestPvMoves?.[0] || ctrl.nextNodeBest();
 
       if (nextBest) {
-        if (bestPvMoves?.length && ctrl.showManeuverMoveArrowsProp()) {
-          const maxPairs = Math.min(bestPvMoves.length, MAX_MANEUVER_ARROWS * 2);
-          const occupied = new Uint8Array(64);
-          for (let i = 0; i < maxPairs; i += 2) {
-            const uci = bestPvMoves[i];
-            const orig = uci.slice(0, 2);
-            const dest = uci.slice(2, 4);
-            if (i > 0) {
-              const prevUci = bestPvMoves[i - 2];
-              if (prevUci.slice(2, 4) !== orig) break;
-            }
-            if (interferingArrow(orig, dest, occupied)) break;
-            shapes = shapes.concat(makeShapesFromUci(color, uci, 'paleBlue'));
-          }
-        } else shapes = shapes.concat(makeShapesFromUci(color, nextBest, 'paleBlue'));
+        drawManeuver(ctrl, color, bestPvMoves || [nextBest], 'paleBlue', shapes);
       }
 
       if (
@@ -167,8 +183,9 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
   }
   if (ctrl.isCevalAllowed() && ctrl.threatMode() && nThreat) {
     const [pv0, ...pv1s] = nThreat.pvs;
+    const brush = pv1s.length > 0 ? 'paleRed' : 'red';
 
-    shapes = shapes.concat(makeShapesFromUci(rcolor, pv0.moves[0], pv1s.length > 0 ? 'paleRed' : 'red'));
+    drawManeuver(ctrl, rcolor, pv0.moves, brush, shapes);
 
     pv1s.forEach(function (pv) {
       const shift = winningChances.povDiff(rcolor, pv, pv0);
