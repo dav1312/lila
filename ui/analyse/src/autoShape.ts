@@ -19,9 +19,28 @@ const pieceDrop = (key: Key, role: Role, color: Color): DrawShape => ({
 });
 
 // Shared move constants to avoid duplication
-const KNIGHT_JUMPS = [[1, 2], [1, -2], [-1, 2], [-1, -2], [2, 1], [2, -1], [-2, 1], [-2, -1]];
-const ROOK_DIRS = [[0, 1], [0, -1], [1, 0], [-1, 0]];
-const BISHOP_DIRS = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
+const KNIGHT_JUMPS = [
+  [1, 2],
+  [1, -2],
+  [-1, 2],
+  [-1, -2],
+  [2, 1],
+  [2, -1],
+  [-2, 1],
+  [-2, -1],
+];
+const ROOK_DIRS = [
+  [0, 1],
+  [0, -1],
+  [1, 0],
+  [-1, 0],
+];
+const BISHOP_DIRS = [
+  [1, 1],
+  [1, -1],
+  [-1, 1],
+  [-1, -1],
+];
 const QUEEN_DIRS = [...ROOK_DIRS, ...BISHOP_DIRS];
 const KING_MOVES = QUEEN_DIRS;
 
@@ -150,11 +169,11 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
 
   const parts = nFen.split(' ');
   const board = parseFen(parts[0]);
-  const epSquare = parts[3] && parts[3] !== '-' ? parseSquare(parts[3]) ?? null : null;
+  const epSquare = parts[3] && parts[3] !== '-' ? (parseSquare(parts[3]) ?? null) : null;
 
-  shapes = shapes.concat(detectPins(board));
-  shapes = shapes.concat(detectUndefended(board));
-  shapes = shapes.concat(detectCheckable(board, epSquare));
+  if (ctrl.showPin()) shapes = shapes.concat(detectPins(board));
+  if (ctrl.showUndefended()) shapes = shapes.concat(detectUndefended(board));
+  if (ctrl.showCheckable()) shapes = shapes.concat(detectCheckable(board, epSquare));
 
   return shapes;
 }
@@ -293,8 +312,7 @@ function getAttackers(
       nf = f + df;
     if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
       const p = board[nr * 8 + nf];
-      if (p && p.color === byColor && p.role === 'knight')
-        attackers.push({ ...p, square: nr * 8 + nf });
+      if (p && p.color === byColor && p.role === 'knight') attackers.push({ ...p, square: nr * 8 + nf });
     }
   }
 
@@ -305,8 +323,7 @@ function getAttackers(
     for (const pf of [f - 1, f + 1]) {
       if (pf >= 0 && pf < 8) {
         const p = board[pr * 8 + pf];
-        if (p && p.color === byColor && p.role === 'pawn')
-          attackers.push({ ...p, square: pr * 8 + pf });
+        if (p && p.color === byColor && p.role === 'pawn') attackers.push({ ...p, square: pr * 8 + pf });
       }
     }
   }
@@ -317,8 +334,7 @@ function getAttackers(
       nf = f + df;
     if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
       const p = board[nr * 8 + nf];
-      if (p && p.color === byColor && p.role === 'king')
-        attackers.push({ ...p, square: nr * 8 + nf });
+      if (p && p.color === byColor && p.role === 'king') attackers.push({ ...p, square: nr * 8 + nf });
     }
   }
 
@@ -587,7 +603,7 @@ function detectCheckable(board: Board, epSquare: number | null): DrawShape[] {
         }
 
         // 1. Is move legal? (Own king not in check)
-        const ownKingSq = p.role === 'king' ? m.to : kings.find(x => x.color === p.color)?.square ?? -1;
+        const ownKingSq = p.role === 'king' ? m.to : (kings.find(x => x.color === p.color)?.square ?? -1);
         if (ownKingSq !== -1 && isSquareAttacked(tempBoard, ownKingSq, opposite(p.color))) {
           continue; // Move is illegal
         }

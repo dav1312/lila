@@ -1,3 +1,4 @@
+// ui\analyse\src\view\actionMenu.ts
 import { isEmpty } from 'lib';
 import * as licon from 'lib/licon';
 import { displayColumns } from 'lib/device';
@@ -193,6 +194,33 @@ export function view(ctrl: AnalyseCtrl): VNode {
         },
         ctrl,
       ),
+    ctrlToggle(
+      {
+        name: 'Show pinned pieces',
+        id: 'show-pin',
+        checked: ctrl.showPin(),
+        change: ctrl.showPin,
+      },
+      ctrl,
+    ),
+    ctrlToggle(
+      {
+        name: 'Show checkable king',
+        id: 'show-checkable',
+        checked: ctrl.showCheckable(),
+        change: ctrl.showCheckable,
+      },
+      ctrl,
+    ),
+    ctrlToggle(
+      {
+        name: 'Show undefended pieces',
+        id: 'show-undefended',
+        checked: ctrl.showUndefended(),
+        change: ctrl.showUndefended,
+      },
+      ctrl,
+    ),
   ];
 
   const displayConfig = [
