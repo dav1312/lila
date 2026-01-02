@@ -432,7 +432,8 @@ export function detectCheckable(board: Board, epSquare: number | null): DrawShap
         const effectiveKingSq = p.role === 'king' ? toSq : ownKingSq;
 
         // 1. Is move legal? (Own king not in check)
-        const isLegal = effectiveKingSq === -1 || !isSquareAttacked(workingBoard, effectiveKingSq, opposite(p.color));
+        const isLegal =
+          effectiveKingSq === -1 || !isSquareAttacked(workingBoard, effectiveKingSq, opposite(p.color));
 
         if (isLegal) {
           // 2. Does it check the opponent king?
