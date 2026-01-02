@@ -7,7 +7,7 @@ import { Chess } from 'chessops/chess';
 import { parseBoardFen, parseFen as parseFenLib } from 'chessops/fen';
 import { chessgroundDests } from 'chessops/compat';
 import { FILE_NAMES, RANK_NAMES } from 'chessops/types';
-import type { Role, Color, Move } from 'chessops/types';
+import type { Role, Color } from 'chessops/types';
 import type { DrawShape } from '@lichess-org/chessground/draw';
 import type { Key } from '@lichess-org/chessground/types';
 
@@ -88,13 +88,6 @@ function toBoardFen(board: Board): string {
     if (r > 0) fen += '/';
   }
   return fen;
-}
-
-function toChessopsBoard(board: Board): ChessopsBoard {
-  const fen = toBoardFen(board);
-  const res = parseBoardFen(fen);
-  if ('error' in res) throw new Error(String(res.error));
-  return res.value;
 }
 
 export function parseFen(placement: string): Board {
