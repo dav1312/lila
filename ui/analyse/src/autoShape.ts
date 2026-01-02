@@ -121,13 +121,23 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
   if (ctrl.showMoveAnnotationsOnBoard()) shapes = shapes.concat(annotationShapes(ctrl.node));
   if (ctrl.showVariationArrows()) hiliteVariations(ctrl, shapes);
 
+  // Register brushes
   ctrl.chessground.state.drawable.brushes['pin'] = {
     key: 'pin',
     color: 'black',
     opacity: 1,
     lineWidth: 4,
   };
-  shapes = shapes.concat(detectPins(nFen));
+  ctrl.chessground.state.drawable.brushes['undefended'] = {
+    key: 'undefended',
+    color: 'red',
+    opacity: 1,
+    lineWidth: 4,
+  };
+
+  const board = parseFen(nFen);
+  shapes = shapes.concat(detectPins(board));
+  shapes = shapes.concat(detectUndefended(board));
 
   return shapes;
 }
@@ -157,9 +167,19 @@ function hiliteVariations(ctrl: AnalyseCtrl, autoShapes: DrawShape[]) {
   }
 }
 
-function detectPins(fen: string): DrawShape[] {
-  const shapes: DrawShape[] = [];
-  const board: ({ role: Role; color: Color } | null)[] = new Array(64).fill(null);
+type Board = ({ role: Role; color: Color } | null)[];
+
+const charToRole: Record<string, Role> = {
+  p: 'pawn',
+  n: 'knight',
+  b: 'bishop',
+  r: 'rook',
+  q: 'queen',
+  k: 'king',
+};
+
+function parseFen(fen: string): Board {
+  const board: Board = new Array(64).fill(null);
   const [placement] = fen.split(' ');
   let rank = 7,
     file = 0;
@@ -172,44 +192,29 @@ function detectPins(fen: string): DrawShape[] {
       file += parseInt(char, 10);
     } else {
       const color: Color = char === char.toUpperCase() ? 'white' : 'black';
-      const role = char.toLowerCase() as Role;
+      const role = charToRole[char.toLowerCase()];
       board[rank * 8 + file] = { role, color };
       file++;
     }
   }
+  return board;
+}
 
-  const values: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 100 };
-  const dirs = {
-    r: [
-      [0, 1],
-      [0, -1],
-      [1, 0],
-      [-1, 0],
-    ],
-    b: [
-      [1, 1],
-      [1, -1],
-      [-1, 1],
-      [-1, -1],
-    ],
-    q: [
-      [0, 1],
-      [0, -1],
-      [1, 0],
-      [-1, 0],
-      [1, 1],
-      [1, -1],
-      [-1, 1],
-      [-1, -1],
-    ],
+function detectPins(board: Board): DrawShape[] {
+  const shapes: DrawShape[] = [];
+  const values: Record<Role, number> = { pawn: 1, knight: 3, bishop: 3, rook: 5, queen: 9, king: 100 };
+  const dirs: Partial<Record<Role, number[][]>> = {
+    rook: [[0, 1], [0, -1], [1, 0], [-1, 0]],
+    bishop: [[1, 1], [1, -1], [-1, 1], [-1, -1]],
+    queen: [[0, 1], [0, -1], [1, 0], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]],
   };
 
   for (let r = 0; r < 8; r++) {
     for (let f = 0; f < 8; f++) {
       const p = board[r * 8 + f];
-      if (!p || !['r', 'b', 'q'].includes(p.role)) continue;
+      if (!p || !['rook', 'bishop', 'queen'].includes(p.role)) continue;
 
-      const rayDirs = dirs[p.role as 'r' | 'b' | 'q'];
+      const rayDirs = dirs[p.role]!;
       for (const [dr, df] of rayDirs) {
         let pinnedSq: number | null = null;
         let pinnedPiece: { role: Role; color: Color } | null = null;
@@ -241,6 +246,106 @@ function detectPins(fen: string): DrawShape[] {
         }
       }
     }
+  }
+  return shapes;
+}
+
+function detectUndefended(board: Board): DrawShape[] {
+  const shapes: DrawShape[] = [];
+  const rookDirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+  const bishopDirs = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
+  const knightJumps = [[1, 2], [1, -2], [-1, 2], [-1, -2], [2, 1], [2, -1], [-2, 1], [-2, -1]];
+  const kingMoves = [[0, 1], [0, -1], [1, 0], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+
+  for (let i = 0; i < 64; i++) {
+    const p = board[i];
+    if (!p) continue;
+
+    const r = Math.floor(i / 8);
+    const f = i % 8;
+    let defended = false;
+
+    // 1. Knight defense
+    for (const [dr, df] of knightJumps) {
+      const nr = r + dr, nf = f + df;
+      if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
+        const source = board[nr * 8 + nf];
+        if (source && source.color === p.color && source.role === 'knight') {
+          defended = true;
+          break;
+        }
+      }
+    }
+    if (defended) continue;
+
+    // 2. King defense
+    for (const [dr, df] of kingMoves) {
+      const nr = r + dr, nf = f + df;
+      if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
+        const source = board[nr * 8 + nf];
+        if (source && source.color === p.color && source.role === 'king') {
+          defended = true;
+          break;
+        }
+      }
+    }
+    if (defended) continue;
+
+    // 3. Pawn defense
+    const pawnDir = p.color === 'white' ? -1 : 1;
+    const pr = r + pawnDir;
+    if (pr >= 0 && pr < 8) {
+      for (const pf of [f - 1, f + 1]) {
+        if (pf >= 0 && pf < 8) {
+          const source = board[pr * 8 + pf];
+          if (source && source.color === p.color && source.role === 'pawn') {
+            defended = true;
+            break;
+          }
+        }
+      }
+    }
+    if (defended) continue;
+
+    // 4. Slider defense (Rook/Queen/Bishop)
+    // Orthogonal
+    for (const [dr, df] of rookDirs) {
+      for (let d = 1; d < 8; d++) {
+        const nr = r + d * dr, nf = f + d * df;
+        if (nr < 0 || nr > 7 || nf < 0 || nf > 7) break;
+        const source = board[nr * 8 + nf];
+        if (source) {
+          if (source.color === p.color && (source.role === 'rook' || source.role === 'queen')) {
+            defended = true;
+          }
+          break;
+        }
+      }
+      if (defended) break;
+    }
+    if (defended) continue;
+
+    // Diagonal
+    for (const [dr, df] of bishopDirs) {
+      for (let d = 1; d < 8; d++) {
+        const nr = r + d * dr, nf = f + d * df;
+        if (nr < 0 || nr > 7 || nf < 0 || nf > 7) break;
+        const source = board[nr * 8 + nf];
+        if (source) {
+          if (source.color === p.color && (source.role === 'bishop' || source.role === 'queen')) {
+            defended = true;
+          }
+          break;
+        }
+      }
+      if (defended) break;
+    }
+    if (defended) continue;
+
+    shapes.push({
+      orig: makeSquare(i),
+      brush: 'undefended',
+    });
   }
   return shapes;
 }
