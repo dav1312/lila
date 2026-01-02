@@ -1,5 +1,5 @@
 // ui\analyse\src\autoShape.ts
-import { parseUci, makeSquare, parseSquare } from 'chessops/util';
+import { parseUci, makeSquare, parseSquare, charToRole } from 'chessops/util';
 import { isDrop } from 'chessops/types';
 import { winningChances } from 'lib/ceval';
 import { opposite } from '@lichess-org/chessground/util';
@@ -186,15 +186,6 @@ function hiliteVariations(ctrl: AnalyseCtrl, autoShapes: DrawShape[]) {
 
 type Board = ({ role: Role; color: Color } | null)[];
 
-const charToRole: Record<string, Role> = {
-  p: 'pawn',
-  n: 'knight',
-  b: 'bishop',
-  r: 'rook',
-  q: 'queen',
-  k: 'king',
-};
-
 const values: Record<Role, number> = { pawn: 1, knight: 3, bishop: 3, rook: 5, queen: 9, king: 100 };
 
 function parseFen(placement: string): Board {
@@ -210,9 +201,11 @@ function parseFen(placement: string): Board {
       file += parseInt(char, 10);
     } else {
       const color: Color = char === char.toUpperCase() ? 'white' : 'black';
-      const role = charToRole[char.toLowerCase()];
-      board[rank * 8 + file] = { role, color };
-      file++;
+      const role = charToRole(char);
+      if (role) {
+        board[rank * 8 + file] = { role, color };
+        file++;
+      }
     }
   }
   return board;
