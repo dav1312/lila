@@ -185,6 +185,8 @@ const charToRole: Record<string, Role> = {
   k: 'king',
 };
 
+const values: Record<Role, number> = { pawn: 1, knight: 3, bishop: 3, rook: 5, queen: 9, king: 100 };
+
 function parseFen(fen: string): Board {
   const board: Board = new Array(64).fill(null);
   const [placement] = fen.split(' ');
@@ -207,9 +209,78 @@ function parseFen(fen: string): Board {
   return board;
 }
 
+function isDefended(board: Board, index: number): boolean {
+  const target = board[index];
+  if (!target) return false;
+  const color = target.color;
+  const r = Math.floor(index / 8);
+  const f = index % 8;
+
+  const knightJumps = [[1, 2], [1, -2], [-1, 2], [-1, -2], [2, 1], [2, -1], [-2, 1], [-2, -1]];
+  const kingMoves = [[0, 1], [0, -1], [1, 0], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+  const rookDirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+  const bishopDirs = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
+
+  // 1. Knight defense
+  for (const [dr, df] of knightJumps) {
+    const nr = r + dr, nf = f + df;
+    if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
+      const source = board[nr * 8 + nf];
+      if (source && source.color === color && source.role === 'knight') return true;
+    }
+  }
+
+  // 2. King defense
+  for (const [dr, df] of kingMoves) {
+    const nr = r + dr, nf = f + df;
+    if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
+      const source = board[nr * 8 + nf];
+      if (source && source.color === color && source.role === 'king') return true;
+    }
+  }
+
+  // 3. Pawn defense
+  const pawnDir = color === 'white' ? -1 : 1;
+  const pr = r + pawnDir;
+  if (pr >= 0 && pr < 8) {
+    for (const pf of [f - 1, f + 1]) {
+      if (pf >= 0 && pf < 8) {
+        const source = board[pr * 8 + pf];
+        if (source && source.color === color && source.role === 'pawn') return true;
+      }
+    }
+  }
+
+  // 4. Slider defense
+  for (const [dr, df] of rookDirs) {
+    for (let d = 1; d < 8; d++) {
+      const nr = r + d * dr, nf = f + d * df;
+      if (nr < 0 || nr > 7 || nf < 0 || nf > 7) break;
+      const source = board[nr * 8 + nf];
+      if (source) {
+        if (source.color === color && (source.role === 'rook' || source.role === 'queen')) return true;
+        break;
+      }
+    }
+  }
+
+  for (const [dr, df] of bishopDirs) {
+    for (let d = 1; d < 8; d++) {
+      const nr = r + d * dr, nf = f + d * df;
+      if (nr < 0 || nr > 7 || nf < 0 || nf > 7) break;
+      const source = board[nr * 8 + nf];
+      if (source) {
+        if (source.color === color && (source.role === 'bishop' || source.role === 'queen')) return true;
+        break;
+      }
+    }
+  }
+
+  return false;
+}
+
 function detectPins(board: Board): DrawShape[] {
   const shapes: DrawShape[] = [];
-  const values: Record<Role, number> = { pawn: 1, knight: 3, bishop: 3, rook: 5, queen: 9, king: 100 };
   const dirs: Partial<Record<Role, number[][]>> = {
     rook: [[0, 1], [0, -1], [1, 0], [-1, 0]],
     bishop: [[1, 1], [1, -1], [-1, 1], [-1, -1]],
@@ -241,11 +312,25 @@ function detectPins(board: Board): DrawShape[] {
               pinnedPiece = target;
               pinnedSq = nr * 8 + nf;
             } else {
+              // Found the piece behind the pin (target)
               if (values[target.role] > values[pinnedPiece.role]) {
-                shapes.push({
-                  orig: makeSquare(pinnedSq!),
-                  brush: 'pin',
-                });
+                if (target.role === 'king') {
+                  shapes.push({
+                    orig: makeSquare(pinnedSq!),
+                    brush: 'pin',
+                  });
+                } else {
+                  // Refined logic for relative pins
+                  const defended = isDefended(board, nr * 8 + nf);
+                  // If undefended, the value diff (T > P) is sufficient.
+                  // If defended, we must ensure winning T is worth losing A (T > A).
+                  if (!defended || values[target.role] > values[p.role]) {
+                    shapes.push({
+                      orig: makeSquare(pinnedSq!),
+                      brush: 'pin',
+                    });
+                  }
+                }
               }
               break;
             }
@@ -259,101 +344,16 @@ function detectPins(board: Board): DrawShape[] {
 
 function detectUndefended(board: Board): DrawShape[] {
   const shapes: DrawShape[] = [];
-  const rookDirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
-  const bishopDirs = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
-  const knightJumps = [[1, 2], [1, -2], [-1, 2], [-1, -2], [2, 1], [2, -1], [-2, 1], [-2, -1]];
-  const kingMoves = [[0, 1], [0, -1], [1, 0], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]];
-
   for (let i = 0; i < 64; i++) {
     const p = board[i];
     if (!p) continue;
     if (p.role === 'king') continue;
-
-    const r = Math.floor(i / 8);
-    const f = i % 8;
-    let defended = false;
-
-    // 1. Knight defense
-    for (const [dr, df] of knightJumps) {
-      const nr = r + dr, nf = f + df;
-      if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
-        const source = board[nr * 8 + nf];
-        if (source && source.color === p.color && source.role === 'knight') {
-          defended = true;
-          break;
-        }
-      }
+    if (!isDefended(board, i)) {
+      shapes.push({
+        orig: makeSquare(i),
+        brush: 'undefended',
+      });
     }
-    if (defended) continue;
-
-    // 2. King defense
-    for (const [dr, df] of kingMoves) {
-      const nr = r + dr, nf = f + df;
-      if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
-        const source = board[nr * 8 + nf];
-        if (source && source.color === p.color && source.role === 'king') {
-          defended = true;
-          break;
-        }
-      }
-    }
-    if (defended) continue;
-
-    // 3. Pawn defense
-    const pawnDir = p.color === 'white' ? -1 : 1;
-    const pr = r + pawnDir;
-    if (pr >= 0 && pr < 8) {
-      for (const pf of [f - 1, f + 1]) {
-        if (pf >= 0 && pf < 8) {
-          const source = board[pr * 8 + pf];
-          if (source && source.color === p.color && source.role === 'pawn') {
-            defended = true;
-            break;
-          }
-        }
-      }
-    }
-    if (defended) continue;
-
-    // 4. Slider defense (Rook/Queen/Bishop)
-    // Orthogonal
-    for (const [dr, df] of rookDirs) {
-      for (let d = 1; d < 8; d++) {
-        const nr = r + d * dr, nf = f + d * df;
-        if (nr < 0 || nr > 7 || nf < 0 || nf > 7) break;
-        const source = board[nr * 8 + nf];
-        if (source) {
-          if (source.color === p.color && (source.role === 'rook' || source.role === 'queen')) {
-            defended = true;
-          }
-          break;
-        }
-      }
-      if (defended) break;
-    }
-    if (defended) continue;
-
-    // Diagonal
-    for (const [dr, df] of bishopDirs) {
-      for (let d = 1; d < 8; d++) {
-        const nr = r + d * dr, nf = f + d * df;
-        if (nr < 0 || nr > 7 || nf < 0 || nf > 7) break;
-        const source = board[nr * 8 + nf];
-        if (source) {
-          if (source.color === p.color && (source.role === 'bishop' || source.role === 'queen')) {
-            defended = true;
-          }
-          break;
-        }
-      }
-      if (defended) break;
-    }
-    if (defended) continue;
-
-    shapes.push({
-      orig: makeSquare(i),
-      brush: 'undefended',
-    });
   }
   return shapes;
 }
@@ -366,7 +366,6 @@ function detectCheckable(board: Board): DrawShape[] {
     if (p && p.role === 'king') kings.push({ color: p.color, square: i });
   }
 
-  // Common movement vectors
   const knightJumps = [[1, 2], [1, -2], [-1, 2], [-1, -2], [2, 1], [2, -1], [-2, 1], [-2, -1]];
   const rookDirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
   const bishopDirs = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
@@ -374,8 +373,6 @@ function detectCheckable(board: Board): DrawShape[] {
 
   for (const k of kings) {
     const kingPos = k.square;
-    const kingR = Math.floor(kingPos / 8);
-    const kingF = kingPos % 8;
     const enemyColor = opposite(k.color);
     let checkFound = false;
 
@@ -387,108 +384,97 @@ function detectCheckable(board: Board): DrawShape[] {
 
       const pr = Math.floor(i / 8);
       const pf = i % 8;
-
-      // Generate pseudo-legal destinations for piece p
       const dests: number[] = [];
 
       if (p.role === 'knight') {
         for (const [dr, df] of knightJumps) {
           const nr = pr + dr, nf = pf + df;
           if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
-             const target = board[nr * 8 + nf];
-             if (!target || target.color !== p.color) dests.push(nr * 8 + nf);
+            const target = board[nr * 8 + nf];
+            if (!target || target.color !== p.color) dests.push(nr * 8 + nf);
           }
         }
       } else if (p.role === 'pawn') {
-        const dir = p.color === 'white' ? 1 : -1;
-        // Pushes (non-captures)
-        let nr = pr + dir, nf = pf;
+        const dir = p.color === 'white' ? 1 : -1; // White pawns move +1 rank in board array structure (0-7=Rank1)
+        // Pushes
+        let nr = pr + dir,
+          nf = pf;
         if (nr >= 0 && nr < 8 && !board[nr * 8 + nf]) {
           dests.push(nr * 8 + nf);
           // Double push
           if ((p.color === 'white' && pr === 1) || (p.color === 'black' && pr === 6)) {
-             const nnr = nr + dir;
-             if (!board[nnr * 8 + nf]) dests.push(nnr * 8 + nf);
+            const nnr = nr + dir;
+            if (!board[nnr * 8 + nf]) dests.push(nnr * 8 + nf);
           }
         }
         // Captures
         for (const cdf of [-1, 1]) {
-           nr = pr + dir; nf = pf + cdf;
-           if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
-              const target = board[nr * 8 + nf];
-              // Standard capture or just hitting the square (we check validity later)
-              if (target && target.color !== p.color) dests.push(nr * 8 + nf);
-           }
-        }
-      } else if (['rook', 'bishop', 'queen'].includes(p.role)) {
-         const dirs = p.role === 'rook' ? rookDirs : p.role === 'bishop' ? bishopDirs : queenDirs;
-         for (const [dr, df] of dirs) {
-            for (let d = 1; d < 8; d++) {
-               const nr = pr + d*dr, nf = pf + d*df;
-               if (nr < 0 || nr > 7 || nf < 0 || nf > 7) break;
-               const target = board[nr * 8 + nf];
-               if (!target) dests.push(nr * 8 + nf);
-               else {
-                  if (target.color !== p.color) dests.push(nr * 8 + nf);
-                  break; 
-               }
-            }
-         }
-      } else if (p.role === 'king') {
-          // King moves usually don't give check, but for completeness (discovered check from king moving?)
-          // We'll skip king moving to give check as it's edge case and king can't approach other king.
-          // Discovered check by king moving is possible.
-          for (const [dr, df] of queenDirs) {
-             const nr = pr + dr, nf = pf + df;
-             if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
-                const target = board[nr * 8 + nf];
-                if (!target || target.color !== p.color) dests.push(nr * 8 + nf);
-             }
+          nr = pr + dir;
+          nf = pf + cdf;
+          if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
+            const target = board[nr * 8 + nf];
+            if (target && target.color !== p.color) dests.push(nr * 8 + nf);
           }
+        }
+      } else if (['rook', 'bishop', 'queen', 'king'].includes(p.role)) {
+        const dirs =
+          p.role === 'rook'
+            ? rookDirs
+            : p.role === 'bishop'
+              ? bishopDirs
+              : p.role === 'queen'
+                ? queenDirs
+                : queenDirs; // King moves ~ queen dirs length 1
+        const dist = p.role === 'king' ? 1 : 8;
+
+        for (const [dr, df] of dirs) {
+          for (let d = 1; d <= dist; d++) {
+            const nr = pr + d * dr,
+              nf = pf + d * df;
+            if (nr < 0 || nr > 7 || nf < 0 || nf > 7) break;
+            const target = board[nr * 8 + nf];
+            if (!target) dests.push(nr * 8 + nf);
+            else {
+              if (target.color !== p.color) dests.push(nr * 8 + nf);
+              break;
+            }
+          }
+        }
       }
 
-      // Check if any move results in check
       for (const d of dests) {
-         // 1. Direct Check: does p at d attack king?
-         if (d !== i) {
-           // Basic check: is 'd' attacking 'kingPos'?
-           // For this we assume the board state: 'i' is empty, 'd' has 'p'.
-           // Path from 'd' to 'kingPos' must be clear (ignoring 'i' which is empty).
-           // If 'd' blocks the line, self-block is handled (distance=0).
-           
-           if (isAttacking(p.role, d, kingPos, board, i)) {
-              checkFound = true;
-              break;
-           }
+        // 1. Direct Check
+        if (d !== i && isAttacking(p.role, d, kingPos, board, i)) {
+          checkFound = true;
+          break;
+        }
 
-           // 2. Discovered Check: did moving from 'i' open a line?
-           // Raytrace from king to 'i'.
-           if (onLine(kingPos, i)) {
-              // extend ray past 'i'
-              const [dr, df] = getDirection(kingPos, i);
-              if (dr !== 0 || df !== 0) {
-                 // Check if 'd' blocks the line again?
-                 if (onRay(kingPos, d, dr, df)) continue; // Moved along the line or blocked it
-                 
-                 // Look for enemy slider behind 'i'
-                 let r = Math.floor(i/8) + dr, f = (i%8) + df;
-                 while(r>=0 && r<8 && f>=0 && f<8) {
-                    if (r*8+f === d) break; // blocked by the moving piece (should cover in onRay but safety)
-                    const blocker = board[r*8+f];
-                    if (blocker) {
-                       if (blocker.color === p.color && (blocker.role === 'queen' || 
-                          (Math.abs(dr*df)===1 && blocker.role === 'bishop') || 
-                          (Math.abs(dr*df)===0 && blocker.role === 'rook'))) {
-                          checkFound = true;
-                       }
-                       break;
-                    }
-                    r+=dr; f+=df;
-                 }
+        // 2. Discovered Check (if moving from 'i' unblocks a ray)
+        if (d !== i && onLine(kingPos, i)) {
+          const [dr, df] = getDirection(kingPos, i);
+          if ((dr !== 0 || df !== 0) && !onRay(kingPos, d, dr, df)) {
+            let r = Math.floor(i / 8) + dr,
+              f = (i % 8) + df;
+            while (r >= 0 && r < 8 && f >= 0 && f < 8) {
+              if (r * 8 + f === d) break;
+              const blocker = board[r * 8 + f];
+              if (blocker) {
+                if (
+                  blocker.color === p.color &&
+                  (blocker.role === 'queen' ||
+                    (Math.abs(dr * df) === 1 && blocker.role === 'bishop') ||
+                    (Math.abs(dr * df) === 0 && blocker.role === 'rook'))
+                ) {
+                  checkFound = true;
+                }
+                break;
               }
-           }
-         }
-         if (checkFound) break;
+              r += dr;
+              f += df;
+            }
+          }
+        }
+        if (checkFound) break;
       }
     }
     if (checkFound) {
@@ -499,70 +485,66 @@ function detectCheckable(board: Board): DrawShape[] {
 }
 
 function isAttacking(role: Role, from: number, to: number, board: Board, ignoredSq: number): boolean {
-   const fr = Math.floor(from/8), ff = from%8;
-   const tr = Math.floor(to/8), tf = to%8;
-   const dr = tr - fr, df = tf - ff;
-   const absDr = Math.abs(dr), absDf = Math.abs(df);
+  const fr = Math.floor(from / 8),
+    ff = from % 8;
+  const tr = Math.floor(to / 8),
+    tf = to % 8;
+  const dr = tr - fr,
+    df = tf - ff;
+  const absDr = Math.abs(dr),
+    absDf = Math.abs(df);
 
-   if (role === 'knight') {
-      return (absDr === 1 && absDf === 2) || (absDr === 2 && absDf === 1);
-   }
-   if (role === 'pawn') {
-      // Pawn attacks are diagonal
-      // We don't need color check here because we assume 'from' is where the pawn moved TO.
-      // But we need to know if the pawn at 'from' *can* attack 'to'.
-      // A pawn at 'from' attacks 'to' if 'to' is one step diagonal "forward" relative to pawn.
-      // But here 'from' is the piece position, 'to' is king.
-      // Wait, we need pawn color. We don't have it passed easily.
-      // Actually we do, checks are symmetric.
-      // But simpler: Pawn checks are short range.
-      return absDr === 1 && absDf === 1; // Simplification: assume correct direction. (Backward checks impossible unless promoted)
-   }
-   if (role === 'king') return (absDr <= 1 && absDf <= 1);
+  if (role === 'knight') return (absDr === 1 && absDf === 2) || (absDr === 2 && absDf === 1);
+  if (role === 'pawn') return absDr === 1 && absDf === 1; // Simplified: assume valid direction/capture
+  if (role === 'king') return absDr <= 1 && absDf <= 1;
 
-   // Sliders
-   const isDiag = absDr === absDf;
-   const isOrth = dr === 0 || df === 0;
+  const isDiag = absDr === absDf;
+  const isOrth = dr === 0 || df === 0;
 
-   if (role === 'rook' && !isOrth) return false;
-   if (role === 'bishop' && !isDiag) return false;
-   if (role === 'queen' && !isOrth && !isDiag) return false;
+  if (role === 'rook' && !isOrth) return false;
+  if (role === 'bishop' && !isDiag) return false;
+  if (role === 'queen' && !isOrth && !isDiag) return false;
 
-   // Check path
-   const stepR = Math.sign(dr), stepF = Math.sign(df);
-   let r = fr + stepR, f = ff + stepF;
-   while (r !== tr || f !== tf) {
-      const idx = r * 8 + f;
-      if (idx !== ignoredSq && board[idx]) return false; // Blocked
-      r += stepR;
-      f += stepF;
-   }
-   return true;
+  const stepR = Math.sign(dr),
+    stepF = Math.sign(df);
+  let r = fr + stepR,
+    f = ff + stepF;
+  while (r !== tr || f !== tf) {
+    const idx = r * 8 + f;
+    if (idx !== ignoredSq && board[idx]) return false;
+    r += stepR;
+    f += stepF;
+  }
+  return true;
 }
 
 function getDirection(from: number, to: number): [number, number] {
-   const fr = Math.floor(from/8), ff = from%8;
-   const tr = Math.floor(to/8), tf = to%8;
-   const dr = tr - fr, df = tf - ff;
-   if (Math.abs(dr) === Math.abs(df)) return [Math.sign(dr), Math.sign(df)];
-   if (dr === 0) return [0, Math.sign(df)];
-   if (df === 0) return [Math.sign(dr), 0];
-   return [0, 0];
+  const fr = Math.floor(from / 8),
+    ff = from % 8;
+  const tr = Math.floor(to / 8),
+    tf = to % 8;
+  const dr = tr - fr,
+    df = tf - ff;
+  if (Math.abs(dr) === Math.abs(df)) return [Math.sign(dr), Math.sign(df)];
+  if (dr === 0) return [0, Math.sign(df)];
+  if (df === 0) return [Math.sign(dr), 0];
+  return [0, 0];
 }
 
 function onLine(from: number, to: number): boolean {
-   const [dr, df] = getDirection(from, to);
-   return dr !== 0 || df !== 0;
+  const [dr, df] = getDirection(from, to);
+  return dr !== 0 || df !== 0;
 }
 
 function onRay(origin: number, target: number, dr: number, df: number): boolean {
-   const fr = Math.floor(origin/8), ff = origin%8;
-   const tr = Math.floor(target/8), tf = target%8;
-   const dR = tr - fr, dF = tf - ff;
-   // Must be same direction
-   if (Math.sign(dR) !== dr || Math.sign(dF) !== df) return false;
-   // Must be on line
-   if (dr === 0) return dR === 0;
-   if (df === 0) return dF === 0;
-   return Math.abs(dR) === Math.abs(dF);
+  const fr = Math.floor(origin / 8),
+    ff = origin % 8;
+  const tr = Math.floor(target / 8),
+    tf = target % 8;
+  const dR = tr - fr,
+    dF = tf - ff;
+  if (Math.sign(dR) !== dr || Math.sign(dF) !== df) return false;
+  if (dr === 0) return dR === 0;
+  if (df === 0) return dF === 0;
+  return Math.abs(dR) === Math.abs(dF);
 }
