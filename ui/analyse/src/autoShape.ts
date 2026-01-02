@@ -260,6 +260,7 @@ function detectUndefended(board: Board): DrawShape[] {
   for (let i = 0; i < 64; i++) {
     const p = board[i];
     if (!p) continue;
+    if (p.role === 'king') continue;
 
     const r = Math.floor(i / 8);
     const f = i % 8;
