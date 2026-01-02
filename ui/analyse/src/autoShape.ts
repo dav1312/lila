@@ -287,6 +287,77 @@ function isSquareAttacked(board: Board, square: number, byColor: Color): boolean
   return false;
 }
 
+function getAttackers(board: Board, square: number, byColor: Color): { role: Role; color: Color }[] {
+  const attackers: { role: Role; color: Color }[] = [];
+  const r = Math.floor(square / 8);
+  const f = square % 8;
+
+  const knightJumps = [[1, 2], [1, -2], [-1, 2], [-1, -2], [2, 1], [2, -1], [-2, 1], [-2, -1]];
+  const rookDirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+  const bishopDirs = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
+  const kingMoves = [[0, 1], [0, -1], [1, 0], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+
+  // Knight
+  for (const [dr, df] of knightJumps) {
+    const nr = r + dr,
+      nf = f + df;
+    if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
+      const p = board[nr * 8 + nf];
+      if (p && p.color === byColor && p.role === 'knight') attackers.push(p);
+    }
+  }
+
+  // Pawn
+  const pawnDir = byColor === 'white' ? -1 : 1;
+  const pr = r + pawnDir;
+  if (pr >= 0 && pr < 8) {
+    for (const pf of [f - 1, f + 1]) {
+      if (pf >= 0 && pf < 8) {
+        const p = board[pr * 8 + pf];
+        if (p && p.color === byColor && p.role === 'pawn') attackers.push(p);
+      }
+    }
+  }
+
+  // King
+  for (const [dr, df] of kingMoves) {
+    const nr = r + dr,
+      nf = f + df;
+    if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
+      const p = board[nr * 8 + nf];
+      if (p && p.color === byColor && p.role === 'king') attackers.push(p);
+    }
+  }
+
+  // Sliders
+  for (const [dr, df] of rookDirs) {
+    for (let d = 1; d < 8; d++) {
+      const nr = r + d * dr,
+        nf = f + d * df;
+      if (nr < 0 || nr > 7 || nf < 0 || nf > 7) break;
+      const p = board[nr * 8 + nf];
+      if (p) {
+        if (p.color === byColor && (p.role === 'rook' || p.role === 'queen')) attackers.push(p);
+        break;
+      }
+    }
+  }
+  for (const [dr, df] of bishopDirs) {
+    for (let d = 1; d < 8; d++) {
+      const nr = r + d * dr,
+        nf = f + d * df;
+      if (nr < 0 || nr > 7 || nf < 0 || nf > 7) break;
+      const p = board[nr * 8 + nf];
+      if (p) {
+        if (p.color === byColor && (p.role === 'bishop' || p.role === 'queen')) attackers.push(p);
+        break;
+      }
+    }
+  }
+
+  return attackers;
+}
+
 function detectPins(board: Board): DrawShape[] {
   const shapes: DrawShape[] = [];
   const dirs: Partial<Record<Role, number[][]>> = {
@@ -352,8 +423,21 @@ function detectUndefended(board: Board): DrawShape[] {
   for (let i = 0; i < 64; i++) {
     const p = board[i];
     if (!p || p.role === 'king') continue;
+
+    const enemy = opposite(p.color);
+    // Must be attacked to be relevant
+    if (!isSquareAttacked(board, i, enemy)) continue;
+
+    // Check if defended by own color
     if (!isSquareAttacked(board, i, p.color)) {
       shapes.push({ orig: makeSquare(i), brush: 'undefended' });
+    } else {
+      // Defended, check values: if attacker < target, it's still vulnerable
+      const attackers = getAttackers(board, i, enemy);
+      const minVal = Math.min(...attackers.map(a => values[a.role]));
+      if (minVal < values[p.role]) {
+        shapes.push({ orig: makeSquare(i), brush: 'undefended' });
+      }
     }
   }
   return shapes;
@@ -392,7 +476,8 @@ function detectCheckable(board: Board, epSquare: number | null): DrawShape[] {
       // Generate pseudo-legal moves
       if (p.role === 'knight') {
         for (const [dr, df] of knightJumps) {
-          const nr = pr + dr, nf = pf + df;
+          const nr = pr + dr,
+            nf = pf + df;
           if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
             const target = board[nr * 8 + nf];
             if (!target || target.color !== p.color) dests.push({ to: nr * 8 + nf });
@@ -402,7 +487,8 @@ function detectCheckable(board: Board, epSquare: number | null): DrawShape[] {
         const dir = p.color === 'white' ? 1 : -1;
         const promRank = p.color === 'white' ? 7 : 0;
         // Pushes
-        let nr = pr + dir, nf = pf;
+        let nr = pr + dir,
+          nf = pf;
         if (nr >= 0 && nr < 8 && !board[nr * 8 + nf]) {
           const isProm = nr === promRank;
           dests.push({ to: nr * 8 + nf, promo: isProm });
@@ -430,7 +516,8 @@ function detectCheckable(board: Board, epSquare: number | null): DrawShape[] {
         const dist = p.role === 'king' ? 1 : 8;
         for (const [dr, df] of dirs) {
           for (let d = 1; d <= dist; d++) {
-            const nr = pr + d * dr, nf = pf + d * df;
+            const nr = pr + d * dr,
+              nf = pf + d * df;
             if (nr < 0 || nr > 7 || nf < 0 || nf > 7) break;
             const destSq = nr * 8 + nf;
             const target = board[destSq];
@@ -448,21 +535,17 @@ function detectCheckable(board: Board, epSquare: number | null): DrawShape[] {
         // Optimization: Fast check rejection?
         // We perform the move on a temp board and see if King is attacked.
         // We also check legality: Own king must not be attacked.
-        
+
         // Simulating the board is cheap for 64 elements
         const tempBoard = [...board];
-        
+
         // Remove from origin
         tempBoard[i] = null;
-        
+
         // Place at dest
         if (m.promo) {
           // Check if Queen promotion gives check
           tempBoard[m.to] = { role: 'queen', color: p.color };
-          // Note: Knight promotion check could be distinct, but usually Queen covers it. 
-          // However, Knight check is unique. We should strictly check both or just Queen if lazy.
-          // Requirement: "any move... can put king in check". Knight promo is a move.
-          // Let's check Queen first.
         } else if (m.ep) {
           tempBoard[m.to] = { role: 'pawn', color: p.color };
           // Remove captured pawn
@@ -473,10 +556,9 @@ function detectCheckable(board: Board, epSquare: number | null): DrawShape[] {
         }
 
         // 1. Is move legal? (Own king not in check)
-        // Find own king in tempBoard (it might have moved!)
-        const ownKingSq = p.role === 'king' ? m.to : (kings.find(x => x.color === p.color)?.square ?? -1);
+        const ownKingSq = p.role === 'king' ? m.to : kings.find(x => x.color === p.color)?.square ?? -1;
         if (ownKingSq !== -1 && isSquareAttacked(tempBoard, ownKingSq, opposite(p.color))) {
-           continue; // Move is illegal
+          continue; // Move is illegal
         }
 
         // 2. Does it check the opponent king?
@@ -487,15 +569,15 @@ function detectCheckable(board: Board, epSquare: number | null): DrawShape[] {
 
         // If promo, also check Knight promo
         if (m.promo) {
-           const tempBoardK = [...board];
-           tempBoardK[i] = null;
-           tempBoardK[m.to] = { role: 'knight', color: p.color };
-           // Legality check again
-           if (ownKingSq !== -1 && isSquareAttacked(tempBoardK, ownKingSq, opposite(p.color))) continue;
-           if (isSquareAttacked(tempBoardK, k.square, p.color)) {
-             checkFound = true;
-             break;
-           }
+          const tempBoardK = [...board];
+          tempBoardK[i] = null;
+          tempBoardK[m.to] = { role: 'knight', color: p.color };
+          // Legality check again
+          if (ownKingSq !== -1 && isSquareAttacked(tempBoardK, ownKingSq, opposite(p.color))) continue;
+          if (isSquareAttacked(tempBoardK, k.square, p.color)) {
+            checkFound = true;
+            break;
+          }
         }
       }
     }
