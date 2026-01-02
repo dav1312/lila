@@ -31,6 +31,8 @@ const KING_MOVES = QUEEN_DIRS;
 
 const values: Record<Role, number> = { pawn: 1, knight: 3, bishop: 3, rook: 5, queen: 9, king: 100 };
 
+const comparePieces = (a: { role: Role }, b: { role: Role }) => values[a.role] - values[b.role];
+
 export function parseFen(placement: string): Board {
   const board: Board = new Array(64).fill(null);
   let rank = 7,
@@ -266,7 +268,7 @@ function getSEE(board: Board, square: number, target: { role: Role; color: Color
     if (attackers.length === 0) break;
 
     // Sort by value to capture with cheapest piece first
-    attackers.sort((a, b) => values[a.role] - values[b.role]);
+    attackers.sort(comparePieces);
 
     const bestAttacker = attackers[0];
 
@@ -326,6 +328,8 @@ export function detectCheckable(board: Board, epSquare: number | null): DrawShap
     const p = board[i];
     if (p && p.role === 'king') kings.push({ color: p.color, square: i });
   }
+
+  const workingBoard = [...board];
 
   for (const k of kings) {
     // Skip if already in check
@@ -401,55 +405,56 @@ export function detectCheckable(board: Board, epSquare: number | null): DrawShap
         }
       }
 
+      const ownKingSq = p.role === 'king' ? -1 : (kings.find(x => x.color === p.color)?.square ?? -1);
+
       // Simulate moves and check
       for (const m of dests) {
-        // Optimization: Fast check rejection?
-        // We perform the move on a temp board and see if King is attacked.
-        // We also check legality: Own king must not be attacked.
+        const fromSq = i;
+        const toSq = m.to;
+        const captured = workingBoard[toSq];
 
-        // Simulating the board is cheap for 64 elements
-        const tempBoard = [...board];
+        // Apply Move
+        workingBoard[fromSq] = null;
+        let epCapturedSq = -1;
+        let epCapturedPiece: { role: Role; color: Color } | null = null;
 
-        // Remove from origin
-        tempBoard[i] = null;
-
-        // Place at dest
         if (m.promo) {
-          // Check if Queen promotion gives check
-          tempBoard[m.to] = { role: 'queen', color: p.color };
+          workingBoard[toSq] = { role: 'queen', color: p.color };
         } else if (m.ep) {
-          tempBoard[m.to] = { role: 'pawn', color: p.color };
-          // Remove captured pawn
-          const capSq = m.to + (p.color === 'white' ? -8 : 8);
-          tempBoard[capSq] = null;
+          workingBoard[toSq] = { role: 'pawn', color: p.color };
+          epCapturedSq = toSq + (p.color === 'white' ? -8 : 8);
+          epCapturedPiece = workingBoard[epCapturedSq];
+          workingBoard[epCapturedSq] = null;
         } else {
-          tempBoard[m.to] = p;
+          workingBoard[toSq] = p;
         }
+
+        const effectiveKingSq = p.role === 'king' ? toSq : ownKingSq;
 
         // 1. Is move legal? (Own king not in check)
-        const ownKingSq = p.role === 'king' ? m.to : (kings.find(x => x.color === p.color)?.square ?? -1);
-        if (ownKingSq !== -1 && isSquareAttacked(tempBoard, ownKingSq, opposite(p.color))) {
-          continue; // Move is illegal
-        }
+        const isLegal = effectiveKingSq === -1 || !isSquareAttacked(workingBoard, effectiveKingSq, opposite(p.color));
 
-        // 2. Does it check the opponent king?
-        if (isSquareAttacked(tempBoard, k.square, p.color)) {
-          checkFound = true;
-          break;
-        }
-
-        // If promo, also check Knight promo
-        if (m.promo) {
-          const tempBoardK = [...board];
-          tempBoardK[i] = null;
-          tempBoardK[m.to] = { role: 'knight', color: p.color };
-          // Legality check again
-          if (ownKingSq !== -1 && isSquareAttacked(tempBoardK, ownKingSq, opposite(p.color))) continue;
-          if (isSquareAttacked(tempBoardK, k.square, p.color)) {
+        if (isLegal) {
+          // 2. Does it check the opponent king?
+          if (isSquareAttacked(workingBoard, k.square, p.color)) {
             checkFound = true;
-            break;
+          } else if (m.promo) {
+            // If promo to Queen didn't check, try Knight
+            workingBoard[toSq] = { role: 'knight', color: p.color };
+            if (isSquareAttacked(workingBoard, k.square, p.color)) {
+              checkFound = true;
+            }
           }
         }
+
+        // Revert Move
+        workingBoard[fromSq] = p;
+        workingBoard[toSq] = captured;
+        if (m.ep) {
+          workingBoard[epCapturedSq] = epCapturedPiece;
+        }
+
+        if (checkFound) break;
       }
     }
     if (checkFound) {
