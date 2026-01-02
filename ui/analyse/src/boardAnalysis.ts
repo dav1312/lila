@@ -1,16 +1,15 @@
 // ui\analyse\src\boardAnalysis.ts
-import { makeSquare, charToRole, opposite } from 'chessops/util';
+import { parseSquare, opposite, roleToChar, squareRank } from 'chessops/util';
 import { SquareSet } from 'chessops/squareSet';
-import {
-  kingAttacks,
-  knightAttacks,
-  pawnAttacks,
-  rookAttacks,
-  bishopAttacks,
-  attacks,
-} from 'chessops/attacks';
-import type { Role, Color } from 'chessops/types';
+import { kingAttacks, knightAttacks, pawnAttacks, rookAttacks, bishopAttacks } from 'chessops/attacks';
+import { Board as ChessopsBoard } from 'chessops/board';
+import { Chess } from 'chessops/chess';
+import { parseBoardFen, parseFen as parseFenLib } from 'chessops/fen';
+import { chessgroundDests } from 'chessops/compat';
+import { FILE_NAMES, RANK_NAMES } from 'chessops/types';
+import type { Role, Color, Move } from 'chessops/types';
 import type { DrawShape } from '@lichess-org/chessground/draw';
+import type { Key } from '@lichess-org/chessground/types';
 
 export type Board = ({ role: Role; color: Color } | null)[];
 
@@ -32,27 +31,59 @@ const values: Record<Role, number> = { pawn: 1, knight: 3, bishop: 3, rook: 5, q
 
 const comparePieces = (a: { role: Role }, b: { role: Role }) => values[a.role] - values[b.role];
 
-export function parseFen(placement: string): Board {
-  const board: Board = new Array(64).fill(null);
-  let rank = 7,
-    file = 0;
+const key = (s: number): Key => (FILE_NAMES[s & 7] + RANK_NAMES[s >> 3]) as Key;
 
-  for (const char of placement) {
-    if (char === '/') {
-      rank--;
-      file = 0;
-    } else if (/\d/.test(char)) {
-      file += parseInt(char, 10);
-    } else {
-      const color: Color = char === char.toUpperCase() ? 'white' : 'black';
-      const role = charToRole(char);
-      if (role) {
-        board[rank * 8 + file] = { role, color };
-        file++;
+function fromChessopsBoard(cb: ChessopsBoard): Board {
+  const board: Board = new Array(64).fill(null);
+  for (const color of ['white', 'black'] as const) {
+    const colorSet = cb[color];
+    for (const role of ['pawn', 'knight', 'bishop', 'rook', 'queen', 'king'] as const) {
+      const pieces = colorSet.intersect(cb[role]);
+      for (const sq of pieces) {
+        board[sq] = { role, color };
       }
     }
   }
   return board;
+}
+
+function toBoardFen(board: Board): string {
+  let fen = '';
+  let empty = 0;
+  for (let r = 7; r >= 0; r--) {
+    for (let f = 0; f < 8; f++) {
+      const p = board[r * 8 + f];
+      if (!p) {
+        empty++;
+      } else {
+        if (empty > 0) {
+          fen += empty;
+          empty = 0;
+        }
+        const char = roleToChar(p.role);
+        fen += p.color === 'white' ? char.toUpperCase() : char;
+      }
+    }
+    if (empty > 0) {
+      fen += empty;
+      empty = 0;
+    }
+    if (r > 0) fen += '/';
+  }
+  return fen;
+}
+
+function toChessopsBoard(board: Board): ChessopsBoard {
+  const fen = toBoardFen(board);
+  const res = parseBoardFen(fen);
+  if ('error' in res) throw new Error(String(res.error));
+  return res.value;
+}
+
+export function parseFen(placement: string): Board {
+  const res = parseBoardFen(placement);
+  if ('error' in res) return new Array(64).fill(null);
+  return fromChessopsBoard(res.value);
 }
 
 function getBoardSets(
@@ -67,43 +98,17 @@ function getBoardSets(
   bishops: SquareSet;
   queens: SquareSet;
 } {
-  let occupied = SquareSet.empty();
-  let pawns = SquareSet.empty();
-  let knights = SquareSet.empty();
-  let kings = SquareSet.empty();
-  let rooks = SquareSet.empty();
-  let bishops = SquareSet.empty();
-  let queens = SquareSet.empty();
-
-  for (let i = 0; i < 64; i++) {
-    const p = board[i];
-    if (p) {
-      occupied = occupied.with(i);
-      if (p.color === byColor) {
-        switch (p.role) {
-          case 'pawn':
-            pawns = pawns.with(i);
-            break;
-          case 'knight':
-            knights = knights.with(i);
-            break;
-          case 'king':
-            kings = kings.with(i);
-            break;
-          case 'rook':
-            rooks = rooks.with(i);
-            break;
-          case 'bishop':
-            bishops = bishops.with(i);
-            break;
-          case 'queen':
-            queens = queens.with(i);
-            break;
-        }
-      }
-    }
-  }
-  return { occupied, pawns, knights, kings, rooks, bishops, queens };
+  const cb = toChessopsBoard(board);
+  const colorSet = cb[byColor];
+  return {
+    occupied: cb.occupied,
+    pawns: cb.pawn.intersect(colorSet),
+    knights: cb.knight.intersect(colorSet),
+    kings: cb.king.intersect(colorSet),
+    rooks: cb.rook.intersect(colorSet),
+    bishops: cb.bishop.intersect(colorSet),
+    queens: cb.queen.intersect(colorSet),
+  };
 }
 
 function isSquareAttacked(board: Board, square: number, byColor: Color): boolean {
@@ -193,7 +198,7 @@ export function detectPins(board: Board): DrawShape[] {
             } else {
               // Pinned logic check
               if (target.role === 'king') {
-                shapes.push({ orig: makeSquare(pinnedSq!), brush: 'pin' });
+                shapes.push({ orig: key(pinnedSq!), brush: 'pin' });
               } else {
                 // Check if target is defended
                 const isDef = isSquareAttacked(board, nr * 8 + nf, target.color);
@@ -204,7 +209,7 @@ export function detectPins(board: Board): DrawShape[] {
                 // Logic: Pinned if Target > Pinned AND (Target is King (handled) OR Target Not Defended OR Target > Attacker)
                 if (valTarget > valPinned) {
                   if (!isDef || valTarget > valAttacker) {
-                    shapes.push({ orig: makeSquare(pinnedSq!), brush: 'pin' });
+                    shapes.push({ orig: key(pinnedSq!), brush: 'pin' });
                   }
                 }
               }
@@ -275,10 +280,9 @@ export function detectUndefended(board: Board): DrawShape[] {
     if (!p || p.role === 'king') continue;
 
     // Check Static Exchange Evaluation
-    // getSEE internally calls getAttackers; if 0 attackers, it returns 0, so no explicit check needed here.
     const see = getSEE(board, i, p);
     if (see > 0) {
-      shapes.push({ orig: makeSquare(i), brush: 'undefended' });
+      shapes.push({ orig: key(i), brush: 'undefended' });
     }
   }
   return shapes;
@@ -286,131 +290,73 @@ export function detectUndefended(board: Board): DrawShape[] {
 
 export function detectCheckable(board: Board, epSquare: number | null): DrawShape[] {
   const shapes: DrawShape[] = [];
+  const cb = toChessopsBoard(board);
+
   const kings: { color: Color; square: number }[] = [];
-  let occupied = SquareSet.empty();
-
-  for (let i = 0; i < 64; i++) {
-    const p = board[i];
-    if (p) {
-      occupied = occupied.with(i);
-      if (p.role === 'king') kings.push({ color: p.color, square: i });
+  for (const color of ['white', 'black'] as const) {
+    let kSq: number | undefined;
+    for (const s of cb.king.intersect(cb[color])) {
+      kSq = s;
+      break;
     }
+    if (typeof kSq === 'number') kings.push({ color, square: kSq });
   }
-
-  const workingBoard = [...board];
 
   for (const k of kings) {
     // Skip if already in check
     if (isSquareAttacked(board, k.square, opposite(k.color))) continue;
 
     const enemyColor = opposite(k.color);
+
+    // Construct FEN to create Setup.
+    // We assume no castling rights ('-') for the purpose of checking if opponent can deliver check.
+    const boardFen = toBoardFen(board);
+    const turnChar = enemyColor === 'white' ? 'w' : 'b';
+    const epChar = epSquare !== null ? key(epSquare) : '-';
+    const fullFen = `${boardFen} ${turnChar} - ${epChar} 0 1`;
+
+    const setupRes = parseFenLib(fullFen);
+    if ('error' in setupRes) continue;
+    const setup = setupRes.value;
+
+    const res = Chess.fromSetup(setup);
+
+    // Check if position creation succeeded
+    if ('error' in res) continue;
+    const legalPos = res.value;
+
+    const dests = chessgroundDests(legalPos);
     let checkFound = false;
 
-    // Iterate all enemy pieces
-    for (let i = 0; i < 64; i++) {
+    for (const [fromStr, tos] of dests) {
       if (checkFound) break;
-      const p = board[i];
-      if (!p || p.color !== enemyColor) continue;
+      const from = parseSquare(fromStr);
+      for (const toStr of tos) {
+        const to = parseSquare(toStr);
 
-      const dests: { to: number; promo?: boolean; ep?: boolean }[] = [];
+        // Promotion check: if pawn moves to last rank
+        const isPawn = cb.pawn.has(from);
+        const rank = squareRank(to);
+        const isPromo = isPawn && (rank === 0 || rank === 7);
+        const candidates: (Role | undefined)[] = isPromo ? ['queen', 'knight'] : [undefined];
 
-      // Generate pseudo-legal moves
-      if (p.role === 'pawn') {
-        const pr = Math.floor(i / 8);
-        const pf = i % 8;
-        const dir = p.color === 'white' ? 1 : -1;
-        const promRank = p.color === 'white' ? 7 : 0;
-        // Pushes
-        let nr = pr + dir,
-          nf = pf;
-        if (nr >= 0 && nr < 8 && !board[nr * 8 + nf]) {
-          const isProm = nr === promRank;
-          dests.push({ to: nr * 8 + nf, promo: isProm });
-          if ((p.color === 'white' && pr === 1) || (p.color === 'black' && pr === 6)) {
-            const nnr = nr + dir;
-            if (!board[nnr * 8 + nf]) dests.push({ to: nnr * 8 + nf });
-          }
-        }
-        // Captures
-        for (const cdf of [-1, 1]) {
-          nr = pr + dir;
-          nf = pf + cdf;
-          if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
-            const destSq = nr * 8 + nf;
-            const target = board[destSq];
-            if (target && target.color !== p.color) {
-              dests.push({ to: destSq, promo: nr === promRank });
-            } else if (destSq === epSquare) {
-              dests.push({ to: destSq, ep: true });
-            }
-          }
-        }
-      } else {
-        // Use chessops for all other pieces
-        const destinations = attacks(p, i, occupied);
-        for (const dest of destinations) {
-          const target = board[dest];
-          if (!target || target.color !== p.color) {
-            dests.push({ to: dest });
-          }
-        }
-      }
-
-      const ownKingSq = p.role === 'king' ? -1 : (kings.find(x => x.color === p.color)?.square ?? -1);
-
-      // Simulate moves and check
-      for (const m of dests) {
-        const fromSq = i;
-        const toSq = m.to;
-        const captured = workingBoard[toSq];
-
-        // Apply Move
-        workingBoard[fromSq] = null;
-        let epCapturedSq = -1;
-        let epCapturedPiece: { role: Role; color: Color } | null = null;
-
-        if (m.promo) {
-          workingBoard[toSq] = { role: 'queen', color: p.color };
-        } else if (m.ep) {
-          workingBoard[toSq] = { role: 'pawn', color: p.color };
-          epCapturedSq = toSq + (p.color === 'white' ? -8 : 8);
-          epCapturedPiece = workingBoard[epCapturedSq];
-          workingBoard[epCapturedSq] = null;
-        } else {
-          workingBoard[toSq] = p;
-        }
-
-        const effectiveKingSq = p.role === 'king' ? toSq : ownKingSq;
-
-        // 1. Is move legal? (Own king not in check)
-        const isLegal =
-          effectiveKingSq === -1 || !isSquareAttacked(workingBoard, effectiveKingSq, opposite(p.color));
-
-        if (isLegal) {
-          // 2. Does it check the opponent king?
-          if (isSquareAttacked(workingBoard, k.square, p.color)) {
+        for (const promotion of candidates) {
+          const move: Move = { from, to, promotion };
+          // Try to play the move and check if it results in check
+          // Since play() is void/mutating, we clone
+          const testPos = legalPos.clone();
+          testPos.play(move);
+          if (testPos.isCheck()) {
             checkFound = true;
-          } else if (m.promo) {
-            // If promo to Queen didn't check, try Knight
-            workingBoard[toSq] = { role: 'knight', color: p.color };
-            if (isSquareAttacked(workingBoard, k.square, p.color)) {
-              checkFound = true;
-            }
+            break;
           }
         }
-
-        // Revert Move
-        workingBoard[fromSq] = p;
-        workingBoard[toSq] = captured;
-        if (m.ep) {
-          workingBoard[epCapturedSq] = epCapturedPiece;
-        }
-
         if (checkFound) break;
       }
     }
+
     if (checkFound) {
-      shapes.push({ orig: makeSquare(k.square), brush: 'checkable' });
+      shapes.push({ orig: key(k.square), brush: 'checkable' });
     }
   }
   return shapes;
