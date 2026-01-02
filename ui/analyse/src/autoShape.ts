@@ -120,9 +120,15 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
   }
   if (ctrl.showMoveAnnotationsOnBoard()) shapes = shapes.concat(annotationShapes(ctrl.node));
   if (ctrl.showVariationArrows()) hiliteVariations(ctrl, shapes);
-  
+
+  ctrl.chessground.state.drawable.brushes['pin'] = {
+    key: 'pin',
+    color: 'black',
+    opacity: 1,
+    lineWidth: 4,
+  };
   shapes = shapes.concat(detectPins(nFen));
-  
+
   return shapes;
 }
 
@@ -225,9 +231,8 @@ function detectPins(fen: string): DrawShape[] {
             } else {
               if (values[target.role] > values[pinnedPiece.role]) {
                 shapes.push({
-                  orig: makeSquare(r * 8 + f),
-                  dest: makeSquare(pinnedSq!),
-                  brush: 'paleRed',
+                  orig: makeSquare(pinnedSq!),
+                  brush: 'pin',
                 });
               }
               break;
