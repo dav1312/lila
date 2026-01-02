@@ -98,21 +98,54 @@ function getBoardSets(
   bishops: SquareSet;
   queens: SquareSet;
 } {
-  const cb = toChessopsBoard(board);
-  const colorSet = cb[byColor];
-  return {
-    occupied: cb.occupied,
-    pawns: cb.pawn.intersect(colorSet),
-    knights: cb.knight.intersect(colorSet),
-    kings: cb.king.intersect(colorSet),
-    rooks: cb.rook.intersect(colorSet),
-    bishops: cb.bishop.intersect(colorSet),
-    queens: cb.queen.intersect(colorSet),
-  };
+  let occupied = SquareSet.empty();
+  let pawns = SquareSet.empty();
+  let knights = SquareSet.empty();
+  let kings = SquareSet.empty();
+  let rooks = SquareSet.empty();
+  let bishops = SquareSet.empty();
+  let queens = SquareSet.empty();
+
+  for (let i = 0; i < 64; i++) {
+    const p = board[i];
+    if (p) {
+      occupied = occupied.with(i);
+      if (p.color === byColor) {
+        switch (p.role) {
+          case 'pawn':
+            pawns = pawns.with(i);
+            break;
+          case 'knight':
+            knights = knights.with(i);
+            break;
+          case 'king':
+            kings = kings.with(i);
+            break;
+          case 'rook':
+            rooks = rooks.with(i);
+            break;
+          case 'bishop':
+            bishops = bishops.with(i);
+            break;
+          case 'queen':
+            queens = queens.with(i);
+            break;
+        }
+      }
+    }
+  }
+
+  return { occupied, pawns, knights, kings, rooks, bishops, queens };
 }
 
-function isSquareAttacked(board: Board, square: number, byColor: Color): boolean {
-  const { occupied, pawns, knights, kings, rooks, bishops, queens } = getBoardSets(board, byColor);
+function isSquareAttacked(
+  board: Board,
+  square: number,
+  byColor: Color,
+  cachedSets?: ReturnType<typeof getBoardSets>,
+): boolean {
+  const { occupied, pawns, knights, kings, rooks, bishops, queens } =
+    cachedSets || getBoardSets(board, byColor);
 
   // 1. Knight
   if (knightAttacks(square).intersects(knights)) return true;
@@ -171,6 +204,9 @@ export function detectPins(board: Board): DrawShape[] {
     queen: QUEEN_DIRS,
   };
 
+  const whiteSets = getBoardSets(board, 'white');
+  const blackSets = getBoardSets(board, 'black');
+
   for (let r = 0; r < 8; r++) {
     for (let f = 0; f < 8; f++) {
       const p = board[r * 8 + f];
@@ -201,7 +237,12 @@ export function detectPins(board: Board): DrawShape[] {
                 shapes.push({ orig: key(pinnedSq!), brush: 'pin' });
               } else {
                 // Check if target is defended
-                const isDef = isSquareAttacked(board, nr * 8 + nf, target.color);
+                const isDef = isSquareAttacked(
+                  board,
+                  nr * 8 + nf,
+                  target.color,
+                  target.color === 'white' ? whiteSets : blackSets,
+                );
                 const valTarget = values[target.role];
                 const valPinned = values[pinnedPiece.role];
                 const valAttacker = values[p.role];
