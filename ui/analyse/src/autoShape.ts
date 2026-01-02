@@ -18,6 +18,13 @@ const pieceDrop = (key: Key, role: Role, color: Color): DrawShape => ({
   brush: 'green',
 });
 
+// Shared move constants to avoid duplication
+const KNIGHT_JUMPS = [[1, 2], [1, -2], [-1, 2], [-1, -2], [2, 1], [2, -1], [-2, 1], [-2, -1]];
+const ROOK_DIRS = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+const BISHOP_DIRS = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
+const QUEEN_DIRS = [...ROOK_DIRS, ...BISHOP_DIRS];
+const KING_MOVES = [...ROOK_DIRS, ...BISHOP_DIRS];
+
 export function makeShapesFromUci(
   color: Color,
   uci: Uci,
@@ -216,16 +223,11 @@ function parseFen(placement: string): Board {
 }
 
 function isSquareAttacked(board: Board, square: number, byColor: Color): boolean {
-  const knightJumps = [[1, 2], [1, -2], [-1, 2], [-1, -2], [2, 1], [2, -1], [-2, 1], [-2, -1]];
-  const rookDirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
-  const bishopDirs = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
-  const kingMoves = [[0, 1], [0, -1], [1, 0], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]];
-
   const r = Math.floor(square / 8);
   const f = square % 8;
 
   // 1. Knight
-  for (const [dr, df] of knightJumps) {
+  for (const [dr, df] of KNIGHT_JUMPS) {
     const nr = r + dr,
       nf = f + df;
     if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
@@ -247,7 +249,7 @@ function isSquareAttacked(board: Board, square: number, byColor: Color): boolean
   }
 
   // 3. King
-  for (const [dr, df] of kingMoves) {
+  for (const [dr, df] of KING_MOVES) {
     const nr = r + dr,
       nf = f + df;
     if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
@@ -257,7 +259,7 @@ function isSquareAttacked(board: Board, square: number, byColor: Color): boolean
   }
 
   // 4. Sliders (Rook/Queen)
-  for (const [dr, df] of rookDirs) {
+  for (const [dr, df] of ROOK_DIRS) {
     for (let d = 1; d < 8; d++) {
       const nr = r + d * dr,
         nf = f + d * df;
@@ -271,7 +273,7 @@ function isSquareAttacked(board: Board, square: number, byColor: Color): boolean
   }
 
   // 5. Sliders (Bishop/Queen)
-  for (const [dr, df] of bishopDirs) {
+  for (const [dr, df] of BISHOP_DIRS) {
     for (let d = 1; d < 8; d++) {
       const nr = r + d * dr,
         nf = f + d * df;
@@ -296,13 +298,8 @@ function getAttackers(
   const r = Math.floor(square / 8);
   const f = square % 8;
 
-  const knightJumps = [[1, 2], [1, -2], [-1, 2], [-1, -2], [2, 1], [2, -1], [-2, 1], [-2, -1]];
-  const rookDirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
-  const bishopDirs = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
-  const kingMoves = [[0, 1], [0, -1], [1, 0], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]];
-
   // Knight
-  for (const [dr, df] of knightJumps) {
+  for (const [dr, df] of KNIGHT_JUMPS) {
     const nr = r + dr,
       nf = f + df;
     if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
@@ -326,7 +323,7 @@ function getAttackers(
   }
 
   // King
-  for (const [dr, df] of kingMoves) {
+  for (const [dr, df] of KING_MOVES) {
     const nr = r + dr,
       nf = f + df;
     if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
@@ -337,7 +334,7 @@ function getAttackers(
   }
 
   // Sliders
-  for (const [dr, df] of rookDirs) {
+  for (const [dr, df] of ROOK_DIRS) {
     for (let d = 1; d < 8; d++) {
       const nr = r + d * dr,
         nf = f + d * df;
@@ -350,7 +347,7 @@ function getAttackers(
       }
     }
   }
-  for (const [dr, df] of bishopDirs) {
+  for (const [dr, df] of BISHOP_DIRS) {
     for (let d = 1; d < 8; d++) {
       const nr = r + d * dr,
         nf = f + d * df;
@@ -370,9 +367,9 @@ function getAttackers(
 function detectPins(board: Board): DrawShape[] {
   const shapes: DrawShape[] = [];
   const dirs: Partial<Record<Role, number[][]>> = {
-    rook: [[0, 1], [0, -1], [1, 0], [-1, 0]],
-    bishop: [[1, 1], [1, -1], [-1, 1], [-1, -1]],
-    queen: [[0, 1], [0, -1], [1, 0], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]],
+    rook: ROOK_DIRS,
+    bishop: BISHOP_DIRS,
+    queen: QUEEN_DIRS,
   };
 
   for (let r = 0; r < 8; r++) {
@@ -483,11 +480,8 @@ function detectUndefended(board: Board): DrawShape[] {
     const p = board[i];
     if (!p || p.role === 'king') continue;
 
-    const enemy = opposite(p.color);
-    // Must be attacked to be relevant
-    if (!isSquareAttacked(board, i, enemy)) continue;
-
     // Check Static Exchange Evaluation
+    // getSEE internally calls getAttackers; if 0 attackers, it returns 0, so no explicit check needed here.
     const see = getSEE(board, i, p);
     if (see > 0) {
       shapes.push({ orig: makeSquare(i), brush: 'undefended' });
@@ -503,11 +497,6 @@ function detectCheckable(board: Board, epSquare: number | null): DrawShape[] {
     const p = board[i];
     if (p && p.role === 'king') kings.push({ color: p.color, square: i });
   }
-
-  const knightJumps = [[1, 2], [1, -2], [-1, 2], [-1, -2], [2, 1], [2, -1], [-2, 1], [-2, -1]];
-  const rookDirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
-  const bishopDirs = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
-  const queenDirs = [...rookDirs, ...bishopDirs];
 
   for (const k of kings) {
     // Skip if already in check
@@ -528,7 +517,7 @@ function detectCheckable(board: Board, epSquare: number | null): DrawShape[] {
 
       // Generate pseudo-legal moves
       if (p.role === 'knight') {
-        for (const [dr, df] of knightJumps) {
+        for (const [dr, df] of KNIGHT_JUMPS) {
           const nr = pr + dr,
             nf = pf + df;
           if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
@@ -565,7 +554,7 @@ function detectCheckable(board: Board, epSquare: number | null): DrawShape[] {
           }
         }
       } else if (['rook', 'bishop', 'queen', 'king'].includes(p.role)) {
-        const dirs = p.role === 'rook' ? rookDirs : p.role === 'bishop' ? bishopDirs : queenDirs;
+        const dirs = p.role === 'rook' ? ROOK_DIRS : p.role === 'bishop' ? BISHOP_DIRS : QUEEN_DIRS;
         const dist = p.role === 'king' ? 1 : 8;
         for (const [dr, df] of dirs) {
           for (let d = 1; d <= dist; d++) {
