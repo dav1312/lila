@@ -36,6 +36,13 @@ test('Pin: No pin if trade (k2q1b2/8/3n4/8/1B6/8/7P/7K)', () => {
   assert.deepEqual(runAnalysis(fen), expected);
 });
 
+test('Checkable: Castling (1K2k2r/8/8/8/8/8/8/8 b k)', () => {
+  const fen = '1K2k2r/8/8/8/8/8/8/8 b k - 0 1';
+  const expected = ['b8:checkable'].sort();
+
+  assert.deepEqual(runAnalysis(fen), expected);
+});
+
 test('Checkable: En passant (7k/8/8/8/4Pp2/8/3K4/8 b - e3)', () => {
   const fen = '7k/8/8/8/4Pp2/8/3K4/8 b - e3 0 1';
   const expected = ['d2:checkable'].sort();
