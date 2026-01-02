@@ -1,3 +1,4 @@
+// ui\analyse\src\autoShape.ts
 import { parseUci, makeSquare } from 'chessops/util';
 import { isDrop } from 'chessops/types';
 import { winningChances } from 'lib/ceval';
@@ -119,6 +120,9 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
   }
   if (ctrl.showMoveAnnotationsOnBoard()) shapes = shapes.concat(annotationShapes(ctrl.node));
   if (ctrl.showVariationArrows()) hiliteVariations(ctrl, shapes);
+  
+  shapes = shapes.concat(detectPins(nFen));
+  
   return shapes;
 }
 
@@ -145,4 +149,93 @@ function hiliteVariations(ctrl: AnalyseCtrl, autoShapes: DrawShape[]) {
         below: true,
       });
   }
+}
+
+function detectPins(fen: string): DrawShape[] {
+  const shapes: DrawShape[] = [];
+  const board: ({ role: Role; color: Color } | null)[] = new Array(64).fill(null);
+  const [placement] = fen.split(' ');
+  let rank = 7,
+    file = 0;
+
+  for (const char of placement) {
+    if (char === '/') {
+      rank--;
+      file = 0;
+    } else if (/\d/.test(char)) {
+      file += parseInt(char, 10);
+    } else {
+      const color: Color = char === char.toUpperCase() ? 'white' : 'black';
+      const role = char.toLowerCase() as Role;
+      board[rank * 8 + file] = { role, color };
+      file++;
+    }
+  }
+
+  const values: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 100 };
+  const dirs = {
+    r: [
+      [0, 1],
+      [0, -1],
+      [1, 0],
+      [-1, 0],
+    ],
+    b: [
+      [1, 1],
+      [1, -1],
+      [-1, 1],
+      [-1, -1],
+    ],
+    q: [
+      [0, 1],
+      [0, -1],
+      [1, 0],
+      [-1, 0],
+      [1, 1],
+      [1, -1],
+      [-1, 1],
+      [-1, -1],
+    ],
+  };
+
+  for (let r = 0; r < 8; r++) {
+    for (let f = 0; f < 8; f++) {
+      const p = board[r * 8 + f];
+      if (!p || !['r', 'b', 'q'].includes(p.role)) continue;
+
+      const rayDirs = dirs[p.role as 'r' | 'b' | 'q'];
+      for (const [dr, df] of rayDirs) {
+        let pinnedSq: number | null = null;
+        let pinnedPiece: { role: Role; color: Color } | null = null;
+
+        for (let i = 1; i < 8; i++) {
+          const nr = r + i * dr;
+          const nf = f + i * df;
+          if (nr < 0 || nr > 7 || nf < 0 || nf > 7) break;
+
+          const target = board[nr * 8 + nf];
+          if (!target) continue;
+
+          if (target.color === p.color) {
+            break;
+          } else {
+            if (!pinnedPiece) {
+              pinnedPiece = target;
+              pinnedSq = nr * 8 + nf;
+            } else {
+              if (values[target.role] > values[pinnedPiece.role]) {
+                shapes.push({
+                  orig: makeSquare(r * 8 + f),
+                  dest: makeSquare(pinnedSq!),
+                  brush: 'paleRed',
+                });
+              }
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+  return shapes;
 }
