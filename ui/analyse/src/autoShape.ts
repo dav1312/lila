@@ -1,5 +1,5 @@
 // ui\analyse\src\autoShape.ts
-import { parseUci, makeSquare } from 'chessops/util';
+import { parseUci, makeSquare, parseSquare } from 'chessops/util';
 import { isDrop } from 'chessops/types';
 import { winningChances } from 'lib/ceval';
 import { opposite } from '@lichess-org/chessground/util';
@@ -23,7 +23,7 @@ const KNIGHT_JUMPS = [[1, 2], [1, -2], [-1, 2], [-1, -2], [2, 1], [2, -1], [-2, 
 const ROOK_DIRS = [[0, 1], [0, -1], [1, 0], [-1, 0]];
 const BISHOP_DIRS = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
 const QUEEN_DIRS = [...ROOK_DIRS, ...BISHOP_DIRS];
-const KING_MOVES = [...ROOK_DIRS, ...BISHOP_DIRS];
+const KING_MOVES = QUEEN_DIRS;
 
 export function makeShapesFromUci(
   color: Color,
@@ -150,7 +150,7 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
 
   const parts = nFen.split(' ');
   const board = parseFen(parts[0]);
-  const epSquare = parts[3] && parts[3] !== '-' ? squareIndex(parts[3]) : null;
+  const epSquare = parts[3] && parts[3] !== '-' ? parseSquare(parts[3]) ?? null : null;
 
   shapes = shapes.concat(detectPins(board));
   shapes = shapes.concat(detectUndefended(board));
@@ -196,10 +196,6 @@ const charToRole: Record<string, Role> = {
 };
 
 const values: Record<Role, number> = { pawn: 1, knight: 3, bishop: 3, rook: 5, queen: 9, king: 100 };
-
-function squareIndex(key: string): number {
-  return key.charCodeAt(0) - 97 + (key.charCodeAt(1) - 49) * 8;
-}
 
 function parseFen(placement: string): Board {
   const board: Board = new Array(64).fill(null);
