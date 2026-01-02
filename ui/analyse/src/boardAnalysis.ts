@@ -1,19 +1,19 @@
+// ui\analyse\src\boardAnalysis.ts
 import { makeSquare, charToRole, opposite } from 'chessops/util';
+import { SquareSet } from 'chessops/squareSet';
+import {
+  kingAttacks,
+  knightAttacks,
+  pawnAttacks,
+  rookAttacks,
+  bishopAttacks,
+  attacks,
+} from 'chessops/attacks';
 import type { Role, Color } from 'chessops/types';
 import type { DrawShape } from '@lichess-org/chessground/draw';
 
 export type Board = ({ role: Role; color: Color } | null)[];
 
-const KNIGHT_JUMPS = [
-  [1, 2],
-  [1, -2],
-  [-1, 2],
-  [-1, -2],
-  [2, 1],
-  [2, -1],
-  [-2, 1],
-  [-2, -1],
-];
 const ROOK_DIRS = [
   [0, 1],
   [0, -1],
@@ -27,7 +27,6 @@ const BISHOP_DIRS = [
   [-1, -1],
 ];
 const QUEEN_DIRS = [...ROOK_DIRS, ...BISHOP_DIRS];
-const KING_MOVES = QUEEN_DIRS;
 
 const values: Record<Role, number> = { pawn: 1, knight: 3, bishop: 3, rook: 5, queen: 9, king: 100 };
 
@@ -56,69 +55,74 @@ export function parseFen(placement: string): Board {
   return board;
 }
 
+function getBoardSets(
+  board: Board,
+  byColor: Color,
+): {
+  occupied: SquareSet;
+  pawns: SquareSet;
+  knights: SquareSet;
+  kings: SquareSet;
+  rooks: SquareSet;
+  bishops: SquareSet;
+  queens: SquareSet;
+} {
+  let occupied = SquareSet.empty();
+  let pawns = SquareSet.empty();
+  let knights = SquareSet.empty();
+  let kings = SquareSet.empty();
+  let rooks = SquareSet.empty();
+  let bishops = SquareSet.empty();
+  let queens = SquareSet.empty();
+
+  for (let i = 0; i < 64; i++) {
+    const p = board[i];
+    if (p) {
+      occupied = occupied.with(i);
+      if (p.color === byColor) {
+        switch (p.role) {
+          case 'pawn':
+            pawns = pawns.with(i);
+            break;
+          case 'knight':
+            knights = knights.with(i);
+            break;
+          case 'king':
+            kings = kings.with(i);
+            break;
+          case 'rook':
+            rooks = rooks.with(i);
+            break;
+          case 'bishop':
+            bishops = bishops.with(i);
+            break;
+          case 'queen':
+            queens = queens.with(i);
+            break;
+        }
+      }
+    }
+  }
+  return { occupied, pawns, knights, kings, rooks, bishops, queens };
+}
+
 function isSquareAttacked(board: Board, square: number, byColor: Color): boolean {
-  const r = Math.floor(square / 8);
-  const f = square % 8;
+  const { occupied, pawns, knights, kings, rooks, bishops, queens } = getBoardSets(board, byColor);
 
   // 1. Knight
-  for (const [dr, df] of KNIGHT_JUMPS) {
-    const nr = r + dr,
-      nf = f + df;
-    if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
-      const p = board[nr * 8 + nf];
-      if (p && p.color === byColor && p.role === 'knight') return true;
-    }
-  }
+  if (knightAttacks(square).intersects(knights)) return true;
 
-  // 2. Pawn
-  const pawnDir = byColor === 'white' ? -1 : 1; // Looking for attacker: White pawn attacks from below (-1 rank relative to target)
-  const pr = r + pawnDir;
-  if (pr >= 0 && pr < 8) {
-    for (const pf of [f - 1, f + 1]) {
-      if (pf >= 0 && pf < 8) {
-        const p = board[pr * 8 + pf];
-        if (p && p.color === byColor && p.role === 'pawn') return true;
-      }
-    }
-  }
+  // 2. Pawn (reverse lookup: where must a pawn be to attack 'square'?)
+  if (pawnAttacks(opposite(byColor), square).intersects(pawns)) return true;
 
   // 3. King
-  for (const [dr, df] of KING_MOVES) {
-    const nr = r + dr,
-      nf = f + df;
-    if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
-      const p = board[nr * 8 + nf];
-      if (p && p.color === byColor && p.role === 'king') return true;
-    }
-  }
+  if (kingAttacks(square).intersects(kings)) return true;
 
   // 4. Sliders (Rook/Queen)
-  for (const [dr, df] of ROOK_DIRS) {
-    for (let d = 1; d < 8; d++) {
-      const nr = r + d * dr,
-        nf = f + d * df;
-      if (nr < 0 || nr > 7 || nf < 0 || nf > 7) break;
-      const p = board[nr * 8 + nf];
-      if (p) {
-        if (p.color === byColor && (p.role === 'rook' || p.role === 'queen')) return true;
-        break;
-      }
-    }
-  }
+  if (rookAttacks(square, occupied).intersects(rooks.union(queens))) return true;
 
   // 5. Sliders (Bishop/Queen)
-  for (const [dr, df] of BISHOP_DIRS) {
-    for (let d = 1; d < 8; d++) {
-      const nr = r + d * dr,
-        nf = f + d * df;
-      if (nr < 0 || nr > 7 || nf < 0 || nf > 7) break;
-      const p = board[nr * 8 + nf];
-      if (p) {
-        if (p.color === byColor && (p.role === 'bishop' || p.role === 'queen')) return true;
-        break;
-      }
-    }
-  }
+  if (bishopAttacks(square, occupied).intersects(bishops.union(queens))) return true;
 
   return false;
 }
@@ -129,68 +133,27 @@ function getAttackers(
   byColor: Color,
 ): { square: number; role: Role; color: Color }[] {
   const attackers: { square: number; role: Role; color: Color }[] = [];
-  const r = Math.floor(square / 8);
-  const f = square % 8;
+  const { occupied, pawns, knights, kings, rooks, bishops, queens } = getBoardSets(board, byColor);
+
+  const add = (set: SquareSet) => {
+    for (const s of set) {
+      const p = board[s];
+      if (p) attackers.push({ ...p, square: s });
+    }
+  };
 
   // Knight
-  for (const [dr, df] of KNIGHT_JUMPS) {
-    const nr = r + dr,
-      nf = f + df;
-    if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
-      const p = board[nr * 8 + nf];
-      if (p && p.color === byColor && p.role === 'knight') attackers.push({ ...p, square: nr * 8 + nf });
-    }
-  }
+  add(knightAttacks(square).intersect(knights));
 
   // Pawn
-  const pawnDir = byColor === 'white' ? -1 : 1;
-  const pr = r + pawnDir;
-  if (pr >= 0 && pr < 8) {
-    for (const pf of [f - 1, f + 1]) {
-      if (pf >= 0 && pf < 8) {
-        const p = board[pr * 8 + pf];
-        if (p && p.color === byColor && p.role === 'pawn') attackers.push({ ...p, square: pr * 8 + pf });
-      }
-    }
-  }
+  add(pawnAttacks(opposite(byColor), square).intersect(pawns));
 
   // King
-  for (const [dr, df] of KING_MOVES) {
-    const nr = r + dr,
-      nf = f + df;
-    if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
-      const p = board[nr * 8 + nf];
-      if (p && p.color === byColor && p.role === 'king') attackers.push({ ...p, square: nr * 8 + nf });
-    }
-  }
+  add(kingAttacks(square).intersect(kings));
 
   // Sliders
-  for (const [dr, df] of ROOK_DIRS) {
-    for (let d = 1; d < 8; d++) {
-      const nr = r + d * dr,
-        nf = f + d * df;
-      if (nr < 0 || nr > 7 || nf < 0 || nf > 7) break;
-      const p = board[nr * 8 + nf];
-      if (p) {
-        if (p.color === byColor && (p.role === 'rook' || p.role === 'queen'))
-          attackers.push({ ...p, square: nr * 8 + nf });
-        break;
-      }
-    }
-  }
-  for (const [dr, df] of BISHOP_DIRS) {
-    for (let d = 1; d < 8; d++) {
-      const nr = r + d * dr,
-        nf = f + d * df;
-      if (nr < 0 || nr > 7 || nf < 0 || nf > 7) break;
-      const p = board[nr * 8 + nf];
-      if (p) {
-        if (p.color === byColor && (p.role === 'bishop' || p.role === 'queen'))
-          attackers.push({ ...p, square: nr * 8 + nf });
-        break;
-      }
-    }
-  }
+  add(rookAttacks(square, occupied).intersect(rooks.union(queens)));
+  add(bishopAttacks(square, occupied).intersect(bishops.union(queens)));
 
   return attackers;
 }
@@ -324,9 +287,14 @@ export function detectUndefended(board: Board): DrawShape[] {
 export function detectCheckable(board: Board, epSquare: number | null): DrawShape[] {
   const shapes: DrawShape[] = [];
   const kings: { color: Color; square: number }[] = [];
+  let occupied = SquareSet.empty();
+
   for (let i = 0; i < 64; i++) {
     const p = board[i];
-    if (p && p.role === 'king') kings.push({ color: p.color, square: i });
+    if (p) {
+      occupied = occupied.with(i);
+      if (p.role === 'king') kings.push({ color: p.color, square: i });
+    }
   }
 
   const workingBoard = [...board];
@@ -344,21 +312,12 @@ export function detectCheckable(board: Board, epSquare: number | null): DrawShap
       const p = board[i];
       if (!p || p.color !== enemyColor) continue;
 
-      const pr = Math.floor(i / 8);
-      const pf = i % 8;
       const dests: { to: number; promo?: boolean; ep?: boolean }[] = [];
 
       // Generate pseudo-legal moves
-      if (p.role === 'knight') {
-        for (const [dr, df] of KNIGHT_JUMPS) {
-          const nr = pr + dr,
-            nf = pf + df;
-          if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
-            const target = board[nr * 8 + nf];
-            if (!target || target.color !== p.color) dests.push({ to: nr * 8 + nf });
-          }
-        }
-      } else if (p.role === 'pawn') {
+      if (p.role === 'pawn') {
+        const pr = Math.floor(i / 8);
+        const pf = i % 8;
         const dir = p.color === 'white' ? 1 : -1;
         const promRank = p.color === 'white' ? 7 : 0;
         // Pushes
@@ -386,21 +345,13 @@ export function detectCheckable(board: Board, epSquare: number | null): DrawShap
             }
           }
         }
-      } else if (['rook', 'bishop', 'queen', 'king'].includes(p.role)) {
-        const dirs = p.role === 'rook' ? ROOK_DIRS : p.role === 'bishop' ? BISHOP_DIRS : QUEEN_DIRS;
-        const dist = p.role === 'king' ? 1 : 8;
-        for (const [dr, df] of dirs) {
-          for (let d = 1; d <= dist; d++) {
-            const nr = pr + d * dr,
-              nf = pf + d * df;
-            if (nr < 0 || nr > 7 || nf < 0 || nf > 7) break;
-            const destSq = nr * 8 + nf;
-            const target = board[destSq];
-            if (!target) dests.push({ to: destSq });
-            else {
-              if (target.color !== p.color) dests.push({ to: destSq });
-              break;
-            }
+      } else {
+        // Use chessops for all other pieces
+        const destinations = attacks(p, i, occupied);
+        for (const dest of destinations) {
+          const target = board[dest];
+          if (!target || target.color !== p.color) {
+            dests.push({ to: dest });
           }
         }
       }
