@@ -287,8 +287,12 @@ function isSquareAttacked(board: Board, square: number, byColor: Color): boolean
   return false;
 }
 
-function getAttackers(board: Board, square: number, byColor: Color): { role: Role; color: Color }[] {
-  const attackers: { role: Role; color: Color }[] = [];
+function getAttackers(
+  board: Board,
+  square: number,
+  byColor: Color,
+): { square: number; role: Role; color: Color }[] {
+  const attackers: { square: number; role: Role; color: Color }[] = [];
   const r = Math.floor(square / 8);
   const f = square % 8;
 
@@ -303,7 +307,8 @@ function getAttackers(board: Board, square: number, byColor: Color): { role: Rol
       nf = f + df;
     if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
       const p = board[nr * 8 + nf];
-      if (p && p.color === byColor && p.role === 'knight') attackers.push(p);
+      if (p && p.color === byColor && p.role === 'knight')
+        attackers.push({ ...p, square: nr * 8 + nf });
     }
   }
 
@@ -314,7 +319,8 @@ function getAttackers(board: Board, square: number, byColor: Color): { role: Rol
     for (const pf of [f - 1, f + 1]) {
       if (pf >= 0 && pf < 8) {
         const p = board[pr * 8 + pf];
-        if (p && p.color === byColor && p.role === 'pawn') attackers.push(p);
+        if (p && p.color === byColor && p.role === 'pawn')
+          attackers.push({ ...p, square: pr * 8 + pf });
       }
     }
   }
@@ -325,7 +331,8 @@ function getAttackers(board: Board, square: number, byColor: Color): { role: Rol
       nf = f + df;
     if (nr >= 0 && nr < 8 && nf >= 0 && nf < 8) {
       const p = board[nr * 8 + nf];
-      if (p && p.color === byColor && p.role === 'king') attackers.push(p);
+      if (p && p.color === byColor && p.role === 'king')
+        attackers.push({ ...p, square: nr * 8 + nf });
     }
   }
 
@@ -337,7 +344,8 @@ function getAttackers(board: Board, square: number, byColor: Color): { role: Rol
       if (nr < 0 || nr > 7 || nf < 0 || nf > 7) break;
       const p = board[nr * 8 + nf];
       if (p) {
-        if (p.color === byColor && (p.role === 'rook' || p.role === 'queen')) attackers.push(p);
+        if (p.color === byColor && (p.role === 'rook' || p.role === 'queen'))
+          attackers.push({ ...p, square: nr * 8 + nf });
         break;
       }
     }
@@ -349,7 +357,8 @@ function getAttackers(board: Board, square: number, byColor: Color): { role: Rol
       if (nr < 0 || nr > 7 || nf < 0 || nf > 7) break;
       const p = board[nr * 8 + nf];
       if (p) {
-        if (p.color === byColor && (p.role === 'bishop' || p.role === 'queen')) attackers.push(p);
+        if (p.color === byColor && (p.role === 'bishop' || p.role === 'queen'))
+          attackers.push({ ...p, square: nr * 8 + nf });
         break;
       }
     }
@@ -418,6 +427,56 @@ function detectPins(board: Board): DrawShape[] {
   return shapes;
 }
 
+function getSEE(board: Board, square: number, target: { role: Role; color: Color }): number {
+  const tempBoard = [...board];
+  const balances: number[] = [];
+  let pieceOnSquare = target;
+  let currentGain = 0;
+  const attackerColor = opposite(target.color);
+  let nextColor = attackerColor;
+
+  while (true) {
+    const attackers = getAttackers(tempBoard, square, nextColor);
+    if (attackers.length === 0) break;
+
+    // Sort by value to capture with cheapest piece first
+    attackers.sort((a, b) => values[a.role] - values[b.role]);
+
+    const bestAttacker = attackers[0];
+
+    // King safety check: King cannot capture into check
+    if (bestAttacker.role === 'king') {
+      if (isSquareAttacked(tempBoard, square, opposite(nextColor))) {
+        break;
+      }
+    }
+
+    const valCaptured = values[pieceOnSquare.role];
+    if (nextColor === attackerColor) currentGain += valCaptured;
+    else currentGain -= valCaptured;
+
+    balances.push(currentGain);
+
+    // Update board
+    tempBoard[square] = bestAttacker;
+    tempBoard[bestAttacker.square] = null;
+    pieceOnSquare = bestAttacker;
+    nextColor = opposite(nextColor);
+  }
+
+  if (balances.length === 0) return 0;
+
+  // Minimax
+  let currentVal = balances[balances.length - 1];
+  for (let i = balances.length - 2; i >= 0; i--) {
+    // i % 2 === 0 means Attacker just moved, next is Defender (minimize)
+    if (i % 2 === 0) currentVal = Math.min(balances[i], currentVal);
+    else currentVal = Math.max(balances[i], currentVal);
+  }
+
+  return currentVal;
+}
+
 function detectUndefended(board: Board): DrawShape[] {
   const shapes: DrawShape[] = [];
   for (let i = 0; i < 64; i++) {
@@ -428,16 +487,10 @@ function detectUndefended(board: Board): DrawShape[] {
     // Must be attacked to be relevant
     if (!isSquareAttacked(board, i, enemy)) continue;
 
-    // Check if defended by own color
-    if (!isSquareAttacked(board, i, p.color)) {
+    // Check Static Exchange Evaluation
+    const see = getSEE(board, i, p);
+    if (see > 0) {
       shapes.push({ orig: makeSquare(i), brush: 'undefended' });
-    } else {
-      // Defended, check values: if attacker < target, it's still vulnerable
-      const attackers = getAttackers(board, i, enemy);
-      const minVal = Math.min(...attackers.map(a => values[a.role]));
-      if (minVal < values[p.role]) {
-        shapes.push({ orig: makeSquare(i), brush: 'undefended' });
-      }
     }
   }
   return shapes;
