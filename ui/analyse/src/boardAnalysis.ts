@@ -1,10 +1,10 @@
 // ui\analyse\src\boardAnalysis.ts
-import { parseSquare, opposite, roleToChar, squareRank } from 'chessops/util';
+import { parseSquare, opposite, squareRank } from 'chessops/util';
 import { SquareSet } from 'chessops/squareSet';
 import { kingAttacks, knightAttacks, pawnAttacks, rookAttacks, bishopAttacks } from 'chessops/attacks';
 import { Board as ChessopsBoard } from 'chessops/board';
 import { Chess } from 'chessops/chess';
-import { parseBoardFen, parseFen as parseFenLib } from 'chessops/fen';
+import { parseBoardFen } from 'chessops/fen';
 import { chessgroundDests } from 'chessops/compat';
 import { FILE_NAMES, RANK_NAMES } from 'chessops/types';
 import type { Role, Color } from 'chessops/types';
@@ -64,30 +64,13 @@ function fromChessopsBoard(cb: ChessopsBoard): Board {
   return board;
 }
 
-function toBoardFen(board: Board): string {
-  let fen = '';
-  let empty = 0;
-  for (let r = 7; r >= 0; r--) {
-    for (let f = 0; f < 8; f++) {
-      const p = board[r * 8 + f];
-      if (!p) {
-        empty++;
-      } else {
-        if (empty > 0) {
-          fen += empty;
-          empty = 0;
-        }
-        const char = roleToChar(p.role);
-        fen += p.color === 'white' ? char.toUpperCase() : char;
-      }
-    }
-    if (empty > 0) {
-      fen += empty;
-      empty = 0;
-    }
-    if (r > 0) fen += '/';
+function toChessopsBoard(board: Board): ChessopsBoard {
+  const cb = ChessopsBoard.empty();
+  for (let i = 0; i < 64; i++) {
+    const p = board[i];
+    if (p) cb.set(i, p);
   }
-  return fen;
+  return cb;
 }
 
 export function parseFen(placement: string): Board {
@@ -345,6 +328,7 @@ export function detectCheckable(board: Board, epSquare: number | null): DrawShap
   }
 
   const state = getBoardSets(board);
+  const cb = toChessopsBoard(board);
 
   for (const k of kings) {
     const oppColor = opposite(k.color);
@@ -352,14 +336,16 @@ export function detectCheckable(board: Board, epSquare: number | null): DrawShap
     // Skip if already in check
     if (isSquareAttacked(k.square, oppColor, state.occupied, oppSets)) continue;
 
-    const boardFen = toBoardFen(board);
-    const turnChar = oppColor === 'white' ? 'w' : 'b';
-    const epChar = epSquare !== null ? key(epSquare) : '-';
-    const fullFen = `${boardFen} ${turnChar} - ${epChar} 0 1`;
-
-    const setupRes = parseFenLib(fullFen);
-    if ('error' in setupRes) continue;
-    const res = Chess.fromSetup(setupRes.value);
+    const res = Chess.fromSetup({
+      board: cb,
+      turn: oppColor,
+      castlingRights: SquareSet.empty(),
+      epSquare: epSquare ?? undefined,
+      halfmoves: 0,
+      fullmoves: 1,
+      pockets: undefined,
+      remainingChecks: undefined,
+    });
     if ('error' in res) continue;
     const legalPos = res.value;
 
