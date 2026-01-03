@@ -3,8 +3,6 @@ import assert from 'node:assert/strict';
 import { parseSquare } from 'chessops/util';
 import { parseFen, detectPins, detectUndefended, detectCheckable } from '../src/boardAnalysis';
 
-// Helper to run all algorithms and return a simple string array for comparison
-// Returns strings in format: "square:type" (e.g., "e5:pin")
 function runAnalysis(fen: string): string[] {
   const parts = fen.split(' ');
   const board = parseFen(parts[0]);
@@ -20,20 +18,20 @@ function runAnalysis(fen: string): string[] {
 }
 
 test('Pin: Absolute', () => {
-  const fen = '4k3/4p3/8/8/8/4R3/8/K7 w - - 0 1';
+  const fen = '4k3/4n3/8/8/8/4R3/8/K7 w - - 0 1';
   const expected = ['e8:checkable', 'e7:pin'].sort();
 
   assert.deepEqual(runAnalysis(fen), expected);
 });
 
 test('Pin: Relative', () => {
-  const fen = '4q2k/4p2p/8/8/8/4R3/P7/K7 w - - 0 1';
+  const fen = '4q2k/4n2p/8/8/8/4R3/P7/K7 w - - 0 1';
   const expected = ['e7:pin'].sort();
 
   assert.deepEqual(runAnalysis(fen), expected);
 });
 
-test('Pin: No pin if trade', () => {
+test('Pin: Trade', () => {
   const fen = 'k2q1b2/8/3n4/8/1B6/8/7P/7K w - - 0 1';
   const expected: string[] = [];
 
@@ -55,6 +53,13 @@ test('Checkable: En passant', () => {
 });
 
 test('Checkable: Promotion', () => {
+  const fen = '4k3/2P5/8/8/8/8/8/2K5 w - - 0 1';
+  const expected = ['e8:checkable'].sort();
+
+  assert.deepEqual(runAnalysis(fen), expected);
+});
+
+test('Checkable: Underpromotion', () => {
   const fen = '8/2P1k3/8/8/8/8/8/2K5 w - - 0 1';
   const expected = ['e7:checkable'].sort();
 
@@ -68,7 +73,7 @@ test('Undefended: Fork', () => {
   assert.deepEqual(runAnalysis(fen), expected);
 });
 
-test('Undefended: Underdefended pawn', () => {
+test('Undefended: Underdefended', () => {
   const fen = '6k1/8/8/r7/1b6/P7/1B5P/7K w - - 0 1';
   const expected = ['b4:undefended', 'a3:undefended'].sort();
 
@@ -82,7 +87,7 @@ test('Undefended: Losing trade', () => {
   assert.deepEqual(runAnalysis(fen), expected);
 });
 
-test('Undefended: Defended pawn (order of trades)', () => {
+test('Undefended: Order of trades', () => {
   const fen = '6rk/6pp/5p2/r7/1b6/P3Q3/1B5P/7K w - - 0 1';
   const expected = ['b4:undefended'].sort();
 
