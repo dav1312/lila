@@ -12,7 +12,7 @@ import {
 } from 'chessops/attacks';
 import { Board as ChessopsBoard } from 'chessops/board';
 import { Chess } from 'chessops/chess';
-import { parseBoardFen, parseCastlingFen } from 'chessops/fen';
+import { parseCastlingFen, parseFen as parseFenChessops } from 'chessops/fen';
 import { chessgroundDests } from 'chessops/compat';
 import type { Role, Color } from 'chessops/types';
 import type { DrawShape } from '@lichess-org/chessground/draw';
@@ -39,8 +39,8 @@ function toChessopsBoard(board: Board): ChessopsBoard {
 }
 
 export function parseFen(placement: string): Board {
-  const res = parseBoardFen(placement);
-  return 'error' in res ? new Array(64).fill(null) : fromChessopsBoard(res.value);
+  const res = parseFenChessops(placement);
+  return 'error' in res ? new Array(64).fill(null) : fromChessopsBoard(res.value.board);
 }
 
 function isSquareAttacked(square: number, byColor: Color, cb: ChessopsBoard): boolean {
