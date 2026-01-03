@@ -1,4 +1,4 @@
-import { parseUci, makeSquare } from 'chessops/util';
+import { parseUci, makeSquare, parseSquare } from 'chessops/util';
 import { isDrop } from 'chessops/types';
 import { winningChances } from 'lib/ceval';
 import { opposite } from '@lichess-org/chessground/util';
@@ -6,6 +6,7 @@ import type { DrawModifiers, DrawShape } from '@lichess-org/chessground/draw';
 import { annotationShapes } from 'lib/game/glyphs';
 import type AnalyseCtrl from './ctrl';
 import { isUci } from 'lib/game/chess';
+import { detectPins, detectUndefended, detectCheckable, parseFen } from './boardAnalysis';
 
 const pieceDrop = (key: Key, role: Role, color: Color): DrawShape => ({
   orig: key,
@@ -119,6 +120,35 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
   }
   if (ctrl.showMoveAnnotationsOnBoard()) shapes = shapes.concat(annotationShapes(ctrl.node));
   if (ctrl.showVariationArrows()) hiliteVariations(ctrl, shapes);
+
+  // Register brushes
+  ctrl.chessground.state.drawable.brushes['pin'] = {
+    key: 'pin',
+    color: 'black',
+    opacity: 1,
+    lineWidth: 4,
+  };
+  ctrl.chessground.state.drawable.brushes['undefended'] = {
+    key: 'undefended',
+    color: 'red',
+    opacity: 1,
+    lineWidth: 4,
+  };
+  ctrl.chessground.state.drawable.brushes['checkable'] = {
+    key: 'checkable',
+    color: 'blue',
+    opacity: 1,
+    lineWidth: 4,
+  };
+
+  const parts = nFen.split(' ');
+  const board = parseFen(parts[0]);
+  const epSquare = parts[3] && parts[3] !== '-' ? (parseSquare(parts[3]) ?? null) : null;
+
+  if (ctrl.showPin()) shapes = shapes.concat(detectPins(board));
+  if (ctrl.showUndefended()) shapes = shapes.concat(detectUndefended(board));
+  if (ctrl.showCheckable()) shapes = shapes.concat(detectCheckable(board, epSquare, parts[2]));
+
   return shapes;
 }
 
