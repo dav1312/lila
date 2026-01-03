@@ -4,7 +4,7 @@ import { SquareSet } from 'chessops/squareSet';
 import { kingAttacks, knightAttacks, pawnAttacks, rookAttacks, bishopAttacks } from 'chessops/attacks';
 import { Board as ChessopsBoard } from 'chessops/board';
 import { Chess } from 'chessops/chess';
-import { parseBoardFen } from 'chessops/fen';
+import { parseBoardFen, parseCastlingFen } from 'chessops/fen';
 import { chessgroundDests } from 'chessops/compat';
 import { FILE_NAMES, RANK_NAMES } from 'chessops/types';
 import type { Role, Color } from 'chessops/types';
@@ -91,11 +91,13 @@ export function detectPins(board: Board): DrawShape[] {
   const cb = toChessopsBoard(board);
   const dirs: Partial<Record<Role, number[][]>> = { rook: ROOK_DIRS, bishop: BISHOP_DIRS, queen: QUEEN_DIRS };
 
+  // Find sliding attackers
   for (let r = 0; r < 8; r++) {
     for (let f = 0; f < 8; f++) {
       const p = board[r * 8 + f];
       if (!p || !dirs[p.role]) continue;
 
+      // Project a ray in every direction the sliding piece can move
       for (const [dr, df] of dirs[p.role]!) {
         let pinnedSq: number | null = null;
         let pinnedPiece: { role: Role; color: Color } | null = null;
@@ -106,26 +108,35 @@ export function detectPins(board: Board): DrawShape[] {
             targetSq = nr * 8 + nf;
           if (nr < 0 || nr > 7 || nf < 0 || nf > 7) break;
           const target = board[targetSq];
+
           if (!target) continue;
 
+          // If we hit a piece of the same color as the attacker, the ray is blocked
           if (target.color === p.color) break;
+
           if (!pinnedPiece) {
+            // First enemy piece encountered is the one that might be pinned
             pinnedPiece = target;
             pinnedSq = targetSq;
           } else {
+            // Second enemy piece encountered is the piece being shielded
             if (target.role === 'king') {
+              // Absolute pin
               shapes.push({ orig: key(pinnedSq!), brush: 'pin' });
             } else {
+              // Relative pin
               const valTarget = values[target.role],
                 valPinned = values[pinnedPiece.role],
                 valAttacker = values[p.role];
+
               if (
-                valTarget > valPinned &&
-                (!isSquareAttacked(targetSq, target.color, cb) || valTarget > valAttacker)
+                valTarget > valPinned && // Back piece is worth more than front piece
+                (!isSquareAttacked(targetSq, target.color, cb) || valTarget > valAttacker) // Back piece is undefended OR worth more than the attacker
               ) {
                 shapes.push({ orig: key(pinnedSq!), brush: 'pin' });
               }
             }
+            // Once we hit a second piece the ray ends
             break;
           }
         }
@@ -186,18 +197,23 @@ export function detectUndefended(board: Board): DrawShape[] {
   return shapes;
 }
 
-export function detectCheckable(board: Board, epSquare: number | null): DrawShape[] {
+export function detectCheckable(board: Board, epSquare: number | null, castling: string): DrawShape[] {
   const shapes: DrawShape[] = [];
   const cb = toChessopsBoard(board);
 
+  const castlingRes = parseCastlingFen(cb, castling);
+  const castlingRights = 'error' in castlingRes ? SquareSet.empty() : castlingRes.value;
+
   for (const color of ['white', 'black'] as const) {
     const kSq = cb.kingOf(color);
+
+    // Skip if King is already in check
     if (kSq === undefined || isSquareAttacked(kSq, opposite(color), cb)) continue;
 
     const res = Chess.fromSetup({
       board: cb,
       turn: opposite(color),
-      castlingRights: SquareSet.empty(),
+      castlingRights: castlingRights,
       epSquare: epSquare ?? undefined,
       halfmoves: 0,
       fullmoves: 1,
@@ -220,6 +236,7 @@ export function detectCheckable(board: Board, epSquare: number | null): DrawShap
       for (const toStr of tos) {
         const to = parseSquare(toStr);
         const rank = squareRank(to);
+
         const isPromo = piece.role === 'pawn' && (rank === 0 || rank === 7);
         const candidates: (Role | undefined)[] = isPromo ? ['queen', 'knight'] : [undefined];
 

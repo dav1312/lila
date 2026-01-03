@@ -148,7 +148,7 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
 
   if (ctrl.showPin()) shapes = shapes.concat(detectPins(board));
   if (ctrl.showUndefended()) shapes = shapes.concat(detectUndefended(board));
-  if (ctrl.showCheckable()) shapes = shapes.concat(detectCheckable(board, epSquare));
+  if (ctrl.showCheckable()) shapes = shapes.concat(detectCheckable(board, epSquare, parts[2]));
 
   return shapes;
 }
