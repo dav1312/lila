@@ -1,3 +1,4 @@
+// ui\analyse\src\ctrl.ts
 import { playable, playedTurns, fenToEpd, readDests, readDrops, validUci } from 'lib/game';
 import * as keyboard from './keyboard';
 import { treeReconstruct, plyColor } from './util';
@@ -11,7 +12,7 @@ import { makeTree, treePath, treeOps, type TreeWrapper } from 'lib/tree';
 import { compute as computeAutoShapes } from './autoShape';
 import type { Config as ChessgroundConfig } from '@lichess-org/chessground/config';
 import type { CevalHandler, EvalMeta, CevalOpts } from 'lib/ceval';
-import { CevalCtrl, isEvalBetter, sanIrreversible } from 'lib/ceval';
+import { CevalCtrl, isEvalBetter, sanIrreversible, winningChances } from 'lib/ceval';
 import { TreeView } from './treeView/treeView';
 import type { Prop, Toggle } from 'lib';
 import { defined, prop, toggle, debounce, throttle, requestIdleCallback, propWithEffect } from 'lib';
@@ -24,7 +25,7 @@ import { make as makePractice, type PracticeCtrl } from './practice/practiceCtrl
 import { make as makeRetro, type RetroCtrl } from './retrospect/retroCtrl';
 import { make as makeSocket, type Socket } from './socket';
 import { nextGlyphSymbol, add3or5FoldGlyphs } from './nodeFinder';
-import { opposite, parseUci, makeSquare, roleToChar } from 'chessops/util';
+import { opposite, parseUci, makeSquare, roleToChar, parseSquare } from 'chessops/util';
 import { type Outcome, isNormal } from 'chessops/types';
 import { parseFen } from 'chessops/fen';
 import type { Position, PositionError } from 'chessops/chess';
@@ -47,6 +48,7 @@ import { ChatCtrl } from 'lib/chat/chatCtrl';
 import { confirm } from 'lib/view';
 import api from './api';
 import { displayColumns } from 'lib/device';
+import { parseFen as boardFen, detectUndefended, values } from './boardAnalysis';
 
 export default class AnalyseCtrl implements CevalHandler {
   data: AnalyseData;
@@ -158,6 +160,7 @@ export default class AnalyseCtrl implements CevalHandler {
 
     this.initialize(this.data, false);
     this.initCeval();
+    this.autoTagTree(this.tree.root);
     this.pendingCopyPath = propWithEffect(null, this.redraw);
     this.pendingDeletionPath = propWithEffect(null, this.redraw);
     this.initialPath = this.makeInitialPath();
@@ -236,6 +239,7 @@ export default class AnalyseCtrl implements CevalHandler {
     const prevTree = merge && this.tree.root;
     this.tree = makeTree(treeReconstruct(this.data.treeParts, this.data.sidelines));
     if (prevTree) this.tree.merge(prevTree);
+    this.autoTagTree(this.tree.root);
     const mainline = treeOps.mainlineNodeList(this.tree.root);
     if (this.data.game.status.name === 'draw') {
       if (add3or5FoldGlyphs(mainline)) this.data.game.threefold = true;
@@ -720,6 +724,13 @@ export default class AnalyseCtrl implements CevalHandler {
         if (node.ceval?.cloud && this.ceval.isDeeper()) node.ceval = ev;
       }
 
+      if (!isThreat) {
+        // Tag this move (needs parent eval)
+        this.autoTagNode(node, this.tree.nodeAtPath(path.slice(0, -2)));
+        // Tag children (they might have been waiting for this node's eval)
+        node.children.forEach(child => this.autoTagNode(child, node));
+      }
+
       if (path === this.path) {
         this.setAutoShapes();
         if (!isThreat) {
@@ -945,6 +956,7 @@ export default class AnalyseCtrl implements CevalHandler {
   mergeAnalysisData(data: ServerEvalData) {
     if (this.study && this.study.data.chapter.id !== data.ch) return;
     this.tree.merge(data.tree);
+    this.autoTagTree(this.tree.root);
     this.data.analysis = data.analysis;
     if (data.analysis)
       data.analysis.partial = !!treeOps.findInMainline(data.tree, this.partialAnalysisCallback);
@@ -1095,4 +1107,49 @@ export default class AnalyseCtrl implements CevalHandler {
     this.idbTree.revealNode();
     this.redraw();
   }
+
+  private autoTagNode = (node: Tree.Node, parent?: Tree.Node): void => {
+    if (!parent) return;
+    const nodeEval = node.ceval || node.eval;
+    const parentEval = parent.ceval || parent.eval;
+    if (!nodeEval || !parentEval) return;
+
+    const color = plyColor(node.ply);
+    const diff = winningChances.povDiff(color, parentEval, nodeEval);
+    console.log(diff);
+    const glyphs = (node.glyphs || []).filter(g => !['?!', '?', '??', '!!'].includes(g.symbol));
+
+    if (diff < -0.3) {
+      node.glyphs = [...glyphs, { id: 4, symbol: '??', name: 'Blunder' }];
+    } else if (diff < -0.2) {
+      node.glyphs = [...glyphs, { id: 2, symbol: '?', name: 'Mistake' }];
+    } else if (diff < -0.1) {
+      node.glyphs = [...glyphs, { id: 6, symbol: '?!', name: 'Inaccuracy' }];
+    } else if (diff > -0.02 && node.uci) {
+      const destKey = node.uci.slice(2, 4) as Key;
+      const board = boardFen(node.fen.split(' ')[0]);
+      const piece = board[parseSquare(destKey)!];
+      if (piece && ['knight', 'bishop', 'rook', 'queen'].includes(piece.role)) {
+        if (detectUndefended(board).some(s => s.orig === destKey)) {
+          const prevBoard = boardFen(parent.fen.split(' ')[0]);
+          const captured = prevBoard[parseSquare(destKey)!];
+          if (!captured || values[captured.role] < values[piece.role]) {
+            node.glyphs = [...glyphs, { id: 3, symbol: '!!', name: 'Brilliant' }];
+            return;
+          }
+        }
+      }
+      node.glyphs = glyphs.length > 0 ? glyphs : undefined;
+    } else {
+      node.glyphs = glyphs.length > 0 ? glyphs : undefined;
+    }
+  };
+
+  private autoTagTree = (root: Tree.Node): void => {
+    const iter = (node: Tree.Node, parent?: Tree.Node) => {
+      this.autoTagNode(node, parent);
+      node.children.forEach(c => iter(c, node));
+    };
+    iter(root);
+  };
 }

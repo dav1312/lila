@@ -1,3 +1,4 @@
+// ui\analyse\src\boardAnalysis.ts
 import { parseSquare, opposite, squareRank, makeSquare } from 'chessops/util';
 import { SquareSet } from 'chessops/squareSet';
 import {
@@ -20,7 +21,7 @@ import type { Key } from '@lichess-org/chessground/types';
 
 export type Board = ({ role: Role; color: Color } | null)[];
 
-const values: Record<Role, number> = { pawn: 1, knight: 3, bishop: 3, rook: 5, queen: 9, king: 100 };
+export const values: Record<Role, number> = { pawn: 1, knight: 3, bishop: 3, rook: 5, queen: 9, king: 100 };
 
 function fromChessopsBoard(cb: ChessopsBoard): Board {
   const board: Board = new Array(64).fill(null);
