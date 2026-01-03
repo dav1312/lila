@@ -1,12 +1,11 @@
 // ui\analyse\src\boardAnalysis.ts
-import { parseSquare, opposite, squareRank } from 'chessops/util';
+import { parseSquare, opposite, squareRank, makeSquare } from 'chessops/util';
 import { SquareSet } from 'chessops/squareSet';
 import { kingAttacks, knightAttacks, pawnAttacks, rookAttacks, bishopAttacks } from 'chessops/attacks';
 import { Board as ChessopsBoard } from 'chessops/board';
 import { Chess } from 'chessops/chess';
 import { parseBoardFen, parseCastlingFen } from 'chessops/fen';
 import { chessgroundDests } from 'chessops/compat';
-import { FILE_NAMES, RANK_NAMES } from 'chessops/types';
 import type { Role, Color } from 'chessops/types';
 import type { DrawShape } from '@lichess-org/chessground/draw';
 import type { Key } from '@lichess-org/chessground/types';
@@ -29,7 +28,6 @@ const QUEEN_DIRS = [...ROOK_DIRS, ...BISHOP_DIRS];
 
 const values: Record<Role, number> = { pawn: 1, knight: 3, bishop: 3, rook: 5, queen: 9, king: 100 };
 const comparePieces = (a: { role: Role }, b: { role: Role }) => values[a.role] - values[b.role];
-const key = (s: number): Key => (FILE_NAMES[s & 7] + RANK_NAMES[s >> 3]) as Key;
 
 function fromChessopsBoard(cb: ChessopsBoard): Board {
   const board: Board = new Array(64).fill(null);
@@ -122,7 +120,7 @@ export function detectPins(board: Board): DrawShape[] {
             // Second enemy piece encountered is the piece being shielded
             if (target.role === 'king') {
               // Absolute pin
-              shapes.push({ orig: key(pinnedSq!), brush: 'pin' });
+              shapes.push({ orig: makeSquare(pinnedSq!) as Key, brush: 'pin' });
             } else {
               // Relative pin
               const valTarget = values[target.role],
@@ -133,7 +131,7 @@ export function detectPins(board: Board): DrawShape[] {
                 valTarget > valPinned && // Back piece is worth more than front piece
                 (!isSquareAttacked(targetSq, target.color, cb) || valTarget > valAttacker) // Back piece is undefended OR worth more than the attacker
               ) {
-                shapes.push({ orig: key(pinnedSq!), brush: 'pin' });
+                shapes.push({ orig: makeSquare(pinnedSq!) as Key, brush: 'pin' });
               }
             }
             // Once we hit a second piece the ray ends
@@ -191,7 +189,7 @@ export function detectUndefended(board: Board): DrawShape[] {
   for (let i = 0; i < 64; i++) {
     const p = board[i];
     if (p && p.role !== 'king' && isSquareAttacked(i, opposite(p.color), cb) && getSEE(board, i, p) > 0) {
-      shapes.push({ orig: key(i), brush: 'undefended' });
+      shapes.push({ orig: makeSquare(i) as Key, brush: 'undefended' });
     }
   }
   return shapes;
@@ -252,7 +250,7 @@ export function detectCheckable(board: Board, epSquare: number | null, castling:
       }
     }
 
-    if (checkFound) shapes.push({ orig: key(kSq), brush: 'checkable' });
+    if (checkFound) shapes.push({ orig: makeSquare(kSq) as Key, brush: 'checkable' });
   }
   return shapes;
 }
