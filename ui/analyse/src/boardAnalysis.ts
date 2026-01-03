@@ -21,7 +21,6 @@ import type { Key } from '@lichess-org/chessground/types';
 export type Board = ({ role: Role; color: Color } | null)[];
 
 const values: Record<Role, number> = { pawn: 1, knight: 3, bishop: 3, rook: 5, queen: 9, king: 100 };
-const comparePieces = (a: { role: Role }, b: { role: Role }) => values[a.role] - values[b.role];
 
 function fromChessopsBoard(cb: ChessopsBoard): Board {
   const board: Board = new Array(64).fill(null);
@@ -128,30 +127,39 @@ export function detectPins(board: Board): DrawShape[] {
   return shapes;
 }
 
-function getSEE(board: Board, square: number, target: { role: Role; color: Color }): number {
-  const cb = toChessopsBoard(board);
+function getSEE(
+  board: Board,
+  square: number,
+  target: { role: Role; color: Color },
+  cb: ChessopsBoard,
+): number {
   const balances: number[] = [];
   let pieceOnSquare = target;
   let currentGain = 0;
   const attackerColor = opposite(target.color);
   let nextColor = attackerColor;
 
+  const simulationBoard = cb.clone();
+
   while (true) {
-    const attackers = getAttackers(board, square, nextColor, cb);
+    const attackers = getAttackers(board, square, nextColor, simulationBoard);
     if (attackers.length === 0) break;
 
-    // Sort by value to capture with cheapest piece first
-    attackers.sort(comparePieces);
-
-    const bestAttacker = attackers[0];
+    // LVA
+    let bestAttacker = attackers[0];
+    for (let i = 1; i < attackers.length; i++) {
+      if (values[attackers[i].role] < values[bestAttacker.role]) {
+        bestAttacker = attackers[i];
+      }
+    }
 
     // King safety check
-    if (bestAttacker.role === 'king' && isSquareAttacked(square, opposite(nextColor), cb)) break;
+    if (bestAttacker.role === 'king' && isSquareAttacked(square, opposite(nextColor), simulationBoard)) break;
 
     currentGain += (nextColor === attackerColor ? 1 : -1) * values[pieceOnSquare.role];
     balances.push(currentGain);
 
-    cb.take(bestAttacker.square);
+    simulationBoard.take(bestAttacker.square);
     pieceOnSquare = bestAttacker;
     nextColor = opposite(nextColor);
   }
@@ -172,7 +180,7 @@ export function detectUndefended(board: Board): DrawShape[] {
 
   for (let i = 0; i < 64; i++) {
     const p = board[i];
-    if (p && p.role !== 'king' && isSquareAttacked(i, opposite(p.color), cb) && getSEE(board, i, p) > 0) {
+    if (p && p.role !== 'king' && isSquareAttacked(i, opposite(p.color), cb) && getSEE(board, i, p, cb) > 0) {
       shapes.push({ orig: makeSquare(i) as Key, brush: 'undefended' });
     }
   }
