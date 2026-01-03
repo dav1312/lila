@@ -1,7 +1,15 @@
-// ui\analyse\src\boardAnalysis.ts
 import { parseSquare, opposite, squareRank, makeSquare } from 'chessops/util';
 import { SquareSet } from 'chessops/squareSet';
-import { kingAttacks, knightAttacks, pawnAttacks, rookAttacks, bishopAttacks } from 'chessops/attacks';
+import {
+  attacks,
+  ray,
+  between,
+  kingAttacks,
+  knightAttacks,
+  pawnAttacks,
+  rookAttacks,
+  bishopAttacks,
+} from 'chessops/attacks';
 import { Board as ChessopsBoard } from 'chessops/board';
 import { Chess } from 'chessops/chess';
 import { parseBoardFen, parseCastlingFen } from 'chessops/fen';
@@ -11,20 +19,6 @@ import type { DrawShape } from '@lichess-org/chessground/draw';
 import type { Key } from '@lichess-org/chessground/types';
 
 export type Board = ({ role: Role; color: Color } | null)[];
-
-const ROOK_DIRS = [
-  [0, 1],
-  [0, -1],
-  [1, 0],
-  [-1, 0],
-];
-const BISHOP_DIRS = [
-  [1, 1],
-  [1, -1],
-  [-1, 1],
-  [-1, -1],
-];
-const QUEEN_DIRS = [...ROOK_DIRS, ...BISHOP_DIRS];
 
 const values: Record<Role, number> = { pawn: 1, knight: 3, bishop: 3, rook: 5, queen: 9, king: 100 };
 const comparePieces = (a: { role: Role }, b: { role: Role }) => values[a.role] - values[b.role];
@@ -87,57 +81,47 @@ function getAttackers(
 export function detectPins(board: Board): DrawShape[] {
   const shapes: DrawShape[] = [];
   const cb = toChessopsBoard(board);
-  const dirs: Partial<Record<Role, number[][]>> = { rook: ROOK_DIRS, bishop: BISHOP_DIRS, queen: QUEEN_DIRS };
+  const occupied = cb.occupied;
 
-  // Find sliding attackers
-  for (let r = 0; r < 8; r++) {
-    for (let f = 0; f < 8; f++) {
-      const p = board[r * 8 + f];
-      if (!p || !dirs[p.role]) continue;
+  for (const s of occupied) {
+    const piece = board[s];
+    if (!piece) continue;
+    if (piece.role !== 'bishop' && piece.role !== 'rook' && piece.role !== 'queen') continue;
 
-      // Project a ray in every direction the sliding piece can move
-      for (const [dr, df] of dirs[p.role]!) {
-        let pinnedSq: number | null = null;
-        let pinnedPiece: { role: Role; color: Color } | null = null;
+    const attackSet = attacks(piece, s, occupied);
+    const pinnedCandidates = attackSet.intersect(cb[opposite(piece.color)]);
 
-        for (let i = 1; i < 8; i++) {
-          const nr = r + i * dr,
-            nf = f + i * df,
-            targetSq = nr * 8 + nf;
-          if (nr < 0 || nr > 7 || nf < 0 || nf > 7) break;
-          const target = board[targetSq];
+    for (const p of pinnedCandidates) {
+      const raySet = ray(s, p);
+      const xray = attacks(piece, s, occupied.without(p)).intersect(raySet);
+      const targets = xray.intersect(occupied).without(p);
 
-          if (!target) continue;
+      for (const t of targets) {
+        if (!between(s, t).has(p)) continue;
 
-          // If we hit a piece of the same color as the attacker, the ray is blocked
-          if (target.color === p.color) break;
+        const target = board[t];
+        if (!target || target.color === piece.color) continue;
 
-          if (!pinnedPiece) {
-            // First enemy piece encountered is the one that might be pinned
-            pinnedPiece = target;
-            pinnedSq = targetSq;
-          } else {
-            // Second enemy piece encountered is the piece being shielded
-            if (target.role === 'king') {
-              // Absolute pin
-              shapes.push({ orig: makeSquare(pinnedSq!) as Key, brush: 'pin' });
-            } else {
-              // Relative pin
-              const valTarget = values[target.role],
-                valPinned = values[pinnedPiece.role],
-                valAttacker = values[p.role];
+        const pinnedPiece = board[p];
+        if (!pinnedPiece) continue;
 
-              if (
-                valTarget > valPinned && // Back piece is worth more than front piece
-                (!isSquareAttacked(targetSq, target.color, cb) || valTarget > valAttacker) // Back piece is undefended OR worth more than the attacker
-              ) {
-                shapes.push({ orig: makeSquare(pinnedSq!) as Key, brush: 'pin' });
-              }
-            }
-            // Once we hit a second piece the ray ends
-            break;
+        if (target.role === 'king') {
+          // Absolute pin
+          shapes.push({ orig: makeSquare(p) as Key, brush: 'pin' });
+        } else {
+          // Relative pin
+          const valTarget = values[target.role],
+            valPinned = values[pinnedPiece.role],
+            valAttacker = values[piece.role];
+
+          if (
+            valTarget > valPinned && // Back piece is worth more than front piece
+            (!isSquareAttacked(t, target.color, cb) || valTarget > valAttacker) // Back piece is undefended OR worth more than the attacker
+          ) {
+            shapes.push({ orig: makeSquare(p) as Key, brush: 'pin' });
           }
         }
+        break;
       }
     }
   }
