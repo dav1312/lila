@@ -1108,6 +1108,59 @@ export default class AnalyseCtrl implements CevalHandler {
     this.redraw();
   }
 
+  private isBrilliant(node: Tree.Node, parent: Tree.Node): boolean {
+    if (!node.uci) return false;
+    const uci = node.uci;
+
+    const board = boardFen(node.fen.split(' ')[0]);
+    const newUndefended = detectUndefended(board);
+
+    // 1. Moving into a dangerous square (Sacrifice)
+    const destKey = uci.slice(2, 4) as Key;
+    const destSquare = parseSquare(destKey);
+    const piece = destSquare !== undefined ? board[destSquare] : undefined;
+    let prevBoard: ReturnType<typeof boardFen> | undefined;
+
+    if (piece && ['knight', 'bishop', 'rook', 'queen'].includes(piece.role)) {
+      if (newUndefended.some(s => s.orig === destKey)) {
+        prevBoard = boardFen(parent.fen.split(' ')[0]);
+        const captured = destSquare !== undefined ? prevBoard[destSquare] : undefined;
+        if (!captured || values[captured.role] < values[piece.role]) {
+          console.log('Brilliant: sacrifice on', destKey, piece.role);
+          return true;
+        }
+      }
+    }
+
+    // 2. Ignoring a threat to a piece (Sacrifice)
+    if (!prevBoard) prevBoard = boardFen(parent.fen.split(' ')[0]);
+    const prevUndefended = detectUndefended(prevBoard);
+    const fromKey = uci.slice(0, 2) as Key;
+    const color = parseFen(parent.fen).unwrap().turn;
+
+    for (const threat of prevUndefended) {
+      if (threat.orig === fromKey) continue;
+
+      const threatenedSquare = parseSquare(threat.orig);
+      if (threatenedSquare === undefined) continue;
+
+      const threatenedPiece = prevBoard[threatenedSquare];
+
+      if (
+        threatenedPiece &&
+        threatenedPiece.color === color &&
+        ['knight', 'bishop', 'rook', 'queen'].includes(threatenedPiece.role)
+      ) {
+        if (newUndefended.some(s => s.orig === threat.orig)) {
+          console.log('Brilliant: ignoring threat on', threat.orig, threatenedPiece.role);
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   private autoTagNode = (node: Tree.Node, parent?: Tree.Node): void => {
     if (!parent) return;
     const nodeEval = node.ceval || node.eval;
@@ -1116,7 +1169,7 @@ export default class AnalyseCtrl implements CevalHandler {
 
     const color = plyColor(node.ply);
     const diff = winningChances.povDiff(color, parentEval, nodeEval);
-    console.log(diff);
+    //console.log(diff);
     const glyphs = (node.glyphs || []).filter(g => !['?!', '?', '??', '!!'].includes(g.symbol));
 
     if (diff < -0.3) {
@@ -1126,18 +1179,9 @@ export default class AnalyseCtrl implements CevalHandler {
     } else if (diff < -0.1) {
       node.glyphs = [...glyphs, { id: 6, symbol: '?!', name: 'Inaccuracy' }];
     } else if (diff > -0.02 && node.uci) {
-      const destKey = node.uci.slice(2, 4) as Key;
-      const board = boardFen(node.fen.split(' ')[0]);
-      const piece = board[parseSquare(destKey)!];
-      if (piece && ['knight', 'bishop', 'rook', 'queen'].includes(piece.role)) {
-        if (detectUndefended(board).some(s => s.orig === destKey)) {
-          const prevBoard = boardFen(parent.fen.split(' ')[0]);
-          const captured = prevBoard[parseSquare(destKey)!];
-          if (!captured || values[captured.role] < values[piece.role]) {
-            node.glyphs = [...glyphs, { id: 3, symbol: '!!', name: 'Brilliant' }];
-            return;
-          }
-        }
+      if (this.isBrilliant(node, parent)) {
+        node.glyphs = [...glyphs, { id: 3, symbol: '!!', name: 'Brilliant' }];
+        return;
       }
       node.glyphs = glyphs.length > 0 ? glyphs : undefined;
     } else {
