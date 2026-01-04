@@ -1134,8 +1134,12 @@ export default class AnalyseCtrl implements CevalHandler {
 
     // 2. Ignoring a threat to a piece (Sacrifice)
     if (!prevBoard) prevBoard = boardFen(parent.fen.split(' ')[0]);
+    
+    const captured = destSquare !== undefined ? prevBoard[destSquare] : undefined;
     const prevUndefended = detectUndefended(prevBoard);
     const fromKey = uci.slice(0, 2) as Key;
+    
+    // Determine the color of the side that made the move 'node'
     const color = parseFen(parent.fen).unwrap().turn;
 
     for (const threat of prevUndefended) {
@@ -1151,6 +1155,9 @@ export default class AnalyseCtrl implements CevalHandler {
         threatenedPiece.color === color &&
         ['knight', 'bishop', 'rook', 'queen'].includes(threatenedPiece.role)
       ) {
+        // If we captured a piece of equal or higher value, it's a trade (or winning material), not a sacrifice
+        if (captured && values[captured.role] >= values[threatenedPiece.role]) continue;
+
         if (newUndefended.some(s => s.orig === threat.orig)) {
           console.log('Brilliant: ignoring threat on', threat.orig, threatenedPiece.role);
           return true;
