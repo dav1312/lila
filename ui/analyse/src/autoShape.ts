@@ -3,7 +3,7 @@ import { isDrop } from 'chessops/types';
 import { winningChances } from 'lib/ceval';
 import { opposite } from '@lichess-org/chessground/util';
 import type { DrawModifiers, DrawShape } from '@lichess-org/chessground/draw';
-import { annotationShapes } from 'lib/game/glyphs';
+import { annotationShapes, analysisGlyphs } from 'lib/game/glyphs';
 import type AnalyseCtrl from './ctrl';
 import { isUci } from 'lib/game/chess';
 import { detectPins, detectUndefended, detectCheckable } from './boardAnalysis';
@@ -122,50 +122,25 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
   if (ctrl.showMoveAnnotationsOnBoard()) shapes = shapes.concat(annotationShapes(ctrl.node));
   if (ctrl.showVariationArrows()) hiliteVariations(ctrl, shapes);
 
-  ctrl.chessground.state.drawable.brushes['pin'] = {
-    key: 'pin',
-    color: 'black',
-    opacity: 1,
-    lineWidth: 4,
-  };
-  ctrl.chessground.state.drawable.brushes['undefended'] = {
-    key: 'undefended',
-    color: 'red',
-    opacity: 1,
-    lineWidth: 4,
-  };
-  ctrl.chessground.state.drawable.brushes['checkable'] = {
-    key: 'checkable',
-    color: 'blue',
-    opacity: 1,
-    lineWidth: 4,
-  };
-
   if (ctrl.isCevalAllowed()) {
     const parsed = parseFen(nFen);
     if ('error' in parsed) return shapes;
     const { board, epSquare, castlingRights } = parsed.value;
 
-    if (ctrl.showPin())
-      shapes = shapes.concat(
-        detectPins(board).map(p => ({
-          orig: makeSquare(p.pinned) as Key,
-          brush: 'pin',
-        })),
-      );
+    const addAnalysis = (orig: Key, type: keyof typeof analysisGlyphs) => {
+      const idx = shapes.filter(s => s.orig === orig && s.customSvg).length;
+      shapes.push({
+        orig,
+        customSvg: { html: analysisGlyphs[type](idx) },
+      });
+    };
+
+    if (ctrl.showPin()) detectPins(board).forEach(p => addAnalysis(makeSquare(p.pinned) as Key, 'pin'));
     if (ctrl.showUndefended())
-      shapes = shapes.concat(
-        detectUndefended(board).map(u => ({
-          orig: makeSquare(u.square) as Key,
-          brush: 'undefended',
-        })),
-      );
+      detectUndefended(board).forEach(u => addAnalysis(makeSquare(u.square) as Key, 'undefended'));
     if (ctrl.showCheckable())
-      shapes = shapes.concat(
-        detectCheckable(board, epSquare, castlingRights).map(s => ({
-          orig: makeSquare(s.king) as Key,
-          brush: 'checkable',
-        })),
+      detectCheckable(board, epSquare, castlingRights).forEach(s =>
+        addAnalysis(makeSquare(s.king) as Key, 'checkable'),
       );
   }
 
