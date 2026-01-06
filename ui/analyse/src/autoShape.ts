@@ -6,7 +6,14 @@ import type { DrawModifiers, DrawShape } from '@lichess-org/chessground/draw';
 import { annotationShapes, analysisGlyphs } from 'lib/game/glyphs';
 import type AnalyseCtrl from './ctrl';
 import { isUci } from 'lib/game/chess';
-import { detectPins, detectUndefended, detectCheckable } from './boardAnalysis';
+import {
+  detectPins,
+  detectUndefended,
+  detectCheckable,
+  allAttacks,
+  getReachableSquares,
+  boardAnalysisVariants,
+} from './boardAnalysis';
 import { parseFen } from 'chessops/fen';
 
 const pieceDrop = (key: Key, role: Role, color: Color): DrawShape => ({
@@ -135,16 +142,45 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
       });
     };
 
-    if (ctrl.showPin()) detectPins(board).forEach(p => addAnalysis(makeSquare(p.pinned) as Key, 'pin'));
-    if (ctrl.showUndefended())
-      detectUndefended(board).forEach(u => addAnalysis(makeSquare(u.square) as Key, 'undefended'));
-    if (ctrl.showCheckable())
-      detectCheckable(board, epSquare, castlingRights).forEach(s =>
-        addAnalysis(makeSquare(s.king) as Key, 'checkable'),
-      );
+    if (boardAnalysisVariants.includes(ctrl.data.game.variant.key)) {
+      if (ctrl.showPin()) detectPins(board).forEach(p => addAnalysis(makeSquare(p.pinned) as Key, 'pin'));
+      if (ctrl.showUndefended())
+        detectUndefended(board).forEach(u => addAnalysis(makeSquare(u.square) as Key, 'undefended'));
+      if (ctrl.showCheckable())
+        detectCheckable(board, epSquare, castlingRights).forEach(s =>
+          addAnalysis(makeSquare(s.king) as Key, 'checkable'),
+        );
+    }
   }
 
   return shapes;
+}
+
+export function computeHighlights(ctrl: AnalyseCtrl): Map<Key, string> {
+  const customHighlights = new Map<Key, string>();
+  if (
+    !boardAnalysisVariants.includes(ctrl.data.game.variant.key) ||
+    (!ctrl.showSafeZones() && !ctrl.showDangerZones())
+  )
+    return customHighlights;
+
+  const parsed = parseFen(ctrl.node.fen);
+  if ('error' in parsed) return customHighlights;
+
+  const { board, epSquare, castlingRights } = parsed.value;
+  const topColor = ctrl.topColor();
+  const bottomColor = opposite(topColor);
+
+  const topAttacks = allAttacks(board, topColor);
+  const reachable = getReachableSquares(board, epSquare, castlingRights, bottomColor);
+
+  for (const i of reachable) {
+    const key = makeSquare(i) as Key;
+    if (topAttacks.has(i) && ctrl.showDangerZones()) customHighlights.set(key, 'danger-zone');
+    else if (!topAttacks.has(i) && ctrl.showSafeZones()) customHighlights.set(key, 'safe-zone');
+  }
+
+  return customHighlights;
 }
 
 function hiliteVariations(ctrl: AnalyseCtrl, autoShapes: DrawShape[]) {

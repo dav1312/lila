@@ -4243,12 +4243,16 @@ interface I18n {
     shareYourInsightsData: string;
     /** Show checkable king */
     showCheckableKing: string;
+    /** Show danger zones */
+    showDangerZones: string;
     /** Show this help dialog */
     showHelpDialog: string;
     /** Show me everything */
     showMeEverything: string;
     /** Show pinned pieces */
     showPinnedPieces: string;
+    /** Show safe zones */
+    showSafeZones: string;
     /** Show threat */
     showThreat: string;
     /** Show undefended pieces */

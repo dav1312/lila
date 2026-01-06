@@ -130,6 +130,8 @@
   <string name="showUndefendedPieces">Show undefended pieces</string>
   <string name="showPinnedPieces">Show pinned pieces</string>
   <string name="showCheckableKing">Show checkable king</string>
+  <string name="showSafeZones">Show safe zones</string>
+  <string name="showDangerZones">Show danger zones</string>
   <string name="multipleLines">Multiple lines</string>
   <string name="cpus">CPUs</string>
   <string name="memory">Memory</string>

@@ -84,6 +84,14 @@ square {
     );
   }
 
+  &.safe-zone {
+    background-color: rgba(0, 255, 0, 0.35);
+  }
+
+  &.danger-zone {
+    background-color: rgba(255, 0, 0, 0.35);
+  }
+
   &.selected {
     background-color: rgba(20, 85, 30, 0.5);
 
