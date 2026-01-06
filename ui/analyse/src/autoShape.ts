@@ -6,7 +6,13 @@ import type { DrawModifiers, DrawShape } from '@lichess-org/chessground/draw';
 import { annotationShapes, analysisGlyphs } from 'lib/game/glyphs';
 import type AnalyseCtrl from './ctrl';
 import { isUci } from 'lib/game/chess';
-import { detectPins, detectUndefended, detectCheckable, allAttacks } from './boardAnalysis';
+import {
+  detectPins,
+  detectUndefended,
+  detectCheckable,
+  allAttacks,
+  getReachableSquares,
+} from './boardAnalysis';
 import { parseFen } from 'chessops/fen';
 
 const pieceDrop = (key: Key, role: Role, color: Color): DrawShape => ({
@@ -154,12 +160,14 @@ export function computeHighlights(ctrl: AnalyseCtrl): Map<Key, string> {
   const parsed = parseFen(ctrl.node.fen);
   if ('error' in parsed) return customHighlights;
 
-  const { board } = parsed.value;
+  const { board, epSquare, castlingRights } = parsed.value;
   const topColor = ctrl.topColor();
+  const bottomColor = opposite(topColor);
 
   const topAttacks = allAttacks(board, topColor);
+  const reachable = getReachableSquares(board, epSquare, castlingRights, bottomColor);
 
-  for (let i = 0; i < 64; i++) {
+  for (const i of reachable) {
     const key = makeSquare(i) as Key;
     if (topAttacks.has(i) && ctrl.showDangerZones()) customHighlights.set(key, 'danger-zone');
     else if (!topAttacks.has(i) && ctrl.showSafeZones()) customHighlights.set(key, 'safe-zone');

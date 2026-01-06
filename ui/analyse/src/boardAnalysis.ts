@@ -66,6 +66,35 @@ export function allAttacks(board: Board, color: Color): SquareSet {
   return set;
 }
 
+export function getReachableSquares(
+  board: Board,
+  epSquare: number | undefined,
+  castlingRights: SquareSet,
+  color: Color,
+): SquareSet {
+  let set = SquareSet.empty();
+  const res = Chess.fromSetup({
+    board,
+    turn: color,
+    castlingRights,
+    epSquare,
+    halfmoves: 0,
+    fullmoves: 1,
+    pockets: undefined,
+    remainingChecks: undefined,
+  });
+
+  if ('error' in res) return set;
+
+  const dests = chessgroundDests(res.value);
+  for (const [, tos] of dests) {
+    for (const to of tos) {
+      set = set.with(parseSquare(to));
+    }
+  }
+  return set;
+}
+
 export function detectPins(board: Board): Pin[] {
   const pins: Pin[] = [];
   const cb = board;
