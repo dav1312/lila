@@ -256,10 +256,10 @@ export const analysisGlyphs: Record<string, (stackedNumber: number) => string> =
   ),
   undefended: composeGlyph(
     '#df5353',
-    '<path fill="none" stroke="#fff" stroke-width="8" d="M50 17L80 27v25c0 25-30 36-30 36S20 77 20 52V27Z" /><path fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" d="M38 39l24 24M62 39l-24 24" />',
+    '<path fill="#fff" d="M50 17 80 27v25c0 25-30 36-30 36S20 77 20 52V27ZM44 51 34 61 40 67 50 57 60 67 66 61 56 51 66 41 60 35 50 45 40 35 34 41Z"/>',
   ),
   checkable: composeGlyph(
     '#2660a4',
-    '<path fill="#fff" d="M46 9H54V20A30 30 0 0180 46H91V54H80A30 30 0 0154 80V91H46V80A30 30 0 0120 54H9V46H20A30 30 0 0146 20ZM50 28A22 22 0 1050 72 22 22 0 1050 28ZM50 42A8 8 0 1050 58 8 8 0 1050 42Z"/>',
+    '<path fill="#fff" d="M46 28H54V46H72V54H54V72H46V54H28V46H46Z"/>',
   ),
 };
