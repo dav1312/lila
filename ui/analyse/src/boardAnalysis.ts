@@ -52,6 +52,20 @@ function getAttackers(
   return attackers;
 }
 
+export function allAttacks(board: Board, color: Color): SquareSet {
+  let set = SquareSet.empty();
+  const colorSet = board[color];
+  const occupied = board.occupied;
+
+  for (const s of colorSet.intersect(board.pawn)) set = set.union(pawnAttacks(color, s));
+  for (const s of colorSet.intersect(board.knight)) set = set.union(knightAttacks(s));
+  for (const s of colorSet.intersect(board.king)) set = set.union(kingAttacks(s));
+  for (const s of colorSet.intersect(board.rooksAndQueens())) set = set.union(rookAttacks(s, occupied));
+  for (const s of colorSet.intersect(board.bishopsAndQueens())) set = set.union(bishopAttacks(s, occupied));
+
+  return set;
+}
+
 export function detectPins(board: Board): Pin[] {
   const pins: Pin[] = [];
   const cb = board;

@@ -224,6 +224,24 @@ export function view(ctrl: AnalyseCtrl): VNode {
       },
       ctrl,
     ),
+    ctrlToggle(
+      {
+        name: 'Safe zones',
+        id: 'show-safe-zones',
+        checked: ctrl.showSafeZones(),
+        change: ctrl.showSafeZones,
+      },
+      ctrl,
+    ),
+    ctrlToggle(
+      {
+        name: 'Danger zones',
+        id: 'show-danger-zones',
+        checked: ctrl.showDangerZones(),
+        change: ctrl.showDangerZones,
+      },
+      ctrl,
+    ),
   ];
 
   const displayConfig = [

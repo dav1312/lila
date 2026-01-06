@@ -8,7 +8,7 @@ import type { AnalyseOpts, AnalyseData, ServerEvalData, JustCaptured, NvuiPlugin
 import type { Api as ChessgroundApi } from '@lichess-org/chessground/api';
 import { Autoplay, type AutoplayDelay } from './autoplay';
 import { makeTree, treePath, treeOps, type TreeWrapper } from 'lib/tree';
-import { compute as computeAutoShapes } from './autoShape';
+import { compute as computeAutoShapes, computeHighlights } from './autoShape';
 import type { Config as ChessgroundConfig } from '@lichess-org/chessground/config';
 import type { CevalHandler, EvalMeta, CevalOpts } from 'lib/ceval';
 import { CevalCtrl, isEvalBetter, sanIrreversible } from 'lib/ceval';
@@ -100,6 +100,8 @@ export default class AnalyseCtrl implements CevalHandler {
   showPin: Prop<boolean>;
   showCheckable: Prop<boolean>;
   showUndefended: Prop<boolean>;
+  showSafeZones: Prop<boolean>;
+  showDangerZones: Prop<boolean>;
   keyboardHelp: boolean = location.hash === '#keyboard';
   threatMode: Prop<boolean> = prop(false);
   disclosureMode = storedBooleanProp('analyse.disclosure.enabled', false);
@@ -174,6 +176,12 @@ export default class AnalyseCtrl implements CevalHandler {
     this.showPin = storedBooleanPropWithEffect('analyse.show-pin', true, this.setAutoShapes);
     this.showCheckable = storedBooleanPropWithEffect('analyse.show-checkable', true, this.setAutoShapes);
     this.showUndefended = storedBooleanPropWithEffect('analyse.show-undefended', true, this.setAutoShapes);
+    this.showSafeZones = storedBooleanPropWithEffect('analyse.show-safe-zones', false, this.setAutoShapes);
+    this.showDangerZones = storedBooleanPropWithEffect(
+      'analyse.show-danger-zones',
+      false,
+      this.setAutoShapes,
+    );
     this.resetAutoShapes();
     this.explorer.setNode();
     this.study =
@@ -296,6 +304,7 @@ export default class AnalyseCtrl implements CevalHandler {
       this.retro = makeRetro(this, this.bottomColor());
     if (this.practice) this.startCeval();
     this.explorer.onFlip();
+    this.setAutoShapes();
     this.onChange();
     this.redraw();
   };
@@ -704,7 +713,11 @@ export default class AnalyseCtrl implements CevalHandler {
   }
 
   setAutoShapes = (): void => {
-    if (!site.blindMode) this.chessground?.setAutoShapes(computeAutoShapes(this));
+    if (site.blindMode || !this.chessground) return;
+
+    this.chessground.setAutoShapes(computeAutoShapes(this));
+
+    this.chessground.set({ highlight: { custom: computeHighlights(this) } });
   };
 
   private onNewCeval = (ev: Tree.ClientEval, path: Tree.Path, isThreat?: boolean): void => {
@@ -1083,7 +1096,9 @@ export default class AnalyseCtrl implements CevalHandler {
       this.variationArrowOpacity() ||
       this.showPin() ||
       this.showCheckable() ||
-      this.showUndefended()
+      this.showUndefended() ||
+      this.showSafeZones() ||
+      this.showDangerZones()
     )
       this.setAutoShapes();
     else this.chessground?.setAutoShapes([]);
