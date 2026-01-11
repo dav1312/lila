@@ -226,7 +226,7 @@ export function view(ctrl: AnalyseCtrl): VNode {
     ),
     ctrlToggle(
       {
-        name: 'Safe zones',
+        name: i18n.site.showSafeZones,
         id: 'show-safe-zones',
         checked: ctrl.showSafeZones(),
         change: ctrl.showSafeZones,
@@ -235,7 +235,7 @@ export function view(ctrl: AnalyseCtrl): VNode {
     ),
     ctrlToggle(
       {
-        name: 'Danger zones',
+        name: i18n.site.showDangerZones,
         id: 'show-danger-zones',
         checked: ctrl.showDangerZones(),
         change: ctrl.showDangerZones,
