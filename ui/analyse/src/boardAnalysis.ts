@@ -16,6 +16,8 @@ import { chessgroundDests } from 'chessops/compat';
 import type { Role, Color, NormalMove } from 'chessops/types';
 import type { Pin, Undefended, Checkable } from './interfaces';
 
+export const boardAnalysisVariants = ['standard', 'chess960', 'fromPosition', 'kingOfTheHill', 'threeCheck', 'racingKings'];
+
 const values: Record<Role, number> = { pawn: 1, knight: 3, bishop: 3, rook: 5, queen: 9, king: 100 };
 
 function isSquareAttacked(square: number, byColor: Color, cb: Board): boolean {

@@ -174,7 +174,7 @@ export default class AnalyseCtrl implements CevalHandler {
       this.setAutoShapes,
     );
     this.showPin = storedBooleanPropWithEffect('analyse.show-pin', true, this.setAutoShapes);
-    this.showCheckable = storedBooleanPropWithEffect('analyse.show-checkable', true, this.setAutoShapes);
+    this.showCheckable = storedBooleanPropWithEffect('analyse.show-checkable', false, this.setAutoShapes);
     this.showUndefended = storedBooleanPropWithEffect('analyse.show-undefended', true, this.setAutoShapes);
     this.showSafeZones = storedBooleanPropWithEffect('analyse.show-safe-zones', false, this.setAutoShapes);
     this.showDangerZones = storedBooleanPropWithEffect(

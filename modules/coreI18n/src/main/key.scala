@@ -1654,6 +1654,8 @@ object I18nKey:
     val `showUndefendedPieces`: I18nKey = "showUndefendedPieces"
     val `showPinnedPieces`: I18nKey = "showPinnedPieces"
     val `showCheckableKing`: I18nKey = "showCheckableKing"
+    val `showSafeZones`: I18nKey = "showSafeZones"
+    val `showDangerZones`: I18nKey = "showDangerZones"
     val `multipleLines`: I18nKey = "multipleLines"
     val `cpus`: I18nKey = "cpus"
     val `memory`: I18nKey = "memory"

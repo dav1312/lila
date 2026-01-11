@@ -12,6 +12,7 @@ import {
   detectCheckable,
   allAttacks,
   getReachableSquares,
+  boardAnalysisVariants,
 } from './boardAnalysis';
 import { parseFen } from 'chessops/fen';
 
@@ -141,13 +142,15 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
       });
     };
 
-    if (ctrl.showPin()) detectPins(board).forEach(p => addAnalysis(makeSquare(p.pinned) as Key, 'pin'));
-    if (ctrl.showUndefended())
-      detectUndefended(board).forEach(u => addAnalysis(makeSquare(u.square) as Key, 'undefended'));
-    if (ctrl.showCheckable())
-      detectCheckable(board, epSquare, castlingRights).forEach(s =>
-        addAnalysis(makeSquare(s.king) as Key, 'checkable'),
-      );
+    if (boardAnalysisVariants.includes(ctrl.data.game.variant.key)) {
+      if (ctrl.showPin()) detectPins(board).forEach(p => addAnalysis(makeSquare(p.pinned) as Key, 'pin'));
+      if (ctrl.showUndefended())
+        detectUndefended(board).forEach(u => addAnalysis(makeSquare(u.square) as Key, 'undefended'));
+      if (ctrl.showCheckable())
+        detectCheckable(board, epSquare, castlingRights).forEach(s =>
+          addAnalysis(makeSquare(s.king) as Key, 'checkable'),
+        );
+    }
   }
 
   return shapes;
@@ -155,7 +158,11 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
 
 export function computeHighlights(ctrl: AnalyseCtrl): Map<Key, string> {
   const customHighlights = new Map<Key, string>();
-  if (!ctrl.showSafeZones() && !ctrl.showDangerZones()) return customHighlights;
+  if (
+    !boardAnalysisVariants.includes(ctrl.data.game.variant.key) ||
+    (!ctrl.showSafeZones() && !ctrl.showDangerZones())
+  )
+    return customHighlights;
 
   const parsed = parseFen(ctrl.node.fen);
   if ('error' in parsed) return customHighlights;
