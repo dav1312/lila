@@ -7,6 +7,7 @@ import { annotationShapes, analysisGlyphs } from 'lib/game/glyphs';
 import type AnalyseCtrl from './ctrl';
 import { isUci } from 'lib/game/chess';
 import { parseFen } from 'chessops/fen';
+import { allAttacks, getReachableSquares } from './motif/boardAnalysis';
 
 const pieceDrop = (key: Key, role: Role, color: Color): DrawShape => ({
   orig: key,
@@ -144,6 +145,30 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
   }
 
   return shapes;
+}
+
+export function computeHighlights(ctrl: AnalyseCtrl): Map<Key, string> {
+  const customHighlights = new Map<Key, string>();
+  if (!ctrl.isCevalAllowed() || !ctrl.zoneEnabled() || (!ctrl.zone.safe() && !ctrl.zone.danger()))
+    return customHighlights;
+
+  const parsed = parseFen(ctrl.node.fen);
+  if ('error' in parsed) return customHighlights;
+
+  const { board, epSquare, castlingRights } = parsed.value;
+  const topColor = ctrl.topColor();
+  const bottomColor = opposite(topColor);
+
+  const topAttacks = allAttacks(board, topColor);
+  const reachable = getReachableSquares(board, epSquare, castlingRights, bottomColor);
+
+  for (const i of reachable) {
+    const key = makeSquare(i) as Key;
+    if (topAttacks.has(i) && ctrl.zone.danger()) customHighlights.set(key, 'danger-zone');
+    else if (!topAttacks.has(i) && ctrl.zone.safe()) customHighlights.set(key, 'safe-zone');
+  }
+
+  return customHighlights;
 }
 
 function hiliteVariations(ctrl: AnalyseCtrl, autoShapes: DrawShape[]) {

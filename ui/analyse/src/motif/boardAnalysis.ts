@@ -61,6 +61,73 @@ function getAttackers(
   return attackers;
 }
 
+export function allAttacks(board: Board, color: Color): SquareSet {
+  let set = SquareSet.empty();
+  const colorSet = board[color];
+  const occupied = board.occupied;
+
+  for (const s of colorSet.intersect(board.pawn)) set = set.union(pawnAttacks(color, s));
+  for (const s of colorSet.intersect(board.knight)) set = set.union(knightAttacks(s));
+  for (const s of colorSet.intersect(board.king)) set = set.union(kingAttacks(s));
+  for (const s of colorSet.intersect(board.rooksAndQueens())) set = set.union(rookAttacks(s, occupied));
+  for (const s of colorSet.intersect(board.bishopsAndQueens())) set = set.union(bishopAttacks(s, occupied));
+
+  return set;
+}
+
+export function getReachableSquares(
+  board: Board,
+  epSquare: number | undefined,
+  castlingRights: SquareSet,
+  color: Color,
+): SquareSet {
+  let set = SquareSet.empty();
+  const res = Chess.fromSetup({
+    board,
+    turn: color,
+    castlingRights,
+    epSquare,
+    halfmoves: 0,
+    fullmoves: 1,
+    pockets: undefined,
+    remainingChecks: undefined,
+  });
+
+  // Fallback for illegal positions (e.g. opponent in check)
+  if ('error' in res) {
+    const occupied = board.occupied;
+    for (const s of board[color]) {
+      const piece = board.get(s);
+      if (!piece) continue;
+
+      if (piece.role === 'pawn') {
+        const forward = color === 'white' ? 8 : -8;
+        const to = s + forward;
+        if (!occupied.has(to)) {
+          set = set.with(to);
+          // Double push
+          const rank = squareRank(s);
+          if ((color === 'white' && rank === 1) || (color === 'black' && rank === 6)) {
+            if (!occupied.has(to + forward)) set = set.with(to + forward);
+          }
+        }
+        set = set.union(pawnAttacks(color, s).intersect(board[opposite(color)]));
+      } else {
+        set = set.union(attacks(piece, s, occupied).diff(board[color]));
+      }
+    }
+    return set;
+  }
+
+  const dests = chessgroundDests(res.value);
+  for (const [, tos] of dests) {
+    for (const to of tos) {
+      set = set.with(parseSquare(to));
+    }
+  }
+  return set;
+}
+
 export function detectPins(board: Board): Pin[] {
   const pins: Pin[] = [];
   const cb = board;

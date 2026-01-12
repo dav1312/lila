@@ -9,6 +9,7 @@ import { cont as contRoute } from 'lib/game/router';
 import * as pgnExport from '../pgnExport';
 import { clamp } from 'lib/algo';
 import { config as motifConfig } from '../motif/motifView';
+import { config as zoneConfig } from '../zone/zoneView';
 
 interface AutoplaySpeed {
   name: keyof I18n['site'];
@@ -240,6 +241,7 @@ export function view(ctrl: AnalyseCtrl): VNode {
     displayColumns() > 1 && renderVariationOpacitySlider(ctrl),
     cevalConfig,
     ctrl.motifAllowed() ? motifConfig(ctrl) : [],
+    ctrl.zoneAllowed() ? zoneConfig(ctrl) : [],
     displayColumns() === 1 && renderVariationOpacitySlider(ctrl),
     ctrl.mainline.length > 4 && [hl('h2', i18n.site.replayMode), autoplayButtons(ctrl)],
     canContinue &&

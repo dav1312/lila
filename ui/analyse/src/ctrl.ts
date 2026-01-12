@@ -8,7 +8,7 @@ import type { AnalyseOpts, AnalyseData, ServerEvalData, JustCaptured, NvuiPlugin
 import type { Api as ChessgroundApi } from '@lichess-org/chessground/api';
 import { Autoplay, type AutoplayDelay } from './autoplay';
 import { makeTree, treePath, treeOps, type TreeWrapper } from 'lib/tree';
-import { compute as computeAutoShapes } from './autoShape';
+import { compute as computeAutoShapes, computeHighlights } from './autoShape';
 import type { Config as ChessgroundConfig } from '@lichess-org/chessground/config';
 import type { CevalHandler, EvalMeta, CevalOpts } from 'lib/ceval';
 import { CevalCtrl, isEvalBetter, sanIrreversible } from 'lib/ceval';
@@ -48,6 +48,7 @@ import { confirm } from 'lib/view';
 import api from './api';
 import { displayColumns } from 'lib/device';
 import MotifCtrl from './motif/motifCtrl';
+import ZoneCtrl from './zone/zoneCtrl';
 
 export default class AnalyseCtrl implements CevalHandler {
   data: AnalyseData;
@@ -79,6 +80,7 @@ export default class AnalyseCtrl implements CevalHandler {
   chatCtrl?: ChatCtrl;
   wiki?: WikiTheory;
   motif: MotifCtrl;
+  zone: ZoneCtrl;
 
   // state flags
   justPlayed?: string; // pos
@@ -143,6 +145,7 @@ export default class AnalyseCtrl implements CevalHandler {
       this.redraw,
     );
     this.motif = new MotifCtrl(this.setAutoShapes);
+    this.zone = new ZoneCtrl(this.setAutoShapes);
 
     if (this.data.forecast) this.forecast = new ForecastCtrl(this.data.forecast, this.data, redraw);
     if (this.opts.wiki) this.wiki = wikiTheory();
@@ -293,6 +296,7 @@ export default class AnalyseCtrl implements CevalHandler {
       this.retro = makeRetro(this, this.bottomColor());
     if (this.practice) this.startCeval();
     this.explorer.onFlip();
+    this.setAutoShapes();
     this.onChange();
     this.redraw();
   };
@@ -657,6 +661,9 @@ export default class AnalyseCtrl implements CevalHandler {
   motifAllowed = (): boolean => this.study?.isCevalAllowed() !== false;
   motifEnabled = (): boolean => this.motifAllowed() && this.motif.supports(this.data.game.variant.key);
 
+  zoneAllowed = (): boolean => this.motifAllowed();
+  zoneEnabled = (): boolean => this.zoneAllowed() && this.zone.supports(this.data.game.variant.key);
+
   outcome(node?: Tree.Node): Outcome | undefined {
     return this.position(node || this.node).unwrap(
       pos => pos.outcome(),
@@ -704,7 +711,11 @@ export default class AnalyseCtrl implements CevalHandler {
   }
 
   setAutoShapes = (): void => {
-    if (!site.blindMode) this.chessground?.setAutoShapes(computeAutoShapes(this));
+    if (site.blindMode || !this.chessground) return;
+
+    this.chessground.setAutoShapes(computeAutoShapes(this));
+
+    this.chessground.set({ highlight: { custom: computeHighlights(this) } });
   };
 
   private onNewCeval = (ev: Tree.ClientEval, path: Tree.Path, isThreat?: boolean): void => {
@@ -1086,10 +1097,14 @@ export default class AnalyseCtrl implements CevalHandler {
       this.showBestMoveArrows() ||
       this.possiblyShowMoveAnnotationsOnBoard() ||
       this.variationArrowOpacity() ||
-      (this.motifEnabled() && this.motif.any())
+      (this.motifEnabled() && this.motif.any()) ||
+      (this.zoneEnabled() && this.zone.any())
     )
       this.setAutoShapes();
-    else this.chessground?.setAutoShapes([]);
+    else {
+      this.chessground?.setAutoShapes([]);
+      this.chessground?.set({ highlight: { custom: new Map() } });
+    }
   };
 
   private async mergeIdbThenShowTreeView() {
