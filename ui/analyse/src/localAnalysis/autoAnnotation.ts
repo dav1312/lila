@@ -15,9 +15,11 @@ export const autoTagNode = (node: TreeNode, parent?: TreeNode): void => {
   if (!nodeEval || !parentEval) return;
 
   const color = plyColor(node.ply);
-  const diff = winningChances.povDiff(color, parentEval, nodeEval);
-  console.log(diff);
-  const glyphs = (node.glyphs || []).filter(g => !['?!', '?', '??', '!!'].includes(g.symbol));
+
+  // -1..1 scale
+  const diff = winningChances.povDiff(color, parentEval, nodeEval) * 2;
+
+  const glyphs = (node.glyphs || []).filter(g => !['?!', '?', '??'].includes(g.symbol));
 
   let newGlyph;
   if (diff > BLUNDER) newGlyph = { id: 4, symbol: '??', name: 'Blunder' };
