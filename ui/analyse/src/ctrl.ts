@@ -49,6 +49,7 @@ import { makeSanAndPlay } from 'chessops/san';
 import type { ClientEval, LocalEval, ServerEval, TreeNode, TreePath } from 'lib/tree/types';
 import { completeNode } from 'lib/tree/node';
 import { Result } from '@badrap/result';
+import { autoTagTree, autoTagNode } from './localAnalysis/autoAnnotation';
 
 export default class AnalyseCtrl implements CevalHandler {
   data: AnalyseData;
@@ -159,6 +160,7 @@ export default class AnalyseCtrl implements CevalHandler {
 
     this.initialize(this.data, false);
     this.initCeval();
+    autoTagTree(this.tree.root);
     this.pendingCopyPath = propWithEffect(null, this.redraw);
     this.pendingDeletionPath = propWithEffect(null, this.redraw);
     this.initialPath = this.makeInitialPath();
@@ -234,6 +236,7 @@ export default class AnalyseCtrl implements CevalHandler {
     const prevTree = merge && this.tree.root;
     this.tree = makeTree(treeReconstruct(this.data.treeParts, this.variantKey, this.data.sidelines));
     if (prevTree) this.tree.merge(prevTree);
+    autoTagTree(this.tree.root);
     const mainline = treeOps.mainlineNodeList(this.tree.root);
     if (this.data.game.status.name === 'draw') {
       if (add3or5FoldGlyphs(mainline)) this.data.game.threefold = true;
@@ -699,6 +702,13 @@ export default class AnalyseCtrl implements CevalHandler {
         if (node.ceval?.cloud && this.ceval.isDeeper()) node.ceval = ev;
       }
 
+      if (!isThreat) {
+        // Tag this move (parent eval)
+        autoTagNode(node, this.tree.nodeAtPath(treePath.init(path)));
+        // Tag children
+        node.children.forEach(child => autoTagNode(child, node));
+      }
+
       if (path === this.path) {
         this.setAutoShapes();
         if (!isThreat) {
@@ -926,6 +936,7 @@ export default class AnalyseCtrl implements CevalHandler {
     if (this.study && this.study.data.chapter.id !== data.ch) return;
     const tree = completeNode(this.variantKey)(data.tree);
     this.tree.merge(tree);
+    autoTagTree(this.tree.root);
     this.data.analysis = data.analysis;
     if (data.analysis) data.analysis.partial = !!treeOps.findInMainline(tree, this.partialAnalysisCallback);
     if (data.division) this.data.game.division = data.division;
