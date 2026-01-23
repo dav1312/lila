@@ -21,10 +21,16 @@
   }
 
   .clock {
-    display: block;
+    @extend %flex-center;
     font-size: 1.5em;
     line-height: 1.6em;
     letter-spacing: 0.1em;
+
+    span[data-icon] {
+      margin-inline-end: 0.2em;
+      font-size: 0.9em;
+      opacity: 0.8;
+    }
   }
 
   @keyframes range-sweep {
@@ -48,6 +54,7 @@
 }
 
 .lpool {
+  position: relative;
   @extend %flex-column, %box-radius, %break-word;
 
   justify-content: center;
@@ -63,7 +70,7 @@
 
   @include transition;
 
-  &:hover {
+  &:hover:not(:has(.edit-overlay:hover, .edit-toggle:hover)) {
     color: $c-font;
     background: $m-accent--fade-80 !important;
     opacity: 1;
@@ -75,9 +82,62 @@
     .perf {
       display: none;
     }
+
+    .edit-toggle {
+      color: $c-good;
+      opacity: 1;
+      background-color: $c-bg-popup;
+    }
   }
 
   &.transp {
     opacity: 0.35;
+  }
+
+  .edit-overlay {
+    @extend %flex-between-stretch;
+    justify-content: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: inherit;
+    z-index: 10;
+  }
+
+  .edit-action {
+    @extend %flex-center;
+    justify-content: center;
+    flex: 1;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.1s;
+
+    &:hover {
+      transform: scale(1.2);
+    }
+  }
+
+  .edit-toggle {
+    position: absolute;
+    top: 0;
+    inset-inline-end: 0;
+    opacity: 0.5;
+    transition: all 0.2s;
+    z-index: 2;
+    border: $border;
+    border-start-end-radius: inherit;
+    padding: 0.2rem;
+
+    &:hover {
+      opacity: 1;
+      background-color: $c-bg-popup;
+    }
   }
 }
