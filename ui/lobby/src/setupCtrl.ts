@@ -309,6 +309,11 @@ export default class SetupController {
     this.root.redraw();
   };
 
+  togglePresetSelection = () => {
+    this.isSelectingPreset.toggle();
+    this.root.redraw();
+  };
+
   resetPreset = (poolId: string) => {
     customPools.remove(poolId);
     this.root.redraw();

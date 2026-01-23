@@ -45,7 +45,7 @@ export default function setupModal(ctrl: LobbyController): VNode[] | null {
                 {
                   class: { active: setupCtrl.isSelectingPreset() },
                   style: { marginRight: '10px' },
-                  on: { click: setupCtrl.isSelectingPreset.toggle },
+                  on: { click: setupCtrl.togglePresetSelection },
                 },
                 setupCtrl.isSelectingPreset() ? i18n.site.cancel : 'Save in lobby',
               )
