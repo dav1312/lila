@@ -23,7 +23,7 @@ const createHandler = (ctrl: LobbyController) => (e: Event) => {
     ctrl.redraw();
     return;
   }
-  
+
   if (target.closest('.edit-toggle')) {
     ctrl.isEditingPools.toggle();
     ctrl.redraw();
@@ -74,11 +74,7 @@ export function render(ctrl: LobbyController) {
         icon = undefined;
       }
 
-      const subLabel = custom
-        ? custom.mode === 'rated'
-          ? 'Rated'
-          : 'Casual'
-        : pool.perf;
+      const subLabel = custom ? (custom.mode === 'rated' ? 'Rated' : 'Casual') : pool.perf;
 
       return h(
         'div.lpool',
@@ -87,38 +83,32 @@ export function render(ctrl: LobbyController) {
           attrs: { role: 'button', 'data-id': pool.id, tabindex: '0' },
         },
         [
-          h('div.clock', [
-            icon ? h('span', { attrs: { 'data-icon': icon } }) : null,
-            label,
-          ]),
+          h('div.clock', [icon ? h('span', { attrs: { 'data-icon': icon } }) : null, label]),
           active
             ? member.range && ctrl.opts.showRatings
               ? h('div.range', member.range.replace('-', '–'))
               : spinnerVdom()
             : h('div.perf', subLabel),
-          
+
           isEditing
-            ? h(
-                'div.edit-overlay',
-                [
-                  h(
-                    'button.edit-action',
-                    {
-                      attrs: { 'data-action': 'edit', title: 'Edit' },
-                    },
-                    h('span', { attrs: { 'data-icon': licon.Pencil } }),
-                  ),
-                  custom
-                    ? h(
-                        'button.edit-action',
-                        {
-                          attrs: { 'data-action': 'reset', title: 'Reset to default' },
-                        },
-                        h('span', { attrs: { 'data-icon': licon.Reload } }),
-                      )
-                    : null,
-                ],
-              )
+            ? h('div.edit-overlay', [
+                h(
+                  'button.edit-action',
+                  {
+                    attrs: { 'data-action': 'edit', title: 'Edit' },
+                  },
+                  h('span', { attrs: { 'data-icon': licon.Pencil } }),
+                ),
+                custom
+                  ? h(
+                      'button.edit-action',
+                      {
+                        attrs: { 'data-action': 'reset', title: 'Reset to default' },
+                      },
+                      h('span', { attrs: { 'data-icon': licon.Reload } }),
+                    )
+                  : null,
+              ])
             : null,
         ],
       );
@@ -131,14 +121,14 @@ export function render(ctrl: LobbyController) {
           attrs: { role: 'button', 'data-id': 'custom', tabindex: '0' },
         },
         [
-            h(
-              'div.edit-toggle', 
-              {
-                attrs: { title: 'Customize lobby grid' }
-              },
-              h('span', { attrs: { 'data-icon': licon.Gear } })
-            ),
-            isEditing ? 'Editing' : i18n.site.custom
+          h(
+            'div.edit-toggle',
+            {
+              attrs: { title: 'Customize lobby grid' },
+            },
+            h('span', { attrs: { 'data-icon': licon.Gear } }),
+          ),
+          isEditing ? 'Editing' : i18n.site.custom,
         ],
       ),
     );

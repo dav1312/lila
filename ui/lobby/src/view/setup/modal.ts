@@ -12,14 +12,16 @@ import { timePickerAndSliders } from 'lib/setup/view/timeControl';
 export default function setupModal(ctrl: LobbyController): VNode[] | null {
   const { setupCtrl } = ctrl;
   if (!setupCtrl.gameType) return null;
-  const buttonText = setupCtrl.editingPoolId 
+  const buttonText = setupCtrl.editingPoolId
     ? i18n.site.save
     : {
         hook: i18n.site.createLobbyGame,
-        friend: setupCtrl.friendUser ? i18n.site.challengeX(setupCtrl.friendUser) : i18n.site.challengeAFriend,
+        friend: setupCtrl.friendUser
+          ? i18n.site.challengeX(setupCtrl.friendUser)
+          : i18n.site.challengeAFriend,
         ai: i18n.site.playAgainstComputer,
       }[setupCtrl.gameType];
-      
+
   const disabled = !setupCtrl.valid() || setupCtrl.loading;
 
   return [

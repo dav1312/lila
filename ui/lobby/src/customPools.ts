@@ -28,8 +28,7 @@ export const getAll = (username?: string): Record<string, CustomPool> => {
   }
 };
 
-export const get = (username: string | undefined, id: string): CustomPool | undefined =>
-  getAll(username)[id];
+export const get = (username: string | undefined, id: string): CustomPool | undefined => getAll(username)[id];
 
 export const set = (username: string | undefined, id: string, pool: CustomPool) => {
   const all = getAll(username);
