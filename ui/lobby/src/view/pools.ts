@@ -1,5 +1,6 @@
 import { h, type Hooks } from 'snabbdom';
 import { spinnerVdom, onInsert } from 'lib/view';
+import * as licon from 'lib/licon';
 import type LobbyController from '../ctrl';
 import * as customPools from '../customPools';
 
@@ -11,11 +12,35 @@ const createHandler = (ctrl: LobbyController) => (e: Event) => {
     e.preventDefault(); // Prevent page scroll on space
   }
 
-  const id =
-    (e.target as HTMLElement).dataset['id'] ||
-    ((e.target as HTMLElement).parentNode as HTMLElement).dataset['id'];
-  if (id === 'custom') ctrl.setupCtrl.openModal('hook');
-  else if (id) ctrl.clickPool(id);
+  const target = e.target as HTMLElement;
+  const poolEl = target.closest('[data-id]') as HTMLElement;
+  const id = poolEl?.dataset['id'];
+
+  if (target.closest('.edit-action')) {
+    const action = (target.closest('.edit-action') as HTMLElement).dataset['action'];
+    if (action === 'edit' && id) ctrl.setupCtrl.openForEdit(id);
+    else if (action === 'reset' && id) ctrl.setupCtrl.resetPreset(id);
+    ctrl.redraw();
+    return;
+  }
+  
+  if (target.closest('.edit-toggle')) {
+    ctrl.isEditingPools.toggle();
+    ctrl.redraw();
+    return;
+  }
+
+  if (!id) return;
+
+  if (ctrl.isEditingPools()) return;
+
+  if (id === 'custom') {
+    if (ctrl.isEditingPools()) {
+      ctrl.isEditingPools.toggle();
+    } else {
+      ctrl.setupCtrl.openModal('hook');
+    }
+  } else if (id) ctrl.clickPool(id);
 
   ctrl.redraw();
 };
@@ -29,6 +54,8 @@ export const hooks = (ctrl: LobbyController): Hooks =>
 
 export function render(ctrl: LobbyController) {
   const member = ctrl.poolMember;
+  const isEditing = ctrl.isEditingPools();
+
   return ctrl.pools
     .map(pool => {
       const active = member?.id === pool.id,
@@ -56,7 +83,7 @@ export function render(ctrl: LobbyController) {
       return h(
         'div.lpool',
         {
-          class: { active, transp, custom: !!custom },
+          class: { active, transp, custom: !!custom, editing: isEditing },
           attrs: { role: 'button', 'data-id': pool.id, tabindex: '0' },
         },
         [
@@ -74,6 +101,59 @@ export function render(ctrl: LobbyController) {
               ? h('div.range', member.range.replace('-', '–'))
               : spinnerVdom()
             : h('div.perf', subLabel),
+          
+          isEditing
+            ? h(
+                'div.edit-overlay',
+                {
+                  style: {
+                    position: 'absolute',
+                    top: '0',
+                    left: '0',
+                    width: '100%',
+                    height: '100%',
+                    background: 'rgba(0,0,0,0.6)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '10px',
+                    borderRadius: '4px',
+                  },
+                },
+                [
+                  h(
+                    'button.edit-action',
+                    {
+                      attrs: { 'data-action': 'edit', title: 'Edit' },
+                      style: {
+                        background: 'none',
+                        border: 'none',
+                        color: '#fff',
+                        fontSize: '1.5em',
+                        cursor: 'pointer',
+                      },
+                    },
+                    h('span', { attrs: { 'data-icon': licon.Pencil } }),
+                  ),
+                  custom
+                    ? h(
+                        'button.edit-action',
+                        {
+                          attrs: { 'data-action': 'reset', title: 'Reset to default' },
+                          style: {
+                            background: 'none',
+                            border: 'none',
+                            color: '#fff',
+                            fontSize: '1.5em',
+                            cursor: 'pointer',
+                          },
+                        },
+                        h('span', { attrs: { 'data-icon': licon.X } }),
+                      )
+                    : null,
+                ],
+              )
+            : null,
         ],
       );
     })
@@ -81,10 +161,28 @@ export function render(ctrl: LobbyController) {
       h(
         'div.lpool',
         {
-          class: { transp: !!member },
+          class: { transp: !!member, active: isEditing },
           attrs: { role: 'button', 'data-id': 'custom', tabindex: '0' },
         },
-        i18n.site.custom,
+        [
+            h(
+              'div.edit-toggle', 
+              {
+                style: {
+                    position: 'absolute',
+                    top: '5px',
+                    right: '5px',
+                    fontSize: '1.2em',
+                    opacity: isEditing ? '1' : '0.5',
+                    color: isEditing ? '#629924' : 'inherit', // Green when active
+                    cursor: 'pointer'
+                },
+                attrs: { title: 'Customize lobby grid' }
+              },
+              h('span', { attrs: { 'data-icon': licon.Gear } })
+            ),
+            isEditing ? 'Editing' : i18n.site.custom
+        ],
       ),
     );
 }

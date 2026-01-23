@@ -30,7 +30,7 @@ export default class SetupController {
   loading = false;
   color: ColorProp;
   forced?: ForceSetupOptions;
-  isSelectingPreset = toggle(false);
+  editingPoolId: string | null = null;
 
   // Store props
   variant: Prop<VariantKey>;
@@ -177,9 +177,45 @@ export default class SetupController {
     this.lastValidFen = '';
     this.friendUser = friendUser || '';
     this.variantMenuOpen(false);
-    this.isSelectingPreset(false);
+    this.editingPoolId = null;
     this.forced = forceOptions;
     this.loadPropsFromStore(forceOptions);
+  };
+
+  openForEdit = (poolId: string) => {
+    const custom = customPools.get(this.root.me?.username, poolId);
+    let opts: ForceSetupOptions;
+    if (custom) {
+      opts = {
+        variant: custom.variant as VariantKey,
+        fen: custom.fen,
+        timeMode: custom.timeMode as any,
+        time: custom.time,
+        increment: custom.increment,
+        days: custom.days,
+        mode: custom.mode as GameMode,
+        color: custom.color as ColorChoice,
+      };
+    } else {
+      const pool = this.root.pools.find(p => p.id === poolId);
+      if (pool) {
+        opts = {
+          variant: 'standard',
+          timeMode: 'realTime',
+          time: pool.lim,
+          increment: pool.inc,
+          mode: 'rated',
+          color: 'random',
+        };
+      } else {
+        opts = {};
+      }
+    }
+    // Don't pass opts as forceOptions to openModal, otherwise they become immutable constraints.
+    // Instead, load them specifically as initial values.
+    this.openModal('hook');
+    this.loadPropsFromStore(opts);
+    this.editingPoolId = poolId;
   };
 
   closeModal?: () => void; // managed by view/setup/modal.ts
@@ -303,20 +339,17 @@ export default class SetupController {
     color: this.color(),
   });
 
-  saveToPreset = (poolId: string) => {
-    customPools.set(this.root.me?.username, poolId, this.getCurrentCustomPool());
-    this.isSelectingPreset(false);
-    this.root.redraw();
-  };
-
-  togglePresetSelection = () => {
-    this.isSelectingPreset.toggle();
-    this.root.redraw();
-  };
-
   resetPreset = (poolId: string) => {
     customPools.remove(this.root.me?.username, poolId);
     this.root.redraw();
+  };
+
+  saveEdit = () => {
+    if (this.editingPoolId) {
+      customPools.set(this.root.me?.username, this.editingPoolId, this.getCurrentCustomPool());
+      this.closeModal?.();
+      this.root.redraw();
+    }
   };
 
   submitPreset = async (p: CustomPool) => {
@@ -382,6 +415,11 @@ export default class SetupController {
   };
 
   submit = async () => {
+    if (this.editingPoolId) {
+      this.saveEdit();
+      return;
+    }
+
     const color = this.color();
     const poolMember = this.hookToPoolMember(color);
     if (poolMember) {

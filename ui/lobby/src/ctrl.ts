@@ -26,6 +26,7 @@ import { pubsub } from 'lib/pubsub';
 import { wsPingInterval } from 'lib/socket';
 import { colors, type ColorChoice } from 'lib/setup/color';
 import * as customPools from './customPools';
+import { toggle } from 'lib';
 
 export default class LobbyController {
   data: LobbyData;
@@ -43,6 +44,8 @@ export default class LobbyController {
   pools: Pool[];
   filter: Filter;
   setupCtrl: SetupController;
+
+  isEditingPools = toggle(false);
 
   private poolInStorage: LichessStorage;
   private flushHooksTimeout?: number;

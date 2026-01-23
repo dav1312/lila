@@ -8,21 +8,19 @@ import { ratingView } from './components/ratingView';
 import { fenInput } from './components/fenInput';
 import { levelButtons } from './components/levelButtons';
 import { timePickerAndSliders } from 'lib/setup/view/timeControl';
-import { presetGrid } from './presetGrid';
 
 export default function setupModal(ctrl: LobbyController): VNode[] | null {
   const { setupCtrl } = ctrl;
   if (!setupCtrl.gameType) return null;
-  const buttonText = {
-    hook: i18n.site.createLobbyGame,
-    friend: setupCtrl.friendUser ? i18n.site.challengeX(setupCtrl.friendUser) : i18n.site.challengeAFriend,
-    ai: i18n.site.playAgainstComputer,
-  }[setupCtrl.gameType];
+  const buttonText = setupCtrl.editingPoolId 
+    ? i18n.site.save
+    : {
+        hook: i18n.site.createLobbyGame,
+        friend: setupCtrl.friendUser ? i18n.site.challengeX(setupCtrl.friendUser) : i18n.site.challengeAFriend,
+        ai: i18n.site.playAgainstComputer,
+      }[setupCtrl.gameType];
+      
   const disabled = !setupCtrl.valid() || setupCtrl.loading;
-
-  const content = setupCtrl.isSelectingPreset()
-    ? presetGrid(ctrl)
-    : views[setupCtrl.gameType](ctrl);
 
   return [
     snabDialog({
@@ -36,31 +34,18 @@ export default function setupModal(ctrl: LobbyController): VNode[] | null {
       },
       modal: true,
       vnodes: [
-        hl('h2#lobby-setup-modal-title', i18n.site.gameSetup),
-        hl('div.setup-content', content),
+        hl('h2#lobby-setup-modal-title', setupCtrl.editingPoolId ? 'Customize Preset' : i18n.site.gameSetup),
+        hl('div.setup-content', views[setupCtrl.gameType](ctrl)),
         hl('div.footer', [
-          setupCtrl.gameType === 'hook'
-            ? hl(
-                'button.button.lobby__start__button.button-empty',
-                {
-                  class: { active: setupCtrl.isSelectingPreset() },
-                  style: { marginRight: '10px' },
-                  on: { click: setupCtrl.togglePresetSelection },
-                },
-                setupCtrl.isSelectingPreset() ? i18n.site.cancel : 'Save in lobby',
-              )
-            : null,
-          !setupCtrl.isSelectingPreset()
-            ? hl(
-                `button.button.button-metal.lobby__start__button.lobby__start__button--${setupCtrl.friendUser ? 'friend-user' : setupCtrl.gameType}`,
-                {
-                  attrs: { disabled },
-                  class: { disabled },
-                  on: { click: ctrl.setupCtrl.submit },
-                },
-                buttonText,
-              )
-            : null,
+          hl(
+            `button.button.button-metal.lobby__start__button.lobby__start__button--${setupCtrl.friendUser ? 'friend-user' : setupCtrl.gameType}`,
+            {
+              attrs: { disabled },
+              class: { disabled },
+              on: { click: ctrl.setupCtrl.submit },
+            },
+            buttonText,
+          ),
           setupCtrl.loading && spinnerVdom(),
         ]),
       ],
