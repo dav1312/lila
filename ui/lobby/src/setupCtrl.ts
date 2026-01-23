@@ -14,6 +14,8 @@ import {
   type TimeControl,
 } from 'lib/setup/timeControl';
 import type { ColorChoice, ColorProp } from 'lib/setup/color';
+import * as customPools from './customPools';
+import type { CustomPool } from './customPools';
 
 const getPerf = (variant: VariantKey, tc: TimeControl): Perf =>
   variant !== 'standard' && variant !== 'fromPosition' ? variant : tc.speed();
@@ -28,6 +30,7 @@ export default class SetupController {
   loading = false;
   color: ColorProp;
   forced?: ForceSetupOptions;
+  isSelectingPreset = toggle(false);
 
   // Store props
   variant: Prop<VariantKey>;
@@ -71,7 +74,7 @@ export default class SetupController {
 
   private loadPropsFromStore = (forceOptions?: ForceSetupOptions) => {
     const storeProps = this.store[this.gameType!]();
-    // Load props from the store, but override any store values with values found in forceOptions
+    // Load props from the store, but override with forceOptions
     this.variant = propWithEffect(forceOptions?.variant || storeProps.variant, this.onDropdownChange);
     this.fen = this.propWithApply(forceOptions?.fen || storeProps.fen);
     const canChangeTimeMode = !!this.root.me || this.gameType !== 'hook';
@@ -91,9 +94,6 @@ export default class SetupController {
     this.color(forceOptions?.color || 'random');
 
     this.enforcePropRules();
-    // Upon loading the props from the store, overriding with forced options, and enforcing rules,
-    // immediately save them to the store. This way, the user can know that whatever they saw last
-    // in the modal will be there when they open it at a later time.
     this.savePropsToStore();
   };
 
@@ -177,6 +177,7 @@ export default class SetupController {
     this.lastValidFen = '';
     this.friendUser = friendUser || '';
     this.variantMenuOpen(false);
+    this.isSelectingPreset(false);
     this.forced = forceOptions;
     this.loadPropsFromStore(forceOptions);
   };
@@ -286,27 +287,65 @@ export default class SetupController {
 
   minimumTimeIfReal = (): number => (this.gameType === 'ai' && this.variant() === 'fromPosition' ? 1 : 0);
 
-  submit = async () => {
-    const color = this.color();
-    const poolMember = this.hookToPoolMember(color);
-    if (poolMember) {
-      this.root.enterPool(poolMember);
-      this.closeModal?.();
-      return;
-    }
+  // New Custom Pool methods
+  getCurrentCustomPool = (): CustomPool => ({
+    variant: this.variant(),
+    fen: this.variant() === 'fromPosition' ? this.fen() : undefined,
+    timeMode: this.timeControl.mode(),
+    time: this.timeControl.time(),
+    increment: this.timeControl.increment(),
+    days: this.timeControl.days(),
+    mode: this.gameMode(),
+    ratingRange: this.ratingRange(),
+    ratingMin: this.ratingMin(),
+    ratingMax: this.ratingMax(),
+    level: this.aiLevel(),
+    color: this.color(),
+  });
 
-    if (this.gameType === 'hook') this.root.setTab(this.timeControl.isRealTime() ? 'real_time' : 'seeks');
+  saveToPreset = (poolId: string) => {
+    customPools.set(poolId, this.getCurrentCustomPool());
+    this.isSelectingPreset(false);
+    this.root.redraw();
+  };
+
+  resetPreset = (poolId: string) => {
+    customPools.remove(poolId);
+    this.root.redraw();
+  };
+
+  submitPreset = async (p: CustomPool) => {
+    this.root.setTab(p.timeMode === 'realTime' ? 'real_time' : 'seeks');
     this.loading = true;
     this.root.redraw();
 
-    let urlPath = `/setup/${this.gameType}`;
-    if (this.gameType === 'hook') urlPath += `/${site.sri}`;
+    const body = xhr.form({
+      variant: keyToId(p.variant, variants).toString(),
+      fen: p.fen,
+      timeMode: keyToId(p.timeMode, timeModes).toString(),
+      time: p.time.toString(),
+      increment: p.increment.toString(),
+      days: p.days.toString(),
+      mode: p.mode === 'casual' ? '0' : '1',
+      ratingRange: p.ratingRange,
+      ratingRange_range_min: p.ratingMin.toString(),
+      ratingRange_range_max: p.ratingMax.toString(),
+      level: p.level?.toString() ?? '1',
+      color: p.color,
+    });
+
+    await this.performSubmit(body, 'hook');
+  };
+
+  private performSubmit = async (body: FormData, type: string) => {
+    let urlPath = `/setup/${type}`;
+    if (type === 'hook') urlPath += `/${site.sri}`;
     const urlParams = { user: this.friendUser || undefined };
     let response;
     try {
       response = await xhr.textRaw(xhr.url(urlPath, urlParams), {
         method: 'post',
-        body: this.propsToFormData(color),
+        body,
       });
     } catch (_) {
       this.loading = false;
@@ -327,8 +366,6 @@ export default class SetupController {
           : 'Invalid setup',
       );
       if (response.status === 403) {
-        // 403 FORBIDDEN closes this modal because challenges to the recipient
-        // will not be accepted.  see friend() in controllers/Setup.scala
         this.closeModal?.();
       }
     } else if (redirected) {
@@ -337,5 +374,21 @@ export default class SetupController {
       this.loading = false;
       this.closeModal?.();
     }
+  };
+
+  submit = async () => {
+    const color = this.color();
+    const poolMember = this.hookToPoolMember(color);
+    if (poolMember) {
+      this.root.enterPool(poolMember);
+      this.closeModal?.();
+      return;
+    }
+
+    if (this.gameType === 'hook') this.root.setTab(this.timeControl.isRealTime() ? 'real_time' : 'seeks');
+    this.loading = true;
+    this.root.redraw();
+
+    await this.performSubmit(this.propsToFormData(color), this.gameType!);
   };
 }
