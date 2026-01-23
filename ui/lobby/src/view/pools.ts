@@ -35,9 +35,18 @@ export function render(ctrl: LobbyController) {
         transp = !!member && !active;
       const custom = customPools.get(ctrl.me?.username, pool.id);
 
-      const label = custom
-        ? customPools.formatDisplay(custom)
-        : `${pool.lim}+${pool.inc}`;
+      let label: string;
+      let icon: string | undefined;
+
+      if (custom) {
+        const display = customPools.getDisplayData(custom);
+        label = display.timeLabel;
+        icon = display.icon;
+      } else {
+        label = `${pool.lim}+${pool.inc}`;
+        icon = undefined;
+      }
+
       const subLabel = custom
         ? custom.mode === 'rated'
           ? 'Rated'
@@ -51,7 +60,15 @@ export function render(ctrl: LobbyController) {
           attrs: { role: 'button', 'data-id': pool.id, tabindex: '0' },
         },
         [
-          h('div.clock', label),
+          h('div.clock', [
+            icon
+              ? h('span', {
+                  attrs: { 'data-icon': icon },
+                  style: { marginRight: '0.2em', fontSize: '0.9em', opacity: '0.8' },
+                })
+              : null,
+            label,
+          ]),
           active
             ? member.range && ctrl.opts.showRatings
               ? h('div.range', member.range.replace('-', '–'))

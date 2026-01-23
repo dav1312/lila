@@ -1,4 +1,5 @@
 import { storage } from 'lib/storage';
+import { variants } from './options';
 
 export interface CustomPool {
   variant: string;
@@ -42,9 +43,18 @@ export const remove = (username: string | undefined, id: string) => {
   storage.make(makeKey(username)).set(JSON.stringify(all));
 };
 
-export const formatDisplay = (p: CustomPool) => {
-  if (p.variant !== 'standard') return p.variant;
-  if (p.timeMode === 'realTime') return `${p.time}+${p.increment}`;
-  if (p.timeMode === 'correspondence') return `${p.days}d`;
-  return '∞';
+export const getDisplayData = (p: CustomPool) => {
+  const timeLabel =
+    p.timeMode === 'realTime'
+      ? `${p.time}+${p.increment}`
+      : p.timeMode === 'correspondence'
+        ? `${p.days}d`
+        : '∞';
+
+  const variantDef = variants.find(v => v.key === p.variant);
+
+  return {
+    timeLabel,
+    icon: p.variant !== 'standard' ? variantDef?.icon : undefined,
+  };
 };
