@@ -88,12 +88,7 @@ export function render(ctrl: LobbyController) {
         },
         [
           h('div.clock', [
-            icon
-              ? h('span', {
-                  attrs: { 'data-icon': icon },
-                  style: { marginRight: '0.2em', fontSize: '0.9em', opacity: '0.8' },
-                })
-              : null,
+            icon ? h('span', { attrs: { 'data-icon': icon } }) : null,
             label,
           ]),
           active
@@ -105,33 +100,11 @@ export function render(ctrl: LobbyController) {
           isEditing
             ? h(
                 'div.edit-overlay',
-                {
-                  style: {
-                    position: 'absolute',
-                    top: '0',
-                    left: '0',
-                    width: '100%',
-                    height: '100%',
-                    background: 'rgba(0,0,0,0.6)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '10px',
-                    borderRadius: '4px',
-                  },
-                },
                 [
                   h(
                     'button.edit-action',
                     {
                       attrs: { 'data-action': 'edit', title: 'Edit' },
-                      style: {
-                        background: 'none',
-                        border: 'none',
-                        color: '#fff',
-                        fontSize: '1.5em',
-                        cursor: 'pointer',
-                      },
                     },
                     h('span', { attrs: { 'data-icon': licon.Pencil } }),
                   ),
@@ -140,15 +113,8 @@ export function render(ctrl: LobbyController) {
                         'button.edit-action',
                         {
                           attrs: { 'data-action': 'reset', title: 'Reset to default' },
-                          style: {
-                            background: 'none',
-                            border: 'none',
-                            color: '#fff',
-                            fontSize: '1.5em',
-                            cursor: 'pointer',
-                          },
                         },
-                        h('span', { attrs: { 'data-icon': licon.X } }),
+                        h('span', { attrs: { 'data-icon': licon.Reload } }),
                       )
                     : null,
                 ],
@@ -168,15 +134,6 @@ export function render(ctrl: LobbyController) {
             h(
               'div.edit-toggle', 
               {
-                style: {
-                    position: 'absolute',
-                    top: '5px',
-                    right: '5px',
-                    fontSize: '1.2em',
-                    opacity: isEditing ? '1' : '0.5',
-                    color: isEditing ? '#629924' : 'inherit', // Green when active
-                    cursor: 'pointer'
-                },
                 attrs: { title: 'Customize lobby grid' }
               },
               h('span', { attrs: { 'data-icon': licon.Gear } })

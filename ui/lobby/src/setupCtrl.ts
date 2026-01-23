@@ -347,6 +347,7 @@ export default class SetupController {
   saveEdit = () => {
     if (this.editingPoolId) {
       customPools.set(this.root.me?.username, this.editingPoolId, this.getCurrentCustomPool());
+      this.root.isEditingPools(false);
       this.closeModal?.();
       this.root.redraw();
     }
