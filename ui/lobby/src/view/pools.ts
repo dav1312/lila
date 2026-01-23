@@ -33,7 +33,7 @@ export function render(ctrl: LobbyController) {
     .map(pool => {
       const active = member?.id === pool.id,
         transp = !!member && !active;
-      const custom = customPools.get(pool.id);
+      const custom = customPools.get(ctrl.me?.username, pool.id);
 
       const label = custom
         ? customPools.formatDisplay(custom)

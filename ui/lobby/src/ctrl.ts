@@ -253,7 +253,7 @@ export default class LobbyController {
   };
 
   clickPool = (id: string) => {
-    const custom = customPools.get(id);
+    const custom = customPools.get(this.me?.username, id);
     if (custom) {
       this.setupCtrl.submitPreset(custom);
       return;

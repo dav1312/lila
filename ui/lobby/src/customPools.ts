@@ -15,11 +15,10 @@ export interface CustomPool {
   color: string;
 }
 
-const key = 'lobby.custom.presets';
-const store = storage.make(key);
+const makeKey = (username?: string) => `lobby.custom.presets.${username || 'anon'}`;
 
-export const getAll = (): Record<string, CustomPool> => {
-  const raw = store.get();
+export const getAll = (username?: string): Record<string, CustomPool> => {
+  const raw = storage.make(makeKey(username)).get();
   if (!raw) return {};
   try {
     return JSON.parse(raw);
@@ -28,18 +27,19 @@ export const getAll = (): Record<string, CustomPool> => {
   }
 };
 
-export const get = (id: string): CustomPool | undefined => getAll()[id];
+export const get = (username: string | undefined, id: string): CustomPool | undefined =>
+  getAll(username)[id];
 
-export const set = (id: string, pool: CustomPool) => {
-  const all = getAll();
+export const set = (username: string | undefined, id: string, pool: CustomPool) => {
+  const all = getAll(username);
   all[id] = pool;
-  store.set(JSON.stringify(all));
+  storage.make(makeKey(username)).set(JSON.stringify(all));
 };
 
-export const remove = (id: string) => {
-  const all = getAll();
+export const remove = (username: string | undefined, id: string) => {
+  const all = getAll(username);
   delete all[id];
-  store.set(JSON.stringify(all));
+  storage.make(makeKey(username)).set(JSON.stringify(all));
 };
 
 export const formatDisplay = (p: CustomPool) => {

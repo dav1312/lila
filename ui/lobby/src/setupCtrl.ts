@@ -304,7 +304,7 @@ export default class SetupController {
   });
 
   saveToPreset = (poolId: string) => {
-    customPools.set(poolId, this.getCurrentCustomPool());
+    customPools.set(this.root.me?.username, poolId, this.getCurrentCustomPool());
     this.isSelectingPreset(false);
     this.root.redraw();
   };
@@ -315,7 +315,7 @@ export default class SetupController {
   };
 
   resetPreset = (poolId: string) => {
-    customPools.remove(poolId);
+    customPools.remove(this.root.me?.username, poolId);
     this.root.redraw();
   };
 

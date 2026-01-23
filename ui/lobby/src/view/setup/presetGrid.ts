@@ -6,7 +6,7 @@ export function presetGrid(ctrl: LobbyController) {
   return h(
     'div.lpools.setup-presets',
     ctrl.pools.map(pool => {
-      const custom = customPools.get(pool.id);
+      const custom = customPools.get(ctrl.me?.username, pool.id);
       const label = custom ? customPools.formatDisplay(custom) : `${pool.lim}+${pool.inc}`;
       const subLabel = custom
         ? custom.mode === 'rated'
@@ -28,7 +28,7 @@ export function presetGrid(ctrl: LobbyController) {
           h('div.perf', subLabel),
           custom
             ? h(
-                'div.reset-preset', // Class needed for styling or just use text
+                'div.reset-preset',
                 {
                   style: {
                     position: 'absolute',
