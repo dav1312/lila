@@ -74,7 +74,7 @@ export function render(ctrl: LobbyController) {
         icon = undefined;
       }
 
-      const subLabel = custom ? (custom.mode === 'rated' ? i18n.site.rated : i18n.site.casual) : pool.perf;
+      const subLabel = custom ? (custom.gameMode === 'rated' ? i18n.site.rated : i18n.site.casual) : pool.perf;
 
       return h(
         'div.lpool',
