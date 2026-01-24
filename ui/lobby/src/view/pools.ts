@@ -58,21 +58,9 @@ export function render(ctrl: LobbyController) {
 
   return ctrl.pools
     .map(pool => {
-      const custom = customPools.get(ctrl.me?.username, pool.id);
-
-      let effectiveId = pool.id;
-      if (custom) {
-        if (
-          custom.variant === 'standard' &&
-          custom.gameMode === 'rated' &&
-          custom.timeMode === 'realTime'
-        ) {
-          effectiveId = `${custom.time}+${custom.increment}`;
-        } else effectiveId = '';
-      }
-
-      const active = member?.id === effectiveId;
+      const active = !!member && ctrl.activePoolSlot === pool.id;
       const transp = !!member && !active;
+      const custom = customPools.get(ctrl.me?.username, pool.id);
 
       let label: string;
       let icon: string | undefined;
