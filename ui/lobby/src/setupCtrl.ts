@@ -15,7 +15,6 @@ import {
 } from 'lib/setup/timeControl';
 import type { ColorChoice, ColorProp } from 'lib/setup/color';
 import * as customPools from './customPools';
-import type { CustomPool } from './customPools';
 
 const getPerf = (variant: VariantKey, tc: TimeControl): Perf =>
   variant !== 'standard' && variant !== 'fromPosition' ? variant : tc.speed();
@@ -189,12 +188,12 @@ export default class SetupController {
       opts = {
         variant: custom.variant as VariantKey,
         fen: custom.fen,
-        timeMode: custom.timeMode as any,
+        timeMode: custom.timeMode,
         time: custom.time,
         increment: custom.increment,
         days: custom.days,
-        mode: custom.mode as GameMode,
-        color: custom.color as ColorChoice,
+        mode: custom.gameMode,
+        color: 'random',
       };
     } else {
       const pool = this.root.pools.find(p => p.id === poolId);
@@ -211,8 +210,6 @@ export default class SetupController {
         opts = {};
       }
     }
-    // Don't pass opts as forceOptions to openModal, otherwise they become immutable constraints.
-    // Instead, load them specifically as initial values.
     this.openModal('hook');
     this.loadPropsFromStore(opts);
     this.editingPoolId = poolId;
@@ -258,9 +255,12 @@ export default class SetupController {
 
   selectedPerf = (): Perf => getPerf(this.variant(), this.timeControl);
 
-  ratingRange = (): string => {
+  ratingRange = (min?: number, max?: number): string => {
     const rating = this.myRating();
-    return rating ? `${Math.max(100, rating + this.ratingMin())}-${rating + this.ratingMax()}` : '';
+    if (!rating) return '';
+    const rMin = min !== undefined ? min : this.ratingMin();
+    const rMax = max !== undefined ? max : this.ratingMax();
+    return `${Math.max(100, rating + rMin)}-${rating + rMax}`;
   };
 
   hookToPoolMember = (color: ColorChoice): PoolMember | null => {
@@ -323,20 +323,17 @@ export default class SetupController {
 
   minimumTimeIfReal = (): number => (this.gameType === 'ai' && this.variant() === 'fromPosition' ? 1 : 0);
 
-  // New Custom Pool methods
-  getCurrentCustomPool = (): CustomPool => ({
+  getCustomPoolState = (): SetupStore => ({
     variant: this.variant(),
-    fen: this.variant() === 'fromPosition' ? this.fen() : undefined,
+    fen: this.variant() === 'fromPosition' ? this.fen() : '',
     timeMode: this.timeControl.mode(),
     time: this.timeControl.time(),
     increment: this.timeControl.increment(),
     days: this.timeControl.days(),
-    mode: this.gameMode(),
-    ratingRange: this.ratingRange(),
+    gameMode: this.gameMode(),
     ratingMin: this.ratingMin(),
     ratingMax: this.ratingMax(),
-    level: this.aiLevel(),
-    color: this.color(),
+    aiLevel: this.aiLevel(),
   });
 
   resetPreset = (poolId: string) => {
@@ -346,31 +343,31 @@ export default class SetupController {
 
   saveEdit = () => {
     if (this.editingPoolId) {
-      customPools.set(this.root.me?.username, this.editingPoolId, this.getCurrentCustomPool());
+      customPools.set(this.root.me?.username, this.editingPoolId, this.getCustomPoolState());
       this.root.isEditingPools(false);
       this.closeModal?.();
       this.root.redraw();
     }
   };
 
-  submitPreset = async (p: CustomPool) => {
+  submitPreset = async (p: SetupStore) => {
     this.root.setTab(p.timeMode === 'realTime' ? 'real_time' : 'seeks');
     this.loading = true;
     this.root.redraw();
 
     const body = xhr.form({
       variant: keyToId(p.variant, variants).toString(),
-      fen: p.fen,
+      fen: p.variant === 'fromPosition' ? p.fen : undefined,
       timeMode: keyToId(p.timeMode, timeModes).toString(),
       time: p.time.toString(),
       increment: p.increment.toString(),
       days: p.days.toString(),
-      mode: p.mode === 'casual' ? '0' : '1',
-      ratingRange: p.ratingRange,
+      mode: p.gameMode === 'casual' ? '0' : '1',
+      ratingRange: this.ratingRange(p.ratingMin, p.ratingMax),
       ratingRange_range_min: p.ratingMin.toString(),
       ratingRange_range_max: p.ratingMax.toString(),
-      level: p.level?.toString() ?? '1',
-      color: p.color,
+      level: p.aiLevel.toString(),
+      color: 'random',
     });
 
     await this.performSubmit(body, 'hook');

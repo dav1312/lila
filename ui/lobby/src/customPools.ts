@@ -1,24 +1,10 @@
 import { storage } from 'lib/storage';
 import { variants } from './options';
-
-export interface CustomPool {
-  variant: string;
-  fen?: string;
-  timeMode: string;
-  time: number;
-  increment: number;
-  days: number;
-  mode: string;
-  ratingRange: string;
-  ratingMin: number;
-  ratingMax: number;
-  level?: number;
-  color: string;
-}
+import type { SetupStore } from './interfaces';
 
 const makeKey = (username?: string) => `lobby.custom.presets.${username || 'anon'}`;
 
-export const getAll = (username?: string): Record<string, CustomPool> => {
+export const getAll = (username?: string): Record<string, SetupStore> => {
   const raw = storage.make(makeKey(username)).get();
   if (!raw) return {};
   try {
@@ -28,9 +14,9 @@ export const getAll = (username?: string): Record<string, CustomPool> => {
   }
 };
 
-export const get = (username: string | undefined, id: string): CustomPool | undefined => getAll(username)[id];
+export const get = (username: string | undefined, id: string): SetupStore | undefined => getAll(username)[id];
 
-export const set = (username: string | undefined, id: string, pool: CustomPool) => {
+export const set = (username: string | undefined, id: string, pool: SetupStore) => {
   const all = getAll(username);
   all[id] = pool;
   storage.make(makeKey(username)).set(JSON.stringify(all));
@@ -42,7 +28,7 @@ export const remove = (username: string | undefined, id: string) => {
   storage.make(makeKey(username)).set(JSON.stringify(all));
 };
 
-export const getDisplayData = (p: CustomPool) => {
+export const getDisplayData = (p: SetupStore) => {
   const timeLabel =
     p.timeMode === 'realTime'
       ? `${p.time}+${p.increment}`
