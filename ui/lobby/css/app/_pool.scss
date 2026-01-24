@@ -26,8 +26,8 @@
     line-height: 1.6em;
     letter-spacing: 0.1em;
 
-    span {
-      margin-right: 0.2em;
+    span[data-icon] {
+      margin-inline-end: 0.2em;
       font-size: 0.9em;
       opacity: 0.8;
     }
