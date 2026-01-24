@@ -258,7 +258,18 @@ export default class LobbyController {
   clickPool = (id: string) => {
     const custom = customPools.get(this.me?.username, id);
     if (custom) {
-      this.setupCtrl.submitPreset(custom);
+      if (
+        this.poolMember &&
+        custom.variant === 'standard' &&
+        custom.gameMode === 'rated' &&
+        custom.timeMode === 'realTime' &&
+        this.poolMember.id === `${custom.time}+${custom.increment}`
+      ) {
+        this.leavePool();
+        this.redraw();
+      } else {
+        this.setupCtrl.submitPreset(custom);
+      }
       return;
     }
 

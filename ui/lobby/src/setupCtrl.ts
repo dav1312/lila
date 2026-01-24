@@ -354,6 +354,20 @@ export default class SetupController {
   };
 
   submitPreset = async (p: SetupStore) => {
+    const poolId = `${p.time}+${p.increment}`;
+    if (
+      p.variant === 'standard' &&
+      p.gameMode === 'rated' &&
+      p.timeMode === 'realTime' &&
+      this.root.me &&
+      this.root.pools.some(pool => pool.id === poolId)
+    ) {
+      this.root.enterPool({
+        id: poolId,
+        range: this.ratingRange(p.ratingMin, p.ratingMax),
+      });
+      return;
+    }
     this.root.setTab(p.timeMode === 'realTime' ? 'real_time' : 'seeks');
     this.loading = true;
     this.root.redraw();
