@@ -125,6 +125,7 @@
   <string name="byCPL">By CPL</string>
   <string name="enable">Enable</string>
   <string name="bestMoveArrow">Best move arrow</string>
+  <string name="pieceManeuverArrows">Piece maneuver arrows</string>
   <string name="showVariationArrows">Show variation arrows</string>
   <string name="evaluationGauge">Evaluation gauge</string>
   <string name="visualMotifs">Visual motifs</string>

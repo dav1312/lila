@@ -4029,6 +4029,8 @@ interface I18n {
     performance: string;
     /** Rating: %s */
     perfRatingX: I18nFormat;
+    /** Piece maneuver arrows */
+    pieceManeuverArrows: string;
     /** A permanent link for anyone to challenge you with these exact settings. */
     permanentLinkForAnyoneToChallengeYou: string;
     /** Piece set */

@@ -19,6 +19,8 @@ const pieceDrop = (key: Key, role: Role, color: Color): DrawShape => ({
   brush: 'green',
 });
 
+const MAX_MANEUVER_ARROWS = 3;
+
 export function makeShapesFromUci(
   color: Color,
   uci: Uci,
@@ -76,8 +78,29 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
   if (ctrl.showBestMoveArrows() && ctrl.showAnalysis()) {
     if (isUci(nEval.best)) shapes = shapes.concat(makeShapesFromUci(rcolor, nEval.best, 'paleGreen'));
     if (!hovering && ctrl.ceval.search.multiPv) {
-      const nextBest = ctrl.isCevalAllowed() && nCeval ? nCeval.pvs[0]?.moves[0] : ctrl.nextNodeBest();
-      if (nextBest) shapes = shapes.concat(makeShapesFromUci(color, nextBest, 'paleBlue'));
+      const bestPvMoves = ctrl.isCevalAllowed() && nCeval ? nCeval.pvs[0]?.moves : undefined;
+      const nextBest = bestPvMoves?.[0] || ctrl.nextNodeBest();
+
+      if (nextBest) {
+        if (bestPvMoves?.length && ctrl.showManeuverMoveArrowsProp()) {
+          const maxPairs = Math.min(bestPvMoves.length, MAX_MANEUVER_ARROWS * 2);
+          for (let i = 0; i < maxPairs; i += 2) {
+            const uci = bestPvMoves[i];
+            if (i > 0) {
+              const prevUci = bestPvMoves[i - 2];
+              const prevOrig = prevUci.slice(0, 2);
+              const prevDest = prevUci.slice(2, 4);
+              const curOrig = uci.slice(0, 2);
+              const curDest = uci.slice(2, 4);
+
+              if (prevDest !== curOrig) break;
+              if (prevOrig === curDest) break; // Avoid clutter
+            }
+            shapes = shapes.concat(makeShapesFromUci(color, uci, 'paleBlue'));
+          }
+        } else shapes = shapes.concat(makeShapesFromUci(color, nextBest, 'paleBlue'));
+      }
+
       if (
         ctrl.isCevalAllowed() &&
         nCeval?.pvs[1] &&

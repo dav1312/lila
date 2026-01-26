@@ -1650,6 +1650,7 @@ object I18nKey:
     val `byCPL`: I18nKey = "byCPL"
     val `enable`: I18nKey = "enable"
     val `bestMoveArrow`: I18nKey = "bestMoveArrow"
+    val `pieceManeuverArrows`: I18nKey = "pieceManeuverArrows"
     val `showVariationArrows`: I18nKey = "showVariationArrows"
     val `evaluationGauge`: I18nKey = "evaluationGauge"
     val `visualMotifs`: I18nKey = "visualMotifs"
