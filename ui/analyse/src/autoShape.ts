@@ -32,8 +32,10 @@ function interferingArrow(from: string, to: string, occupied: Uint8Array): boole
   // Mark the origin square as occupied
   occupied[fromIdx] = 1;
 
-  const fromX = fromIdx % 8, fromY = fromIdx >> 3;
-  const toX = toIdx % 8, toY = toIdx >> 3;
+  const fromX = fromIdx % 8,
+    fromY = fromIdx >> 3;
+  const toX = toIdx % 8,
+    toY = toIdx >> 3;
   const deltaX = Math.abs(toX - fromX);
   const deltaY = Math.abs(toY - fromY);
 
