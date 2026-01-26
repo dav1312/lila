@@ -21,47 +21,42 @@ const pieceDrop = (key: Key, role: Role, color: Color): DrawShape => ({
 
 const MAX_MANEUVER_ARROWS = 3;
 
-function interferingArrow(from: string, to: string, occupied: Set<number>): boolean {
-  // Convert "a1" to 0, "h8" to 63
-  const getIndex = (s: string) => s.charCodeAt(0) - 97 + (s.charCodeAt(1) - 49) * 8;
+const getIdx = (s: string) => s.charCodeAt(0) - 97 + (s.charCodeAt(1) - 49) * 8;
 
-  const fromIdx = getIndex(from);
-  const toIdx = getIndex(to);
+function interferingArrow(from: string, to: string, occupied: Uint8Array): boolean {
+  const fromIdx = getIdx(from);
+  const toIdx = getIdx(to);
 
   if (fromIdx === toIdx) return true; // Ignore null moves
 
   // Mark the origin square as occupied
-  occupied.add(fromIdx);
+  occupied[fromIdx] = 1;
 
-  const fromX = fromIdx % 8,
-    fromY = Math.floor(fromIdx / 8);
-  const toX = toIdx % 8,
-    toY = Math.floor(toIdx / 8);
-
+  const fromX = fromIdx % 8, fromY = fromIdx >> 3;
+  const toX = toIdx % 8, toY = toIdx >> 3;
   const deltaX = Math.abs(toX - fromX);
   const deltaY = Math.abs(toY - fromY);
 
-  // Knight move: only check the destination
+  // Knight: check only the destination
   if ((deltaX === 2 && deltaY === 1) || (deltaX === 1 && deltaY === 2)) {
-    if (occupied.has(toIdx)) return true;
-    occupied.add(toIdx);
+    if (occupied[toIdx]) return true;
+    occupied[toIdx] = 1;
     return false;
   }
 
   // Sliding piece: check every square along the path
+  // Ensure the move is a valid line or diagonal before sliding
+  if (deltaX !== 0 && deltaY !== 0 && deltaX !== deltaY) return true;
+
   const stepX = Math.sign(toX - fromX);
   const stepY = Math.sign(toY - fromY);
+  const stepDelta = stepX + (stepY << 3);
 
-  let curX = fromX;
-  let curY = fromY;
-
-  while (curX !== toX || curY !== toY) {
-    curX += stepX;
-    curY += stepY;
-    const curIdx = curX + curY * 8;
-
-    if (occupied.has(curIdx)) return true;
-    occupied.add(curIdx);
+  let currentIdx = fromIdx;
+  while (currentIdx !== toIdx) {
+    currentIdx += stepDelta;
+    if (occupied[currentIdx]) return true;
+    occupied[currentIdx] = 1;
   }
 
   return false;
@@ -130,16 +125,14 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
       if (nextBest) {
         if (bestPvMoves?.length && ctrl.showManeuverMoveArrowsProp()) {
           const maxPairs = Math.min(bestPvMoves.length, MAX_MANEUVER_ARROWS * 2);
-          const occupied = new Set<number>();
+          const occupied = new Uint8Array(64);
           for (let i = 0; i < maxPairs; i += 2) {
             const uci = bestPvMoves[i];
             const orig = uci.slice(0, 2);
             const dest = uci.slice(2, 4);
             if (i > 0) {
               const prevUci = bestPvMoves[i - 2];
-              const prevDest = prevUci.slice(2, 4);
-
-              if (prevDest !== orig) break;
+              if (prevUci.slice(2, 4) !== orig) break;
             }
             if (interferingArrow(orig, dest, occupied)) break;
             shapes = shapes.concat(makeShapesFromUci(color, uci, 'paleBlue'));
