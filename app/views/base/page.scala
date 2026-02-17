@@ -22,10 +22,10 @@ object page:
   private def metaThemeColor(using ctx: Context): Frag =
     raw(s"""<meta name="theme-color" content="${ctx.pref.themeColor}">""")
 
-  private def boardPreload(using ctx: Context) = frag(
-    imagePreload(assetUrl(s"images/board/${ctx.pref.currentTheme.file}")),
-    ctx.pref.is3d.option:
-      imagePreload(assetUrl(s"images/staunton/board/${ctx.pref.currentTheme3d.file}"))
+  private def boardPreload(pref: lila.pref.Pref) = frag(
+    imagePreload(assetUrl(s"images/board/${pref.currentTheme.file}")),
+    pref.is3d.option:
+      imagePreload(assetUrl(s"images/staunton/board/${pref.currentTheme3d.file}"))
   )
 
   def boardStyle(zoomable: Boolean)(using ctx: Context) =
@@ -36,7 +36,11 @@ object page:
       zoomable.so(s"---zoom:$pageZoom;")
 
   def apply(p: Page)(using ctx: PageContext): RenderedPage =
-    import ctx.pref
+    val forceHorsey = p.flags(PageFlags.forceHorsey)
+
+    val pref =
+      if forceHorsey then ctx.pref.copy(is3d = false, theme = "horsey", pieceSet = "horsey") else ctx.pref
+
     val allModules = p.modules ++
       p.pageModule.so(module => esmPage(module.name)) ++
       ctx.needsFp.so(fingerprintTag)
@@ -84,12 +88,12 @@ object page:
             raw(s"""<style id="bg-data">html.transp::before{background-image:url("$url");}</style>""")
           },
           fontsPreload,
-          boardPreload,
+          boardPreload(pref),
           manifests,
           p.withHrefLangs.map(hrefLangs),
           sitePreload(p.i18nModules, ctx.data.inquiry.isDefined.option(Esm("mod.inquiry")) :: allModules),
           lichessFontFaceCss,
-          pieceSetImages.load(ctx.pref.currentPieceSet.name),
+          pieceSetImages.load(pref.currentPieceSet.name),
           (ctx.pref.bg === lila.pref.Pref.Bg.SYSTEM || ctx.impersonatedBy.isDefined)
             .so(systemThemeScript(ctx.nonce))
         ).pipe(p.transformHead),

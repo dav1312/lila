@@ -33,21 +33,27 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
       angle: PuzzleAngle,
       color: Option[Color] = None,
       replay: Option[lila.puzzle.PuzzleReplay] = None,
-      langPath: Option[LangPath] = None
+      langPath: Option[LangPath] = None,
+      forceHorsey: Boolean = false
   )(using ctx: Context)(using Perf) = for
     json <- jsonView.analysis(puzzle, angle, replay)
     settings <- ctx.user.traverse(env.puzzle.session.getSettings)
-    prefJson = jsonView.pref(ctx.pref)
+    prefJsonBase = jsonView.pref(ctx.pref)
+    prefJson = if forceHorsey then prefJsonBase ++ Json.obj("is3d" -> false) else prefJsonBase
     page <- renderPage:
-      views.puzzle.ui.show(puzzle, json, prefJson, settings | PuzzleSettings.default(color), langPath)
+      views.puzzle.ui
+        .show(puzzle, json, prefJson, settings | PuzzleSettings.default(color), langPath)
+        .flag(_.forceHorsey, forceHorsey)
   yield Ok(page).enforceCrossSiteIsolation
 
   def daily = Open:
     NoBot:
       Found(env.puzzle.daily.get): daily =>
         WithPuzzlePerf:
+          val today = java.time.LocalDate.now(java.time.ZoneId.of("UTC"))
+          val isAprilFools = today.getDayOfMonth == 1 && today.getMonth == java.time.Month.APRIL
           negotiateApi(
-            html = renderShow(daily.puzzle, PuzzleAngle.mix),
+            html = renderShow(daily.puzzle, PuzzleAngle.mix, forceHorsey = isAprilFools),
             api = v => jsonView.analysis(daily.puzzle, PuzzleAngle.mix, apiVersion = v.some).dmap { Ok(_) }
           ).dmap(_.noCache)
 
