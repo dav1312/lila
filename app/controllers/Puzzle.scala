@@ -39,7 +39,9 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
     json <- jsonView.analysis(puzzle, angle, replay)
     settings <- ctx.user.traverse(env.puzzle.session.getSettings)
     prefJsonBase = jsonView.pref(ctx.pref)
-    prefJson = if forceHorsey then prefJsonBase ++ Json.obj("is3d" -> false) else prefJsonBase
+    prefJson =
+      if forceHorsey then prefJsonBase ++ Json.obj("is3d" -> false, "forceHorsey" -> true)
+      else prefJsonBase
     page <- renderPage:
       views.puzzle.ui
         .show(puzzle, json, prefJson, settings | PuzzleSettings.default(color), langPath)

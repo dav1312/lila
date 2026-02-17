@@ -152,6 +152,11 @@ export default class PuzzleCtrl implements CevalHandler {
     });
     $('body').addClass('playing'); // for zen
     $('#zentog').on('click', () => pubsub.emit('zen'));
+    if ((this.opts.pref as any).forceHorsey && this.isDaily) {
+      alert(
+        "🐴 Horsey has taken over the Daily Puzzle today...\nHappy April 1st!\n\n(Don't worry, your settings are safe!)",
+      );
+    }
   }
 
   private loadSound = (name: string, volume?: number) => {
