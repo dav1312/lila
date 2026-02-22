@@ -14,6 +14,7 @@ import {
   type TimeControl,
 } from 'lib/setup/timeControl';
 import type { ColorChoice, ColorProp } from 'lib/setup/color';
+import * as customPools from './customPools';
 
 const getPerf = (variant: VariantKey, tc: TimeControl): Perf =>
   variant !== 'standard' && variant !== 'fromPosition' ? variant : tc.speed();
@@ -28,6 +29,7 @@ export default class SetupController {
   loading = false;
   color: ColorProp;
   forced?: ForceSetupOptions;
+  editingPoolId: string | null = null;
 
   // Store props
   variant: Prop<VariantKey>;
@@ -177,8 +179,43 @@ export default class SetupController {
     this.lastValidFen = '';
     this.friendUser = friendUser || '';
     this.variantMenuOpen(false);
+    this.editingPoolId = null;
     this.forced = forceOptions;
     this.loadPropsFromStore(forceOptions);
+  };
+
+  openForEdit = (poolId: string) => {
+    const custom = customPools.get(this.root.me?.username, poolId);
+    let opts: ForceSetupOptions;
+    if (custom) {
+      opts = {
+        variant: custom.variant,
+        fen: custom.fen,
+        timeMode: custom.timeMode,
+        time: custom.time,
+        increment: custom.increment,
+        days: custom.days,
+        mode: custom.gameMode,
+        color: 'random',
+      };
+    } else {
+      const pool = this.root.pools.find(p => p.id === poolId);
+      if (pool) {
+        opts = {
+          variant: 'standard',
+          timeMode: 'realTime',
+          time: pool.lim,
+          increment: pool.inc,
+          mode: 'rated',
+          color: 'random',
+        };
+      } else {
+        opts = {};
+      }
+    }
+    this.openModal('hook');
+    this.loadPropsFromStore(opts);
+    this.editingPoolId = poolId;
   };
 
   closeModal?: () => void; // managed by view/setup/modal.ts
@@ -221,9 +258,12 @@ export default class SetupController {
 
   selectedPerf = (): Perf => getPerf(this.variant(), this.timeControl);
 
-  ratingRange = (): string => {
+  ratingRange = (min?: number, max?: number): string => {
     const rating = this.myRating();
-    return rating ? `${Math.max(100, rating + this.ratingMin())}-${rating + this.ratingMax()}` : '';
+    if (!rating) return '';
+    const rMin = min !== undefined ? min : this.ratingMin();
+    const rMax = max !== undefined ? max : this.ratingMax();
+    return `${Math.max(100, rating + rMin)}-${rating + rMax}`;
   };
 
   hookToPoolMember = (color: ColorChoice): PoolMember | null => {
@@ -286,27 +326,83 @@ export default class SetupController {
 
   minimumTimeIfReal = (): number => (this.gameType === 'ai' && this.variant() === 'fromPosition' ? 1 : 0);
 
-  submit = async () => {
-    const color = this.color();
-    const poolMember = this.hookToPoolMember(color);
-    if (poolMember) {
-      this.root.enterPool(poolMember);
+  getCustomPoolState = (): SetupStore => ({
+    variant: this.variant(),
+    fen: this.variant() === 'fromPosition' ? this.fen() : '',
+    timeMode: this.timeControl.mode(),
+    time: this.timeControl.time(),
+    increment: this.timeControl.increment(),
+    days: this.timeControl.days(),
+    gameMode: this.gameMode(),
+    ratingMin: this.ratingMin(),
+    ratingMax: this.ratingMax(),
+    aiLevel: this.aiLevel(),
+  });
+
+  resetPreset = (poolId: string) => {
+    customPools.remove(this.root.me?.username, poolId);
+    this.root.redraw();
+  };
+
+  saveEdit = () => {
+    if (this.editingPoolId) {
+      customPools.set(this.root.me?.username, this.editingPoolId, this.getCustomPoolState());
+      this.root.isEditingPools(false);
       this.closeModal?.();
+      this.root.redraw();
+    }
+  };
+
+  submitPreset = async (p: SetupStore, slotId?: string) => {
+    const poolId = `${p.time}+${p.increment}`;
+    if (
+      p.variant === 'standard' &&
+      p.gameMode === 'rated' &&
+      p.timeMode === 'realTime' &&
+      this.root.me &&
+      this.root.pools.some(pool => pool.id === poolId)
+    ) {
+      this.root.enterPool(
+        {
+          id: poolId,
+          range: this.ratingRange(p.ratingMin, p.ratingMax),
+        },
+        slotId,
+      );
       return;
     }
 
-    if (this.gameType === 'hook') this.root.setTab(this.timeControl.isRealTime() ? 'real_time' : 'seeks');
+    this.root.setTab(p.timeMode === 'realTime' ? 'real_time' : 'seeks');
     this.loading = true;
     this.root.redraw();
 
-    let urlPath = `/setup/${this.gameType}`;
-    if (this.gameType === 'hook') urlPath += `/${site.sri}`;
+    const body = xhr.form({
+      variant: keyToId(p.variant, variants).toString(),
+      fen: p.variant === 'fromPosition' ? p.fen : undefined,
+      timeMode: keyToId(p.timeMode, timeModes).toString(),
+      time: p.time.toString(),
+      increment: p.increment.toString(),
+      days: p.days.toString(),
+      mode: p.gameMode === 'casual' ? '0' : '1',
+      ratingRange: this.ratingRange(p.ratingMin, p.ratingMax),
+      ratingRange_range_min: p.ratingMin.toString(),
+      ratingRange_range_max: p.ratingMax.toString(),
+      level: p.aiLevel.toString(),
+      color: 'random',
+    });
+
+    await this.performSubmit(body, 'hook');
+  };
+
+  private performSubmit = async (body: FormData, type: string) => {
+    let urlPath = `/setup/${type}`;
+    if (type === 'hook') urlPath += `/${site.sri}`;
     const urlParams = { user: this.friendUser || undefined };
     let response;
     try {
       response = await xhr.textRaw(xhr.url(urlPath, urlParams), {
         method: 'post',
-        body: this.propsToFormData(color),
+        body,
       });
     } catch (_) {
       this.loading = false;
@@ -337,5 +433,26 @@ export default class SetupController {
       this.loading = false;
       this.closeModal?.();
     }
+  };
+
+  submit = async () => {
+    if (this.editingPoolId) {
+      this.saveEdit();
+      return;
+    }
+
+    const color = this.color();
+    const poolMember = this.hookToPoolMember(color);
+    if (poolMember) {
+      this.root.enterPool(poolMember);
+      this.closeModal?.();
+      return;
+    }
+
+    if (this.gameType === 'hook') this.root.setTab(this.timeControl.isRealTime() ? 'real_time' : 'seeks');
+    this.loading = true;
+    this.root.redraw();
+
+    await this.performSubmit(this.propsToFormData(color), this.gameType!);
   };
 }

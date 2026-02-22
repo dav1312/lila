@@ -25,6 +25,8 @@ import { storage, type LichessStorage } from 'lib/storage';
 import { pubsub } from 'lib/pubsub';
 import { wsPingInterval } from 'lib/socket';
 import { colors, type ColorChoice } from 'lib/setup/color';
+import * as customPools from './customPools';
+import { toggle } from 'lib';
 
 export default class LobbyController {
   data: LobbyData;
@@ -42,6 +44,10 @@ export default class LobbyController {
   pools: Pool[];
   filter: Filter;
   setupCtrl: SetupController;
+
+  activePoolSlot?: string;
+
+  isEditingPools = toggle(false);
 
   private poolInStorage: LichessStorage;
   private flushHooksTimeout?: number;
@@ -253,18 +259,30 @@ export default class LobbyController {
   };
 
   clickPool = (id: string) => {
+    const custom = customPools.get(this.me?.username, id);
+    if (custom) {
+      if (this.poolMember && this.activePoolSlot === id) {
+        this.leavePool();
+        this.redraw();
+        return;
+      }
+      this.setupCtrl.submitPreset(custom, id);
+      return;
+    }
+
     if (!this.me) {
       xhr.anonPoolSeek(this.pools.find(p => p.id === id)!);
       this.setTab('real_time');
-    } else if (this.poolMember && this.poolMember.id === id) this.leavePool();
-    else this.enterPool({ id });
+    } else if (this.poolMember && this.poolMember.id === id && this.activePoolSlot === id) this.leavePool();
+    else this.enterPool({ id }, id);
     this.redraw();
   };
 
-  enterPool = (member: PoolMember) => {
+  enterPool = (member: PoolMember, slotId?: string) => {
     poolRangeStorage.set(this.me?.username, member.id, member.range);
     this.setTab('pools');
     this.poolMember = member;
+    this.activePoolSlot = slotId || member.id;
     this.poolIn();
   };
 
@@ -272,6 +290,7 @@ export default class LobbyController {
     if (!this.poolMember) return;
     this.socket.poolOut(this.poolMember);
     this.poolMember = undefined;
+    this.activePoolSlot = undefined;
   };
 
   poolIn = () => {
