@@ -1,0 +1,25 @@
+#blindfoldzone {
+  @extend %flex-center-nowrap;
+  justify-content: center;
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 4em;
+  z-index: $z-zen-toggle-111;
+  pointer-events: none;
+}
+
+#blindfoldtog {
+  @extend %box-radius;
+  flex: 0 0 auto;
+  padding: 0.2em 1em;
+  opacity: 0.5;
+  pointer-events: auto;
+  &:hover {
+    opacity: 1;
+  }
+  @media (max-width: at-most($xx-small)) {
+    opacity: 1;
+  }
+}

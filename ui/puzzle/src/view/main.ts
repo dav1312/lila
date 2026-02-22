@@ -13,6 +13,7 @@ import {
   hl,
   type MaybeVNode,
 } from 'lib/view';
+import { renderBlindfoldToggle } from 'lib/view/blindfold';
 import { type VNode, h } from 'snabbdom';
 import { addPointerListeners } from 'lib/pointer';
 import { render as treeView } from './tree';
@@ -94,6 +95,7 @@ export default function (ctrl: PuzzleCtrl): VNode {
       },
     },
     [
+      renderBlindfoldToggle(ctrl.blindfold(), () => ctrl.blindfold(false)),
       hl('aside.puzzle__side', [
         replay(ctrl),
         puzzleBox(ctrl),
