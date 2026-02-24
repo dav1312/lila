@@ -224,7 +224,7 @@ const makePreview =
             boardPlayer(preview, 'white', showResults, round),
             boardPlayer(preview, 'black', showResults, round),
           ]),
-          showResults && cloudEval ? verticalEvalGauge(preview, cloudEval) : undefined,
+          showResults && cloudEval ? evalGauge(preview, cloudEval, true) : undefined,
         ],
       );
     }
@@ -238,7 +238,7 @@ const makePreview =
       [
         boardPlayer(preview, cgOpposite(orientation), showResults, round),
         h('span.cg-gauge', [
-          showResults && cloudEval ? verticalEvalGauge(preview, cloudEval) : undefined,
+          showResults && cloudEval ? evalGauge(preview, cloudEval) : undefined,
           h(
             'span.mini-game__board',
             h('span.cg-wrap', {
@@ -269,7 +269,7 @@ const makePreview =
     );
   };
 
-export const verticalEvalGauge = (chap: ChapterPreview, cloudEval: MultiCloudEval, horizontal = false): MaybeVNode => {
+export const evalGauge = (chap: ChapterPreview, cloudEval: MultiCloudEval, horizontal = false): MaybeVNode => {
   const isFlip = !horizontal && chap.orientation === 'black';
   const tag = `span.mini-game__gauge${isFlip ? ' mini-game__gauge--flip' : ''}${
     chap.check === '#' ? ' mini-game__gauge--set' : ''
