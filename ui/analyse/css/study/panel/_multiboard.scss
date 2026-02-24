@@ -1,3 +1,4 @@
+// ui/analyse/css/study/panel/_multiboard.scss
 .study__multiboard {
   .analyse__underboard & {
     @extend %box-neat;
@@ -145,6 +146,23 @@
       }
     }
 
+    &--horizontal {
+      order: 2;
+      max-width: none;
+      flex: 0 0 15px;
+      border: $border;
+      border-radius: 3px;
+      background: linear-gradient(to right, var(--c-eval-mini-gauge-white), var(--c-eval-mini-gauge-black));
+
+      .mini-game__gauge__black {
+        height: 100%;
+        width: 50%;
+        position: absolute;
+        right: 0;
+        top: 0;
+      }
+    }
+
     &--set {
       opacity: 1;
       background: var(--c-eval-mini-gauge-white);
@@ -167,33 +185,71 @@
         height: 50%;
       }
     }
+
+    &--horizontal.mini-game__gauge--set {
+      tick {
+        height: 100%;
+        width: auto;
+        border-bottom: none;
+        border-left: 2px solid $m-accent--fade-50;
+        left: 50%;
+        top: 0;
+        transform: translateX(-50%);
+      }
+    }
   }
-  .mini-game__gauge ~ .mini-game__board cg-board {
+  .mini-game__gauge:not(.mini-game__gauge--horizontal) ~ .mini-game__board cg-board {
     border-radius: 4px 0 0 4px;
   }
 
   &--no-board {
-    display: grid;
-    grid-template-columns: min-content 1fr;
-    gap: 0.2em 0.5em;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.25em;
 
-    .cg-gauge {
-      grid-column: 1;
-      grid-row: 1 / span 2;
-      width: 10px;
-    }
-
-    .mini-game__gauge {
-      max-width: none;
-      border-left: $border;
-      border-radius: 3px;
-    }
-
-    > .mini-game__player {
-      grid-column: 2;
+    .mini-game__players {
       display: flex;
       justify-content: space-between;
+      gap: 0.25em;
+      width: 100%;
+    }
+
+    .mini-game__player {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      flex: 1;
+      min-width: 0;
+      padding: 0;
+
+      &--white {
+        align-items: flex-start;
+        text-align: left;
+      }
+
+      &--black {
+        align-items: flex-end;
+        text-align: right;
+        .mini-game__user {
+          flex-direction: row-reverse;
+        }
+      }
+    }
+
+    .mini-game__user {
+      display: flex;
       align-items: center;
+      max-width: 100%;
+      gap: 0.4em;
+      min-width: 0;
+
+      .name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        min-width: 0;
+      }
     }
   }
 }

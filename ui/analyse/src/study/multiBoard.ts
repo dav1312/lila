@@ -1,3 +1,4 @@
+// ui/analyse/src/study/multiBoard.ts
 import * as licon from 'lib/licon';
 import { otbClockIsRunning, formatMs } from 'lib/game/clock/clockWidget';
 import { fenColor } from 'lib/game/chess';
@@ -210,58 +211,73 @@ const makePreview =
   ) =>
   (preview: ChapterPreview) => {
     const orientation = preview.orientation || 'white';
+    
+    if (!showBoard) {
+      return h(
+        `a.mini-game.is2d.chap-${preview.id}${showResults ? '' : '.no-spoilers'}.mini-game--no-board`,
+        {
+          class: { active: preview.id === current },
+          attrs: gameLinkAttrs(roundPath, preview),
+        },
+        [
+          h('div.mini-game__players', [
+            boardPlayer(preview, 'white', showResults, round),
+            boardPlayer(preview, 'black', showResults, round),
+          ]),
+          showResults && cloudEval ? evalGauge(preview, cloudEval, true) : undefined,
+        ],
+      );
+    }
+
     return h(
-      `a.mini-game.is2d.chap-${preview.id}${showResults ? '' : '.no-spoilers'}${!showBoard ? ' mini-game--no-board' : ''}`,
+      `a.mini-game.is2d.chap-${preview.id}${showResults ? '' : '.no-spoilers'}`,
       {
         class: { active: preview.id === current },
         attrs: gameLinkAttrs(roundPath, preview),
       },
       [
         boardPlayer(preview, cgOpposite(orientation), showResults, round),
-        (showBoard || (showResults && cloudEval))
-          ? h('span.cg-gauge', [
-              showResults ? cloudEval && verticalEvalGauge(preview, cloudEval) : undefined,
-              showBoard
-                ? h(
-                    'span.mini-game__board',
-                    h('span.cg-wrap', {
-                      hook: {
-                        insert(vnode) {
-                          const el = vnode.elm as HTMLElement;
-                          vnode.data!.cg = makeChessground(el, {
-                            coordinates: false,
-                            viewOnly: true,
-                            orientation,
-                            drawable: { enabled: false, visible: false },
-                            ...(showResults ? previewToCgConfig(preview) : { fen: EMPTY_BOARD_FEN }),
-                          });
-                          vnode.data!.fen = preview.fen;
-                        },
-                        postpatch(old, vnode) {
-                          if (!showResults) return;
-                          if (old.data!.fen !== preview.fen) old.data!.cg?.set(previewToCgConfig(preview));
-                          vnode.data!.fen = preview.fen;
-                          vnode.data!.cg = old.data!.cg;
-                        },
-                      },
-                    }),
-                  )
-                : undefined,
-            ])
-          : undefined,
+        h('span.cg-gauge', [
+          showResults && cloudEval ? verticalEvalGauge(preview, cloudEval) : undefined,
+          h(
+            'span.mini-game__board',
+            h('span.cg-wrap', {
+              hook: {
+                insert(vnode) {
+                  const el = vnode.elm as HTMLElement;
+                  vnode.data!.cg = makeChessground(el, {
+                    coordinates: false,
+                    viewOnly: true,
+                    orientation,
+                    drawable: { enabled: false, visible: false },
+                    ...(showResults ? previewToCgConfig(preview) : { fen: EMPTY_BOARD_FEN }),
+                  });
+                  vnode.data!.fen = preview.fen;
+                },
+                postpatch(old, vnode) {
+                  if (!showResults) return;
+                  if (old.data!.fen !== preview.fen) old.data!.cg?.set(previewToCgConfig(preview));
+                  vnode.data!.fen = preview.fen;
+                  vnode.data!.cg = old.data!.cg;
+                },
+              },
+            }),
+          ),
+        ]),
         boardPlayer(preview, orientation, showResults, round),
       ],
     );
   };
 
-export const verticalEvalGauge = (chap: ChapterPreview, cloudEval: MultiCloudEval): MaybeVNode => {
-  const tag = `span.mini-game__gauge${chap.orientation === 'black' ? ' mini-game__gauge--flip' : ''}${
+export const verticalEvalGauge = (chap: ChapterPreview, cloudEval: MultiCloudEval, horizontal = false): MaybeVNode => {
+  const isFlip = !horizontal && chap.orientation === 'black';
+  const tag = `span.mini-game__gauge${isFlip ? ' mini-game__gauge--flip' : ''}${
     chap.check === '#' ? ' mini-game__gauge--set' : ''
-  }`;
+  }${horizontal ? ' mini-game__gauge--horizontal' : ''}`;
   return chap.check === '#'
     ? h(tag, { attrs: { 'data-id': chap.id, title: 'Checkmate' } }, [
         h('span.mini-game__gauge__black', {
-          attrs: { style: `height: ${fenColor(chap.fen) === 'white' ? 100 : 0}%` },
+          attrs: { style: horizontal ? `width: ${fenColor(chap.fen) === 'white' ? 100 : 0}%` : `height: ${fenColor(chap.fen) === 'white' ? 100 : 0}%` },
         }),
         h('tick'),
       ])
@@ -276,9 +292,12 @@ export const verticalEvalGauge = (chap: ChapterPreview, cloudEval: MultiCloudEva
               const prevNodeCloud: CloudEval | undefined = old.data?.cloud;
               const cev = cloudEval.getCloudEval(chap.fen) || prevNodeCloud;
               if (cev?.chances !== prevNodeCloud?.chances) {
-                (elm.firstChild as HTMLElement).style.height = `${Math.round(
-                  ((1 - (cev?.chances || 0)) / 2) * 100,
-                )}%`;
+                const percent = `${Math.round(((1 - (cev?.chances || 0)) / 2) * 100)}%`;
+                if (horizontal) {
+                  (elm.firstChild as HTMLElement).style.width = percent;
+                } else {
+                  (elm.firstChild as HTMLElement).style.height = percent;
+                }
                 if (cev) {
                   elm.title = renderScore(cev);
                   elm.classList.add('mini-game__gauge--set');
@@ -326,7 +345,7 @@ const boardPlayer = (preview: ChapterPreview, color: Color, showResults?: boolea
   const player = preview.players?.[color];
   const coloredResult =
     preview.status && preview.status !== '*' && playerColoredResult(preview.status, color, round);
-  return h('span.mini-game__player', [
+  return h(`span.mini-game__player.mini-game__player--${color}`, [
     player && renderUser(player),
     showResults
       ? coloredResult
