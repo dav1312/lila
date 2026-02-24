@@ -221,7 +221,6 @@
       overflow: hidden;
       flex: 1;
       min-width: 0;
-      padding: 0;
 
       &--white {
         align-items: flex-start;
@@ -250,6 +249,10 @@
         white-space: nowrap;
         min-width: 0;
       }
+    }
+
+    .mini-game__clock {
+      padding: 0;
     }
   }
 }
