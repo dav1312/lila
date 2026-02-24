@@ -22,6 +22,7 @@ import type { RelayRound } from './relay/interfaces';
 export class MultiBoardCtrl {
   playing: Toggle = toggle(false);
   showResults: Prop<boolean>;
+  showBoard: Prop<boolean>;
   teamSelect: Prop<string> = prop('');
   page: number = 1;
   maxPerPageStorage = storage.make('study.multiBoard.maxPerPage');
@@ -33,6 +34,7 @@ export class MultiBoardCtrl {
     readonly redraw: Redraw,
   ) {
     this.showResults = this.isRelay ? storedBooleanProp('study.showResults', true) : toggle(true);
+    this.showBoard = storedBooleanProp('study.showBoard', true);
   }
 
   gameTeam = (id: ChapterId): string | undefined => this.chapters.get(id)?.players?.white.team;
@@ -102,6 +104,12 @@ export function view(ctrl: MultiBoardCtrl, study: StudyCtrl): MaybeVNode {
             name: i18n.study.showEvalBar,
             prop: ctrl.multiCloudEval.showEval,
           }),
+        cmnToggleWrapProp({
+          id: 'multiboard-board',
+          name: i18n.broadcast.boards,
+          prop: ctrl.showBoard,
+          redraw: ctrl.redraw,
+        }),
         ctrl.isRelay &&
           cmnToggleWrapProp({
             id: 'multiboard-playing',
@@ -133,7 +141,7 @@ export function view(ctrl: MultiBoardCtrl, study: StudyCtrl): MaybeVNode {
         },
       },
       pager.currentPageResults.map(
-        makePreview(baseUrl, study.vm.chapterId, cloudEval, ctrl.showResults(), study.relay?.round),
+        makePreview(baseUrl, study.vm.chapterId, cloudEval, ctrl.showResults(), study.relay?.round, ctrl.showBoard()),
       ),
     ),
   ]);
@@ -198,44 +206,49 @@ const makePreview =
     cloudEval?: MultiCloudEval,
     showResults?: boolean,
     round?: RelayRound,
+    showBoard: boolean = true,
   ) =>
   (preview: ChapterPreview) => {
     const orientation = preview.orientation || 'white';
     return h(
-      `a.mini-game.is2d.chap-${preview.id}${showResults ? '' : '.no-spoilers'}`,
+      `a.mini-game.is2d.chap-${preview.id}${showResults ? '' : '.no-spoilers'}${!showBoard ? ' mini-game--no-board' : ''}`,
       {
         class: { active: preview.id === current },
         attrs: gameLinkAttrs(roundPath, preview),
       },
       [
         boardPlayer(preview, cgOpposite(orientation), showResults, round),
-        h('span.cg-gauge', [
-          showResults ? cloudEval && verticalEvalGauge(preview, cloudEval) : undefined,
-          h(
-            'span.mini-game__board',
-            h('span.cg-wrap', {
-              hook: {
-                insert(vnode) {
-                  const el = vnode.elm as HTMLElement;
-                  vnode.data!.cg = makeChessground(el, {
-                    coordinates: false,
-                    viewOnly: true,
-                    orientation,
-                    drawable: { enabled: false, visible: false },
-                    ...(showResults ? previewToCgConfig(preview) : { fen: EMPTY_BOARD_FEN }),
-                  });
-                  vnode.data!.fen = preview.fen;
-                },
-                postpatch(old, vnode) {
-                  if (!showResults) return;
-                  if (old.data!.fen !== preview.fen) old.data!.cg?.set(previewToCgConfig(preview));
-                  vnode.data!.fen = preview.fen;
-                  vnode.data!.cg = old.data!.cg;
-                },
-              },
-            }),
-          ),
-        ]),
+        (showBoard || (showResults && cloudEval))
+          ? h('span.cg-gauge', [
+              showResults ? cloudEval && verticalEvalGauge(preview, cloudEval) : undefined,
+              showBoard
+                ? h(
+                    'span.mini-game__board',
+                    h('span.cg-wrap', {
+                      hook: {
+                        insert(vnode) {
+                          const el = vnode.elm as HTMLElement;
+                          vnode.data!.cg = makeChessground(el, {
+                            coordinates: false,
+                            viewOnly: true,
+                            orientation,
+                            drawable: { enabled: false, visible: false },
+                            ...(showResults ? previewToCgConfig(preview) : { fen: EMPTY_BOARD_FEN }),
+                          });
+                          vnode.data!.fen = preview.fen;
+                        },
+                        postpatch(old, vnode) {
+                          if (!showResults) return;
+                          if (old.data!.fen !== preview.fen) old.data!.cg?.set(previewToCgConfig(preview));
+                          vnode.data!.fen = preview.fen;
+                          vnode.data!.cg = old.data!.cg;
+                        },
+                      },
+                    }),
+                  )
+                : undefined,
+            ])
+          : undefined,
         boardPlayer(preview, orientation, showResults, round),
       ],
     );

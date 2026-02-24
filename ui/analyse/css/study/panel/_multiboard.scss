@@ -171,6 +171,31 @@
   .mini-game__gauge ~ .mini-game__board cg-board {
     border-radius: 4px 0 0 4px;
   }
+
+  &--no-board {
+    display: grid;
+    grid-template-columns: min-content 1fr;
+    gap: 0.2em 0.5em;
+
+    .cg-gauge {
+      grid-column: 1;
+      grid-row: 1 / span 2;
+      width: 10px;
+    }
+
+    .mini-game__gauge {
+      max-width: none;
+      border-left: $border;
+      border-radius: 3px;
+    }
+
+    > .mini-game__player {
+      grid-column: 2;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  }
 }
 
 .empty-boards-note {
