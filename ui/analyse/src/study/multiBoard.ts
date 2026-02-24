@@ -224,7 +224,7 @@ const makePreview =
             boardPlayer(preview, 'white', showResults, round),
             boardPlayer(preview, 'black', showResults, round),
           ]),
-          showResults && cloudEval ? evalGauge(preview, cloudEval, true) : undefined,
+          showResults && cloudEval ? verticalEvalGauge(preview, cloudEval) : undefined,
         ],
       );
     }
