@@ -71,6 +71,10 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100% / 2, max(210px, 100% / 6)), 1fr));
 
+    &:has(.mini-game--no-board) {
+      grid-template-columns: repeat(auto-fill, minmax(min(100% / 2, max(240px, 100% / 6)), 1fr));
+    }
+
     a {
       @extend %box-radius;
       container-type: inline-size;
@@ -250,6 +254,10 @@
         text-overflow: ellipsis;
         white-space: nowrap;
         min-width: 0;
+      }
+
+      .rating {
+        margin: 0;
       }
     }
 
