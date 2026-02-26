@@ -80,7 +80,8 @@
       min-width: 0;
 
       &,
-      &:first-child {
+      &:first-child,
+      .mini-game__clock {
         padding: 0;
       }
 
@@ -104,10 +105,6 @@
       .mini-game__flag {
         margin: 0;
       }
-    }
-
-    .mini-game__clock {
-      padding: 0;
     }
   }
 }
