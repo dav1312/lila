@@ -79,6 +79,7 @@
       border: 1px solid transparent;
 
       overflow: hidden;
+      justify-content: space-between;
 
       &.active {
         background: $m-primary_bg--mix-20;
@@ -125,7 +126,7 @@
     max-width: 1.5em;
     overflow: hidden;
     opacity: 0.4;
-    margin-left: 4px;
+    margin-inline-start: 4px;
     background: linear-gradient(to top, var(--c-eval-mini-gauge-white), var(--c-eval-mini-gauge-black));
     &::after {
       content: '';
@@ -150,6 +151,20 @@
       }
     }
 
+    &--horizontal {
+      max-width: none;
+      flex: 0 0 15px;
+      margin-inline-start: 0;
+      background: linear-gradient(to right, var(--c-eval-mini-gauge-white), var(--c-eval-mini-gauge-black));
+
+      .mini-game__gauge__black {
+        height: 100%;
+        width: 50%;
+        position: absolute;
+        inset-inline-end: 0;
+      }
+    }
+
     &--set {
       opacity: 1;
       background: var(--c-eval-mini-gauge-white);
@@ -164,6 +179,61 @@
         border-bottom: 5px solid $m-accent--fade-50;
         height: 50%;
       }
+    }
+
+    &--horizontal.mini-game__gauge--set {
+      tick {
+        height: 100%;
+        width: auto;
+        border-left: 2px solid $m-accent--fade-50;
+        left: 50%;
+        top: 0;
+        transform: translateX(-50%);
+      }
+    }
+  }
+
+  &--no-board {
+    @extend %flex-column;
+
+    .mini-game__players {
+      @extend %flex-between-nowrap;
+      gap: 0.25em;
+    }
+
+    .mini-game__player {
+      flex-direction: column;
+      flex: 1;
+      min-width: 0;
+      padding: 0;
+
+      &--white {
+        align-items: flex-start;
+      }
+
+      &--black {
+        align-items: flex-end;
+        .mini-game__user {
+          flex-direction: row-reverse;
+        }
+      }
+    }
+
+    .mini-game__user {
+      max-width: 100%;
+      gap: 0.4em;
+
+      .name {
+        @extend %nowrap-ellipsis;
+      }
+
+      .rating {
+        margin: 0;
+      }
+    }
+
+    .mini-game__clock {
+      padding: 0;
     }
   }
 }
