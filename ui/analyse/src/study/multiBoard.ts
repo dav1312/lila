@@ -22,6 +22,7 @@ import type { RelayRound } from './relay/interfaces';
 export class MultiBoardCtrl {
   playing: Toggle = toggle(false);
   showResults: Prop<boolean>;
+  showBoard: Prop<boolean>;
   teamSelect: Prop<string> = prop('');
   page: number = 1;
   maxPerPageStorage = storage.make('study.multiBoard.maxPerPage');
@@ -33,6 +34,7 @@ export class MultiBoardCtrl {
     readonly redraw: Redraw,
   ) {
     this.showResults = this.isRelay ? storedBooleanProp('study.showResults', true) : toggle(true);
+    this.showBoard = storedBooleanProp('study.showBoard', true);
   }
 
   gameTeam = (id: ChapterId): string | undefined => this.chapters.get(id)?.players?.white.team;
@@ -102,6 +104,12 @@ export function view(ctrl: MultiBoardCtrl, study: StudyCtrl): MaybeVNode {
             name: i18n.study.showEvalBar,
             prop: ctrl.multiCloudEval.showEval,
           }),
+        cmnToggleWrapProp({
+          id: 'multiboard-board',
+          name: i18n.broadcast.boards,
+          prop: ctrl.showBoard,
+          redraw: ctrl.redraw,
+        }),
         ctrl.isRelay &&
           cmnToggleWrapProp({
             id: 'multiboard-playing',
@@ -133,7 +141,14 @@ export function view(ctrl: MultiBoardCtrl, study: StudyCtrl): MaybeVNode {
         },
       },
       pager.currentPageResults.map(
-        makePreview(baseUrl, study.vm.chapterId, cloudEval, ctrl.showResults(), study.relay?.round),
+        makePreview(
+          baseUrl,
+          study.vm.chapterId,
+          cloudEval,
+          ctrl.showResults(),
+          study.relay?.round,
+          ctrl.showBoard(),
+        ),
       ),
     ),
   ]);
@@ -198,9 +213,28 @@ const makePreview =
     cloudEval?: MultiCloudEval,
     showResults?: boolean,
     round?: RelayRound,
+    showBoard: boolean = true,
   ) =>
   (preview: ChapterPreview) => {
     const orientation = preview.orientation || 'white';
+
+    if (!showBoard) {
+      return h(
+        `a.mini-game.is2d.chap-${preview.id}${showResults ? '' : '.no-spoilers'}.mini-game--no-board`,
+        {
+          class: { active: preview.id === current },
+          attrs: gameLinkAttrs(roundPath, preview),
+        },
+        [
+          h('div.mini-game__players', [
+            boardPlayer(preview, 'white', showResults, round),
+            boardPlayer(preview, 'black', showResults, round),
+          ]),
+          showResults && cloudEval ? evalGauge(preview, cloudEval, true) : undefined,
+        ],
+      );
+    }
+
     return h(
       `a.mini-game.is2d.chap-${preview.id}${showResults ? '' : '.no-spoilers'}`,
       {
@@ -210,7 +244,7 @@ const makePreview =
       [
         boardPlayer(preview, cgOpposite(orientation), showResults, round),
         h('span.cg-gauge', [
-          showResults ? cloudEval && verticalEvalGauge(preview, cloudEval) : undefined,
+          showResults && cloudEval ? evalGauge(preview, cloudEval) : undefined,
           h(
             'span.mini-game__board',
             h('span.cg-wrap', {
@@ -241,14 +275,23 @@ const makePreview =
     );
   };
 
-export const verticalEvalGauge = (chap: ChapterPreview, cloudEval: MultiCloudEval): MaybeVNode => {
-  const tag = `span.mini-game__gauge${chap.orientation === 'black' ? ' mini-game__gauge--flip' : ''}${
+export const evalGauge = (
+  chap: ChapterPreview,
+  cloudEval: MultiCloudEval,
+  horizontal = false,
+): MaybeVNode => {
+  const isFlip = !horizontal && chap.orientation === 'black';
+  const tag = `span.mini-game__gauge${isFlip ? ' mini-game__gauge--flip' : ''}${
     chap.check === '#' ? ' mini-game__gauge--set' : ''
-  }`;
+  }${horizontal ? ' mini-game__gauge--horizontal' : ''}`;
   return chap.check === '#'
     ? h(tag, { attrs: { 'data-id': chap.id, title: 'Checkmate' } }, [
         h('span.mini-game__gauge__black', {
-          attrs: { style: `height: ${fenColor(chap.fen) === 'white' ? 100 : 0}%` },
+          attrs: {
+            style: horizontal
+              ? `width: ${fenColor(chap.fen) === 'white' ? 100 : 0}%`
+              : `height: ${fenColor(chap.fen) === 'white' ? 100 : 0}%`,
+          },
         }),
         h('tick'),
       ])
@@ -263,9 +306,12 @@ export const verticalEvalGauge = (chap: ChapterPreview, cloudEval: MultiCloudEva
               const prevNodeCloud: CloudEval | undefined = old.data?.cloud;
               const cev = cloudEval.getCloudEval(chap.fen) || prevNodeCloud;
               if (cev?.chances !== prevNodeCloud?.chances) {
-                (elm.firstChild as HTMLElement).style.height = `${Math.round(
-                  ((1 - (cev?.chances || 0)) / 2) * 100,
-                )}%`;
+                const percent = `${Math.round(((1 - (cev?.chances || 0)) / 2) * 100)}%`;
+                if (horizontal) {
+                  (elm.firstChild as HTMLElement).style.width = percent;
+                } else {
+                  (elm.firstChild as HTMLElement).style.height = percent;
+                }
                 if (cev) {
                   elm.title = renderScore(cev);
                   elm.classList.add('mini-game__gauge--set');
@@ -313,7 +359,7 @@ const boardPlayer = (preview: ChapterPreview, color: Color, showResults?: boolea
   const player = preview.players?.[color];
   const coloredResult =
     preview.status && preview.status !== '*' && playerColoredResult(preview.status, color, round);
-  return h('span.mini-game__player', [
+  return h(`span.mini-game__player.mini-game__player--${color}`, [
     player && renderUser(player),
     showResults
       ? coloredResult
