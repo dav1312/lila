@@ -66,4 +66,48 @@
     font-weight: bold;
     margin: 0 1ch;
   }
+
+  &--no-board {
+    display: flex;
+    flex-flow: column;
+    justify-content: space-between;
+
+    .mini-game__players {
+      @extend %flex-between-nowrap;
+      gap: 0.25em;
+    }
+
+    .mini-game__player {
+      flex-direction: column;
+      flex: 1;
+      min-width: 0;
+
+      &,
+      &:first-child,
+      .mini-game__clock {
+        padding: 0;
+      }
+
+      &--white {
+        align-items: flex-start;
+      }
+
+      &--black {
+        align-items: flex-end;
+        .mini-game__user {
+          flex-direction: row-reverse;
+        }
+      }
+    }
+
+    .mini-game__user {
+      max-width: 100%;
+      gap: 0.4em;
+
+      .rating,
+      .mini-game__flag {
+        margin: 0;
+      }
+    }
+  }
 }

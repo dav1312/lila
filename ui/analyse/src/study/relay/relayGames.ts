@@ -2,7 +2,7 @@ import type { StudyCtrl } from '../studyDeps';
 import type RelayCtrl from './relayCtrl';
 import { userTitle } from 'lib/view/userLink';
 import { defined, scrollToInnerSelector } from 'lib';
-import { renderClock, verticalEvalGauge } from '../multiBoard';
+import { renderClock, evalGauge } from '../multiBoard';
 import type { ChapterPreview } from '../interfaces';
 import { gameLinkAttrs } from '../studyChapters';
 import { playerFedFlag } from '../playerBars';
@@ -48,7 +48,7 @@ export const gamesList = (study: StudyCtrl, relay: RelayCtrl) => {
               class: { 'relay-game--current': c.id === study.data.chapter.id },
             },
             [
-              showResults && cloudEval && verticalEvalGauge(c, cloudEval),
+              showResults && cloudEval && evalGauge(c, cloudEval),
               hl(
                 'span.relay-game__players',
                 players.map((p, i) => {

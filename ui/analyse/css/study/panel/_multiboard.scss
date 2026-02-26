@@ -125,7 +125,7 @@
     max-width: 1.5em;
     overflow: hidden;
     opacity: 0.4;
-    margin-left: 4px;
+    margin-inline-start: 4px;
     background: linear-gradient(to top, var(--c-eval-mini-gauge-white), var(--c-eval-mini-gauge-black));
     &::after {
       content: '';
@@ -147,6 +147,29 @@
       .mini-game__gauge__black {
         position: absolute;
         bottom: 0;
+      }
+    }
+
+    &--horizontal {
+      max-width: none;
+      flex: 0 0 15px;
+      margin-inline-start: 0;
+      background: linear-gradient(to right, var(--c-eval-mini-gauge-white), var(--c-eval-mini-gauge-black));
+
+      &.mini-game__gauge--set tick {
+        height: 100%;
+        width: auto;
+        border-left: 2px solid $m-accent--fade-50;
+        left: 50%;
+        top: 0;
+        transform: translateX(-50%);
+      }
+
+      .mini-game__gauge__black {
+        height: 100%;
+        width: 50%;
+        position: absolute;
+        inset-inline-end: 0;
       }
     }
 
