@@ -173,6 +173,8 @@ final class AssessApi(
 
     import AutoAnalysis.Reason.*
 
+    val isHumanVsBot = players(White).user.isBot != players(Black).user.isBot
+
     def manyBlurs(player: Player) =
       game.playerBlurPercent(player.color) >= 70
 
@@ -200,7 +202,7 @@ final class AssessApi(
       if !gameApi.analysable(game) then fuccess(none)
       else if game.speed >= chess.Speed.Blitz && players.exists(_.user.hasTitle) then
         fuccess(TitledPlayer.some)
-      else if !game.source.exists(assessableSources.contains) then fuccess(none)
+      else if !game.source.exists(assessableSources.contains) && !isHumanVsBot then fuccess(none)
       // give up on correspondence games
       else if game.isCorrespondence then fuccess(none)
       // stop here for short games
