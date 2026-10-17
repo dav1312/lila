@@ -174,8 +174,8 @@ importers:
   .:
     devDependencies:
       '@lichess-org/chessground':
-        specifier: ^10.4.2
-        version: 10.4.2
+        specifier: link:../chessground
+        version: link:../chessground
       '@lichess-org/pgn-viewer':
         specifier: ^2.7.3
         version: 2.7.3
