@@ -15,7 +15,7 @@ import { SquareSet } from 'chessops/squareSet';
 import { type Role, type Color, type Piece, type NormalMove, COLORS, type Square } from 'chessops/types';
 import { parseSquare, opposite, squareRank, squareFile, squareFromCoords } from 'chessops/util';
 
-import type { Pin, Undefended, Checkable } from './interfaces';
+import type { Pin, Undefended, Checkable, Trapped } from './interfaces';
 
 export const boardAnalysisVariants = [
   'standard',
@@ -273,4 +273,90 @@ export function detectCheckable(
     if (checkFound) checkable.push({ king: kSq, check: checkFound });
   }
   return checkable;
+}
+
+export const MIN_MATERIAL_LOSS = 2;
+
+export const makeMove = (pos: Chess, from: Square, to: Square): NormalMove => {
+  const promotes = pos.board.get(from)?.role === 'pawn' && [0, 7].includes(squareRank(to));
+  return promotes ? { from, to, promotion: 'queen' } : { from, to };
+};
+
+export const hangingPieces = (pos: Chess, color: Color, minLoss = MIN_MATERIAL_LOSS): Undefended[] =>
+  detectUndefended(pos.board, pos.epSquare).filter(
+    p => pos.board.get(p.square)?.color === color && p.materialLoss >= minLoss,
+  );
+
+export const hasMateInOne = (pos: Chess): boolean => {
+  for (const [from, tos] of pos.allDests()) {
+    for (const to of tos) {
+      const next = pos.clone();
+      next.play(makeMove(pos, from, to));
+      if (next.isCheckmate()) return true;
+    }
+  }
+  return false;
+};
+
+// a piece is trapped when every square it can move to lets the opponent win material or mate
+// movedOnly: an escape only fails if the moved piece itself is lost (the motif rule);
+// otherwise any newly hanging piece of the same color also counts (the brilliant rule)
+export const isTrapped = (
+  pos: Chess,
+  square: Square,
+  color: Color,
+  hangingBefore: Undefended[],
+  movedOnly = false,
+): boolean => {
+  const hangingSquares = new Set(hangingBefore.map(p => p.square));
+  const moverValue = values[pos.board.get(square)?.role ?? 'pawn'];
+  for (const to of pos.dests(square)) {
+    const escape = pos.clone();
+    escape.play(makeMove(pos, square, to));
+    // a capture of an equal or better piece pays for the moved piece that is lost afterwards
+    const captured = pos.board.get(to);
+    const paidFor = !!captured && values[captured.role] >= moverValue;
+    const badEscape =
+      hasMateInOne(escape) ||
+      hangingPieces(escape, color).some(p =>
+        movedOnly ? p.square === to && !paidFor : !hangingSquares.has(p.square),
+      );
+    if (!badEscape) return false;
+  }
+  return true;
+};
+
+export function detectTrapped(
+  board: Board,
+  epSquare: Square | undefined,
+  castlingRights: SquareSet,
+): Trapped[] {
+  const trapped: Trapped[] = [];
+
+  for (const color of COLORS) {
+    const res = Chess.fromSetup({
+      board,
+      turn: color,
+      castlingRights,
+      epSquare,
+      halfmoves: 0,
+      fullmoves: 1,
+      pockets: undefined,
+      remainingChecks: undefined,
+    });
+    if ('error' in res) continue;
+    const pos = res.value;
+
+    // hanging pieces are the baseline: an escape that hangs one of them is not a new loss
+    const hanging = hangingPieces(pos, color);
+    for (const square of pos.board[color]) {
+      // pawns are fixed in place more often than trapped, and promotion makes their moves look bad
+      const role = pos.board.get(square)?.role;
+      if (role === 'king' || role === 'pawn') continue;
+      // a piece with no legal moves is blocked, not trapped
+      if (pos.dests(square).isEmpty()) continue;
+      if (isTrapped(pos, square, color, hanging, true)) trapped.push({ square });
+    }
+  }
+  return trapped;
 }

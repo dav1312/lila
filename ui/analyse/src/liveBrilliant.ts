@@ -1,34 +1,21 @@
 import type { Color, Move, NormalMove, Role, Square } from 'chessops';
 import { Chess } from 'chessops/chess';
 import { parseFen } from 'chessops/fen';
-import { parseUci, squareRank } from 'chessops/util';
+import { parseUci } from 'chessops/util';
 
 import { povChances } from 'lib/ceval/winningChances';
 import type { TreeNode } from 'lib/tree/types';
 
-import { detectUndefended } from './motif/boardAnalysis';
+import { MIN_MATERIAL_LOSS, hangingPieces, hasMateInOne, isTrapped, makeMove } from './motif/boardAnalysis';
 import type { Undefended } from './motif/interfaces';
 
 // winning chances (-1 to 1, from the mover's point of view)
 const WINNING_CHANCES = 0.75;
 const LOSING_CHANCES = -0.25;
 
-const MIN_MATERIAL_LOSS = 2;
-
 const ROLE_VALUE: Record<Role, number> = { pawn: 1, knight: 3, bishop: 3, rook: 5, queen: 9, king: 0 };
 
 const materialLoss = (pieces: Undefended[]): number => pieces.reduce((sum, p) => sum + p.materialLoss, 0);
-
-// promotions are the only special case for a normal move in these checks
-const makeMove = (pos: Chess, from: Square, to: Square): NormalMove => {
-  const promotes = pos.board.get(from)?.role === 'pawn' && [0, 7].includes(squareRank(to));
-  return promotes ? { from, to, promotion: 'queen' } : { from, to };
-};
-
-const hangingPieces = (pos: Chess, color: Color, minLoss = MIN_MATERIAL_LOSS): Undefended[] =>
-  detectUndefended(pos.board, pos.epSquare).filter(
-    p => pos.board.get(p.square)?.color === color && p.materialLoss >= minLoss,
-  );
 
 const capturesOn = (pos: Chess, square: Square): NormalMove[] => {
   const captures: NormalMove[] = [];
@@ -36,29 +23,6 @@ const capturesOn = (pos: Chess, square: Square): NormalMove[] => {
     if (tos.has(square)) captures.push(makeMove(pos, from, square));
   }
   return captures;
-};
-
-const hasMateInOne = (pos: Chess): boolean => {
-  for (const [from, tos] of pos.allDests()) {
-    for (const to of tos) {
-      const next = pos.clone();
-      next.play(makeMove(pos, from, to));
-      if (next.isCheckmate()) return true;
-    }
-  }
-  return false;
-};
-
-const isTrapped = (pos: Chess, square: Square, color: Color, hangingBefore: Undefended[]): boolean => {
-  const hangingSquares = new Set(hangingBefore.map(p => p.square));
-  for (const to of pos.dests(square)) {
-    const escape = pos.clone();
-    escape.play(makeMove(pos, square, to));
-    const badEscape =
-      hasMateInOne(escape) || hangingPieces(escape, color).some(p => !hangingSquares.has(p.square));
-    if (!badEscape) return false;
-  }
-  return true;
 };
 
 const isCapturePunished = (afterCapture: Chess, sacked: Undefended, taker: Color): boolean => {
