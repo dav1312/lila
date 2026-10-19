@@ -1,7 +1,7 @@
 .trophies {
   display: flex;
   flex-flow: row wrap;
-  align-items: flex-start;
+  align-items: center;
   justify-content: flex-end;
   margin-top: 0 !important;
 
@@ -93,8 +93,8 @@
 }
 
 .stacked {
-  height: 40px;
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
 }
 
@@ -226,7 +226,6 @@
   line-height: 60px;
   color: #333 !important;
   text-shadow: 0 0 6px #fff;
-  margin-top: -20px;
   filter: drop-shadow(0 0 6px $c-brag);
 }
 
