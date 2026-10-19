@@ -74,13 +74,10 @@ final class UserBits(helpers: Helpers):
 
   def trophyMeta(perf: PerfType, rank: Int)(using Translate) =
     rank match
-      case 1 => Some(("trophy perf top1", s"${perf.trans} Champion!", "images/trophy/gold-cup-2.png"))
-      case r if r <= 10 =>
-        Some(("trophy perf top10", s"${perf.trans} Top 10!", "images/trophy/silver-cup-2.png"))
-      case r if r <= 50 =>
-        Some(("trophy perf top50", s"${perf.trans} Top 50 player!", "images/trophy/Fancy-Gold.png"))
-      case r if r <= 100 =>
-        Some(("trophy perf top100", s"${perf.trans} Top 100 player!", "images/trophy/Gold-Cup.png"))
+      case 1 => Some(("trophy perf top1", s"${perf.trans} Champion!"))
+      case r if r <= 10 => Some(("trophy perf top10", s"${perf.trans} Top 10!"))
+      case r if r <= 50 => Some(("trophy perf top50", s"${perf.trans} Top 50 player!"))
+      case r if r <= 100 => Some(("trophy perf top100", s"${perf.trans} Top 100 player!"))
       case _ => None
 
   def perfTrophies(u: User, rankMap: lila.core.rating.UserRankMap)(using Translate) = u.lame.not.so:
@@ -90,11 +87,9 @@ final class UserBits(helpers: Helpers):
         lila.rating.PerfType(perf) -> rank
       .flatMap: (perf, rank) =>
         trophyMeta(perf, rank).map(perf -> _)
-      .map { case (perf, (cssClass, trophyTitle, imgPath)) =>
+      .map { case (perf, (cssClass, trophyTitle)) =>
         a(href := routes.User.top(perf.key))(
-          span(cls := cssClass, title := trophyTitle)(
-            img(src := assetUrl(imgPath))
-          )
+          span(cls := s"$cssClass perf-badge", title := trophyTitle, dataIcon := perf.icon)
         )
       }
 

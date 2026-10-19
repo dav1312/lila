@@ -1,9 +1,4 @@
 .trophies {
-  @include inline-end(1.5em);
-
-  position: absolute;
-  top: 35px;
-  height: 40px;
   display: flex;
   flex-flow: row wrap;
   align-items: flex-start;
@@ -31,9 +26,60 @@
   img {
     height: 80px;
   }
+}
+
+.trophy.perf-badge {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  justify-content: center;
+  align-items: center;
+  background: center / contain no-repeat;
+
+  &::before {
+    font-size: 2.5em;
+    color: rgb(0 0 0 / 0.45);
+  }
+
+  &::after {
+    position: absolute;
+    color: #fff;
+    font-size: 0.7em;
+    font-weight: bold;
+    white-space: nowrap;
+    text-shadow: 1px 1px rgb(0 0 0 / 0.5);
+  }
 
   &.top1 {
-    filter: drop-shadow(0 0 6px $c-brag);
+    background-image: url('../images/trophy/perf-top1.webp');
+
+    &::after {
+      content: 'CHAMPION';
+    }
+  }
+
+  &.top10 {
+    background-image: url('../images/trophy/perf-top10.webp');
+
+    &::after {
+      content: 'TOP 10';
+    }
+  }
+
+  &.top50 {
+    background-image: url('../images/trophy/perf-top50.webp');
+
+    &::after {
+      content: 'TOP 50';
+    }
+  }
+
+  &.top100 {
+    background-image: url('../images/trophy/perf-top100.webp');
+
+    &::after {
+      content: 'TOP 100';
+    }
   }
 }
 
@@ -115,6 +161,10 @@
 
 .packed .trophy {
   margin-inline-end: -8px;
+}
+
+.packed .trophy.perf-badge {
+  margin-inline-end: 0;
 }
 
 .packed .stacked {

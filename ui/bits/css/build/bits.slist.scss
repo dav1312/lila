@@ -3,7 +3,31 @@
 
 .lb__trophy {
   width: 24px;
+  height: 24px;
   text-align: center;
+  background: center / contain no-repeat;
+
+  &::before {
+    font-size: 13px;
+    line-height: 24px;
+    color: rgb(0 0 0 / 0.45);
+  }
+
+  &.top1 {
+    background-image: url('../images/trophy/perf-top1-nb.webp');
+  }
+
+  &.top10 {
+    background-image: url('../images/trophy/perf-top10-nb.webp');
+  }
+
+  &.top50 {
+    background-image: url('../images/trophy/perf-top50-nb.webp');
+  }
+
+  &.top100 {
+    background-image: url('../images/trophy/perf-top100-nb.webp');
+  }
 }
 
 .slist td {
@@ -14,23 +38,12 @@
     vertical-align: middle;
     margin-right: 6px;
     margin-left: -4px;
-    overflow: visible;
-    line-height: 0;
   }
 
   .lb__rank-num {
     display: inline-block;
     vertical-align: middle;
   }
-}
-
-.slist .lb__trophy img {
-  display: inline-block;
-  height: 16px;
-  width: auto;
-  vertical-align: middle;
-  transform: scale(1.6) translateY(-2px);
-  transform-origin: left center;
 }
 
 .pager__label {

@@ -1,7 +1,7 @@
 .user-show__header {
   background: $c-bg-zebra;
-  padding: 2em 1.5em 2em 1.5em;
-  flex-flow: row nowrap;
+  padding: 1em 1.5em;
+  flex-flow: row wrap;
 
   h1 {
     flex: 0 0 auto;
