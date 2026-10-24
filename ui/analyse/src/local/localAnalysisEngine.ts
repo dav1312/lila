@@ -6,11 +6,11 @@ import { myUserId } from 'lib';
 import { randomId } from 'lib/algo';
 import type { CustomCeval } from 'lib/ceval/types';
 import { mainlineNodeList, structuredCloneLite } from 'lib/tree/ops';
-import type { ClientEval, Glyph, TreeNode, TreeNodeLite, TreePath } from 'lib/tree/types';
+import type { ClientEval, Glyph, TreeNodeLite, TreePath } from 'lib/tree/types';
 
+import { brilliantVariants, isBrilliantMove } from '../brilliant';
 import AnalyseCtrl from '../ctrl';
 import type { AnalysisUpdate, AnalysisEngineInfo, AnalysisMeta, Division } from '../interfaces';
-import { brilliantVariants, isBrilliantMove } from '../liveBrilliant';
 
 const brilliantGlyph: Glyph = { id: 3, symbol: '!!', name: 'Brilliant', comp: true };
 
@@ -178,8 +178,14 @@ export class LocalAnalysisEngine {
       if (!move.judgment?.comment && !move.judgment?.glyph) {
         serverDocument.infos[i].eval.best = undefined;
         serverDocument.infos[i].variation = [];
-        if (detectBrilliant && isBrilliantMove(withCeval(parent), withCeval(bad)))
-          bad.glyphs = [brilliantGlyph];
+        const evals = {
+          fen: parent.fen,
+          uci: bad.uci,
+          score: parent.eval,
+          best: parent.eval?.best,
+          second: parent.eval?.pvs[1],
+        };
+        if (detectBrilliant && isBrilliantMove(evals)) bad.glyphs = [brilliantGlyph];
         return;
       }
       bad.comments = [{ id: randomId().slice(0, 4), by: 'lichess', comp: true, text: move.judgment.comment }];
@@ -223,10 +229,6 @@ function serverEvalScore(variant: VariantKey, node: TreeNodeLite): ServerEvalSco
   if (!outcome) return {};
   return outcome.winner ? { mate: 0, mateGiven: outcome.winner === pos.turn } : { cp: 0 };
 }
-
-// isBrilliantMove reads only the scores and bestmove of node.ceval, which this engine keeps in node.eval
-const withCeval = (node: TreeNodeLite): TreeNode =>
-  ({ ...node, ceval: node.eval && { ...node.eval, bestmove: node.eval.best } }) as TreeNode;
 
 function ucisToNodes(ucis: Uci[], initial: co.Position, ply: number, props: any): TreeNodeLite[] {
   const nodes: TreeNodeLite[] = [];

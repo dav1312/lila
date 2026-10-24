@@ -3,9 +3,8 @@ import type { Chess } from 'chessops/chess';
 import { opposite } from 'chessops/util';
 
 import { povChances } from 'lib/ceval/winningChances';
-import type { TreeNode } from 'lib/tree/types';
 
-import { importantMove } from './liveImportant';
+import { type MoveEvals, importantMove } from './importantMove';
 import {
   MIN_MATERIAL_LOSS,
   detectTrapped,
@@ -89,13 +88,14 @@ const isCapturePunished = (afterCapture: Chess, sackedValue: number, taker: Colo
 // sacrifices are judged with standard chess rules
 export const brilliantVariants: VariantKey[] = ['standard', 'chess960', 'fromPosition'];
 
-export function isBrilliantMove(parent: TreeNode, node: TreeNode): boolean {
-  const important = importantMove(parent, node);
-  if (!important || !node.ceval) return false;
+export function isBrilliantMove(evals: MoveEvals): boolean {
+  const important = importantMove(evals);
+  if (!important || !evals.score) return false;
   const { pos, move, color } = important;
 
   if (move.promotion) return false;
-  if (povChances(color, node.ceval) < LOSING_CHANCES) return false;
+  // the move is the engine's best, so the score of `fen` is the score after it
+  if (povChances(color, evals.score) < LOSING_CHANCES) return false;
 
   const next = pos.clone();
   next.play(move);
