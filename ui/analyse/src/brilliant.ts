@@ -69,10 +69,12 @@ const isCapturePunished = (afterCapture: Chess, sackedValue: number, taker: Colo
 
   if (largestHanging(afterCapture, taker) >= sackedValue) return true;
 
-  // or by winning it back after an even trade
+  // or by winning it back after an even trade. the taker can decline the recapture,
+  // so the traded piece must be worth at least the sacked one
   for (const [from, tos] of afterCapture.allDests()) {
     for (const to of tos) {
-      if (valueAt(afterCapture, from) !== valueAt(afterCapture, to)) continue;
+      const traded = valueAt(afterCapture, to);
+      if (valueAt(afterCapture, from) !== traded || traded < sackedValue) continue;
       const trade = play(afterCapture, from, to);
       const recaptures = capturersOf(trade, to);
       if (
