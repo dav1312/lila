@@ -63,23 +63,24 @@ const isTrapped = (pos: Chess, square: Square, color: Color, looseBefore: Set<Sq
   return true;
 };
 
-// the capture is compensated if the taker's side can win back a piece at least as valuable as the sacked one
-const isCapturePunished = (afterCapture: Chess, sackedValue: number, taker: Color): boolean => {
+// the capture is compensated if the taker's side can win back at least the net value of the sacrifice:
+// the sacked piece minus what the move captured
+const isCapturePunished = (afterCapture: Chess, netValue: number, taker: Color): boolean => {
   if (hasMateInOne(afterCapture)) return true;
 
-  if (largestHanging(afterCapture, taker) >= sackedValue) return true;
+  if (largestHanging(afterCapture, taker) >= netValue) return true;
 
   // or by winning it back after an even trade. the taker can decline the recapture,
-  // so the traded piece must be worth at least the sacked one
+  // so the traded piece must be worth at least the net value
   for (const [from, tos] of afterCapture.allDests()) {
     for (const to of tos) {
       const traded = valueAt(afterCapture, to);
-      if (valueAt(afterCapture, from) !== traded || traded < sackedValue) continue;
+      if (valueAt(afterCapture, from) !== traded || traded < netValue) continue;
       const trade = play(afterCapture, from, to);
       const recaptures = capturersOf(trade, to);
       if (
         recaptures.length > 0 &&
-        recaptures.every(r => largestHanging(play(trade, r, to), taker) >= sackedValue)
+        recaptures.every(r => largestHanging(play(trade, r, to), taker) >= netValue)
       )
         return true;
     }
@@ -130,7 +131,7 @@ export function isBrilliantMove(evals: MoveEvals): boolean {
     if (sacked.square !== move.to && wasTrapped(sacked.square)) return false;
     const sackedValue = valueAt(next, sacked.square);
     return capturersOf(next, sacked.square).some(
-      from => !isCapturePunished(play(next, from, sacked.square), sackedValue, taker),
+      from => !isCapturePunished(play(next, from, sacked.square), sackedValue - captured, taker),
     );
   });
 }

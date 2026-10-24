@@ -268,6 +268,13 @@ const POSITION_CASES: PositionCase[] = [
     move: 'Bc4',
     expected: false,
   },
+  {
+    // Rxc1 Qxe7 Rxd1+ gives the queen for two rooks
+    name: 'Capture that unpins wins material',
+    fen: '2k5/1pp1q3/4p2p/PPr1r1p1/8/Q4P1P/8/2RR2K1 b - - 1 32',
+    move: 'Rxc1',
+    expected: false,
+  },
 ];
 
 describe('isBrilliantMove - position evaluations', () => {
