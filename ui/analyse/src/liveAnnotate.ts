@@ -2,7 +2,10 @@ import { povChances } from 'lib/ceval/winningChances';
 import type { TreeWrapper } from 'lib/tree';
 import type { Glyph, TreeNode, TreePath } from 'lib/tree/types';
 
+import { brilliantVariants, isBrilliantMove } from './brilliant';
+
 const glyphs: Record<string, Glyph> = {
+  brilliant: { id: 3, symbol: '!!', name: 'Brilliant' },
   inaccuracy: { id: 6, symbol: '?!', name: 'Inaccuracy' },
   mistake: { id: 2, symbol: '?', name: 'Mistake' },
   blunder: { id: 4, symbol: '??', name: 'Blunder' },
@@ -10,6 +13,8 @@ const glyphs: Record<string, Glyph> = {
 
 export default class LiveAnnotate {
   private readonly glyphs = new Map<TreePath, Glyph>();
+
+  constructor(private readonly variant: () => VariantKey) {}
 
   readonly get = this.glyphs.get.bind(this.glyphs);
 
@@ -20,7 +25,18 @@ export default class LiveAnnotate {
   };
 
   private readonly liveGlyph = (node: TreeNode, parent: TreeNode): Glyph | undefined => {
-    if (!parent.ceval || node.uci === parent.ceval.bestmove) return undefined;
+    if (!parent.ceval) return undefined;
+    if (node.uci === parent.ceval.bestmove)
+      return brilliantVariants.includes(this.variant()) &&
+        isBrilliantMove({
+          fen: parent.fen,
+          uci: node.uci,
+          score: parent.ceval,
+          best: parent.ceval.bestmove,
+          second: parent.ceval.pvs[1],
+        })
+        ? glyphs.brilliant
+        : undefined;
     const postMoveEval = parent.ceval.pvs.find(pv => node.uci === pv.moves[0]) ?? node.ceval;
     if (!postMoveEval) return undefined;
     const color = node.ply % 2 === 1 ? 'white' : 'black';

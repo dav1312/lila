@@ -8,8 +8,11 @@ import type { CustomCeval } from 'lib/ceval/types';
 import { mainlineNodeList, structuredCloneLite } from 'lib/tree/ops';
 import type { ClientEval, Glyph, TreeNodeLite, TreePath } from 'lib/tree/types';
 
+import { brilliantVariants, isBrilliantMove } from '../brilliant';
 import AnalyseCtrl from '../ctrl';
 import type { AnalysisUpdate, AnalysisEngineInfo, AnalysisMeta, Division } from '../interfaces';
+
+const brilliantGlyph: Glyph = { id: 3, symbol: '!!', name: 'Brilliant', comp: true };
 
 // modules/tree/.../Analysis.scala
 export interface ServerAnalysisDocument {
@@ -171,13 +174,22 @@ export class LocalAnalysisEngine {
     if (!rsp.ok) throw new Error(`${rsp.status} ${rsp.statusText}`);
 
     const review: Review = await rsp.json();
+    const detectBrilliant = brilliantVariants.includes(this.ctrl.variantKey);
     review.moves.forEach((move, i) => {
+      const [parent, bad] = this.nodes.slice(i, i + 2);
       if (!move.judgment?.comment && !move.judgment?.glyph) {
         serverDocument.infos[i].eval.best = undefined;
         serverDocument.infos[i].variation = [];
+        const evals = {
+          fen: parent.fen,
+          uci: bad.uci,
+          score: parent.eval,
+          best: parent.eval!.pvs[0].moves.split(' ')[0],
+          second: parent.eval?.pvs[1],
+        };
+        if (detectBrilliant && isBrilliantMove(evals)) bad.glyphs = [brilliantGlyph];
         return;
       }
-      const [parent, bad] = this.nodes.slice(i, i + 2);
       if (bad.eval) bad.eval.best = lines[i].ucis[0];
       bad.comments = [{ id: randomId().slice(0, 4), by: 'lichess', comp: true, text: move.judgment.comment }];
       bad.glyphs = [{ ...move.judgment.glyph, comp: true }];
