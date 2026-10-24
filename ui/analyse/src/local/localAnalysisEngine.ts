@@ -224,20 +224,9 @@ function serverEvalScore(variant: VariantKey, node: TreeNodeLite): ServerEvalSco
   return outcome.winner ? { mate: 0, mateGiven: outcome.winner === pos.turn } : { cp: 0 };
 }
 
-// isBrilliantMove reads live ceval fields, while this engine stores its results in node.eval
-function withCeval(node: TreeNodeLite): TreeNode {
-  const ev = node.eval;
-  const ceval = ev && {
-    cp: ev.cp,
-    mate: ev.mate,
-    bestmove: ev.best,
-    fen: ev.fen,
-    depth: ev.depth,
-    nodes: ev.knodes * 1000,
-    pvs: ev.pvs.map(pv => ({ ...pv, moves: pv.moves.split(' ') })),
-  };
-  return { ...node, ceval } as TreeNode;
-}
+// isBrilliantMove reads only the scores and bestmove of node.ceval, which this engine keeps in node.eval
+const withCeval = (node: TreeNodeLite): TreeNode =>
+  ({ ...node, ceval: node.eval && { ...node.eval, bestmove: node.eval.best } }) as TreeNode;
 
 function ucisToNodes(ucis: Uci[], initial: co.Position, ply: number, props: any): TreeNodeLite[] {
   const nodes: TreeNodeLite[] = [];
