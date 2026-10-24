@@ -6,10 +6,13 @@ import { myUserId } from 'lib';
 import { randomId } from 'lib/algo';
 import type { CustomCeval } from 'lib/ceval/types';
 import { mainlineNodeList, structuredCloneLite } from 'lib/tree/ops';
-import type { ClientEval, Glyph, TreeNodeLite, TreePath } from 'lib/tree/types';
+import type { ClientEval, Glyph, TreeNode, TreeNodeLite, TreePath } from 'lib/tree/types';
 
 import AnalyseCtrl from '../ctrl';
 import type { AnalysisUpdate, AnalysisEngineInfo, AnalysisMeta, Division } from '../interfaces';
+import { brilliantVariants, isBrilliantMove } from '../liveBrilliant';
+
+const brilliantGlyph: Glyph = { id: 3, symbol: '!!', name: 'Brilliant', comp: true };
 
 // modules/tree/.../Analysis.scala
 export interface ServerAnalysisDocument {
@@ -169,13 +172,16 @@ export class LocalAnalysisEngine {
     if (!rsp.ok) throw new Error(`${rsp.status} ${rsp.statusText}`);
 
     const review: Review = await rsp.json();
+    const detectBrilliant = brilliantVariants.includes(this.ctrl.variantKey);
     review.moves.forEach((move, i) => {
+      const [parent, bad] = this.nodes.slice(i, i + 2);
       if (!move.judgment?.comment && !move.judgment?.glyph) {
         serverDocument.infos[i].eval.best = undefined;
         serverDocument.infos[i].variation = [];
+        if (detectBrilliant && isBrilliantMove(withCeval(parent), withCeval(bad)))
+          bad.glyphs = [brilliantGlyph];
         return;
       }
-      const [parent, bad] = this.nodes.slice(i, i + 2);
       bad.comments = [{ id: randomId().slice(0, 4), by: 'lichess', comp: true, text: move.judgment.comment }];
       bad.glyphs = [{ ...move.judgment.glyph, comp: true }];
       parent.children.push(
@@ -216,6 +222,21 @@ function serverEvalScore(variant: VariantKey, node: TreeNodeLite): ServerEvalSco
   const outcome = pos.outcome();
   if (!outcome) return {};
   return outcome.winner ? { mate: 0, mateGiven: outcome.winner === pos.turn } : { cp: 0 };
+}
+
+// isBrilliantMove reads live ceval fields, while this engine stores its results in node.eval
+function withCeval(node: TreeNodeLite): TreeNode {
+  const ev = node.eval;
+  const ceval = ev && {
+    cp: ev.cp,
+    mate: ev.mate,
+    bestmove: ev.best,
+    fen: ev.fen,
+    depth: ev.depth,
+    nodes: ev.knodes * 1000,
+    pvs: ev.pvs.map(pv => ({ ...pv, moves: pv.moves.split(' ') })),
+  };
+  return { ...node, ceval } as TreeNode;
 }
 
 function ucisToNodes(ucis: Uci[], initial: co.Position, ply: number, props: any): TreeNodeLite[] {
