@@ -26,7 +26,7 @@ export const boardAnalysisVariants = [
   'racingKings',
 ];
 
-const values: Record<Role, number> = { pawn: 1, knight: 3, bishop: 3, rook: 5, queen: 9, king: 100 };
+export const values: Record<Role, number> = { pawn: 1, knight: 3, bishop: 3, rook: 5, queen: 9, king: 100 };
 
 const isSquareAttacked = (square: Square, byColor: Color, cb: Board): boolean =>
   knightAttacks(square).intersects(cb[byColor].intersect(cb.knight)) ||
@@ -277,7 +277,7 @@ export function detectCheckable(
   return checkable;
 }
 
-const MIN_MATERIAL_LOSS = 2;
+export const MIN_MATERIAL_LOSS = 2;
 
 const positionFor = (board: Board, turn: Color, castlingRights: SquareSet, epSquare?: Square) =>
   Chess.fromSetup({
@@ -291,7 +291,7 @@ const positionFor = (board: Board, turn: Color, castlingRights: SquareSet, epSqu
     remainingChecks: undefined,
   });
 
-const play = (pos: Chess, from: Square, to: Square): Chess => {
+export const play = (pos: Chess, from: Square, to: Square): Chess => {
   const promotion = pos.board.pawn.has(from) && SquareSet.backranks().has(to) ? 'queen' : undefined;
   const next = pos.clone();
   next.play({ from, to, promotion });
@@ -318,7 +318,7 @@ const mayGiveCheck = ({ board, epSquare }: Chess, from: Square, to: Square): boo
   );
 };
 
-const hasMateInOne = (pos: Chess): boolean => {
+export const hasMateInOne = (pos: Chess): boolean => {
   for (const [from, tos] of pos.allDests()) {
     for (const to of tos) if (mayGiveCheck(pos, from, to) && play(pos, from, to).isCheckmate()) return true;
   }
