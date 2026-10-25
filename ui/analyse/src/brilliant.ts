@@ -63,24 +63,24 @@ const isTrapped = (pos: Chess, square: Square, color: Color, looseBefore: Set<Sq
   return true;
 };
 
-// whether every legal reply captures on `square`, so the sacrifice cannot be declined
-const mustCapture = (pos: Chess, square: Square): boolean => {
-  for (const tos of pos.allDests().values()) {
-    for (const to of tos) if (to !== square) return false;
+// whether every legal reply allows mate in one, so declining the sacrifice loses too
+const everyReplyAllowsMate = (pos: Chess): boolean => {
+  for (const [from, tos] of pos.allDests()) {
+    for (const to of tos) if (!hasMateInOne(play(pos, from, to))) return false;
   }
   return true;
 };
 
 // the capture is compensated if the taker's side can win back at least the net value of the sacrifice:
 // the sacked piece minus what the move captured.
-// a mate in one only punishes a capture the taker could decline: if forced, the mate is the payoff
+// a mate in one only punishes a capture the taker could safely decline: otherwise the mate is the payoff
 const isCapturePunished = (
   afterCapture: Chess,
   netValue: number,
   taker: Color,
-  forced: boolean,
+  mateUnavoidable: () => boolean,
 ): boolean => {
-  if (!forced && hasMateInOne(afterCapture)) return true;
+  if (hasMateInOne(afterCapture) && !mateUnavoidable()) return true;
 
   if (largestHanging(afterCapture, taker) >= netValue) return true;
 
@@ -140,13 +140,16 @@ export function isBrilliantMove(evals: MoveEvals): boolean {
   if (wasTrapped(move.from)) return false;
 
   const taker = next.turn;
+  // computed only when a capture allows mate in one, and then once for all of them
+  let unavoidable: boolean | undefined;
+  const mateUnavoidable = () => (unavoidable ??= everyReplyAllowsMate(next));
   return candidates.some(sacked => {
     // a trapped piece left where it was is already lost, not sacrificed
     if (sacked.square !== move.to && wasTrapped(sacked.square)) return false;
     const sackedValue = valueAt(next, sacked.square);
-    const forced = mustCapture(next, sacked.square);
     return capturersOf(next, sacked.square).some(
-      from => !isCapturePunished(play(next, from, sacked.square), sackedValue - captured, taker, forced),
+      from =>
+        !isCapturePunished(play(next, from, sacked.square), sackedValue - captured, taker, mateUnavoidable),
     );
   });
 }

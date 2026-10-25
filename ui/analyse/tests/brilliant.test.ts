@@ -150,6 +150,12 @@ const POSITION_CASES: PositionCase[] = [
     expected: true,
   },
   {
+    name: 'Every reply allows mate in one',
+    fen: 'r1bk2nr/p2p1pNp/n2B4/1p1NP2P/6P1/3P1Q2/P1P1K3/q5b1 w - - 1 22',
+    move: 'Qf6+',
+    expected: true,
+  },
+  {
     name: 'Exchange sacrifice',
     fen: '2q2Nk1/4n2p/b2p2p1/p7/4pP2/2bn2P1/1R1Q1B1P/R4BK1 w - - 0 25',
     move: 'Rc1',
@@ -246,6 +252,12 @@ const POSITION_CASES: PositionCase[] = [
     name: 'Trapped piece left en prise',
     fen: 'r1k5/B1p2ppp/1p6/8/8/8/5PPP/3R2K1 w - - 0 1',
     move: 'h3',
+    expected: false,
+  },
+  {
+    name: 'Pinned piece already lost',
+    fen: '4r2k/8/8/8/8/4B3/P7/4K3 w - - 0 1',
+    move: 'a3',
     expected: false,
   },
   {
