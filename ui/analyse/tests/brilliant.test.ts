@@ -138,6 +138,18 @@ const POSITION_CASES: PositionCase[] = [
     expected: true,
   },
   {
+    name: 'Forced queen sacrifice with mate',
+    fen: '2b5/k2n1p2/p2q4/5R1B/2p4P/P1b5/KPQ1R3/6r1 b - - 2 37',
+    move: 'Qxa3+',
+    expected: true,
+  },
+  {
+    name: 'Smothered mate',
+    fen: '4r2k/6pp/7N/3Q4/8/8/8/6K1 w - - 0 1',
+    move: 'Qg8+',
+    expected: true,
+  },
+  {
     name: 'Exchange sacrifice',
     fen: '2q2Nk1/4n2p/b2p2p1/p7/4pP2/2bn2P1/1R1Q1B1P/R4BK1 w - - 0 25',
     move: 'Rc1',
