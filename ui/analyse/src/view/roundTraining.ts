@@ -93,7 +93,7 @@ const doRender = (ctrl: AnalyseCtrl): VNode => {
       }),
     },
     [
-      h('div.advice-summary__players', [playerName(ctrl, 'white'), h('div'), playerName(ctrl, 'black')]),
+      h('div.advice-summary__players', [playerName(ctrl, 'white'), playerName(ctrl, 'black')]),
       h('div.advice-summary__acpl', acplRows(white, black)),
       h('div.advice-summary__accuracy', accuracyRows(white, black)),
       ctrl.study

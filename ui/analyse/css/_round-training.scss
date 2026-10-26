@@ -13,19 +13,23 @@
   }
 }
 
-// one three-column grid: white | label | black. The sections are subgrids so every row lines up.
 .advice-summary {
   @extend %box-neat;
 
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   gap: 1em;
   color: $c-font-page;
   font-size: 0.9em;
   padding: 0.75em 0.75em 1em;
   background: $c-bg-box;
 
-  &__players,
+  &__players {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
   &__acpl,
   &__accuracy {
     display: grid;
@@ -34,10 +38,8 @@
     align-items: center;
     row-gap: 0.4em;
 
-    // children come in triples: white value (left), label (middle), black value (right)
     > :nth-child(3n + 1) {
-      justify-self: start;
-      text-align: start;
+      text-align: end;
     }
 
     > :nth-child(3n + 2) {
@@ -45,17 +47,16 @@
     }
 
     > :nth-child(3n) {
-      justify-self: end;
-      text-align: end;
+      text-align: start;
     }
   }
 
   &__player {
     @extend %nowrap-ellipsis;
 
+    text-align: center;
     min-width: 0;
     font-weight: bold;
-    padding-bottom: 0.5em;
   }
 
   &__label {
