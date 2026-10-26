@@ -21,6 +21,19 @@ import lila.core.userId.*
 
 object user:
 
+  // Indexes into the lists in lila.user.Avatars; 0 is the default option for every part
+  case class Avatar(
+      skin: Int = 0,
+      hair: Int = 0,
+      hairColor: Int = 0,
+      eyebrows: Int = 0,
+      eyes: Int = 0,
+      nose: Int = 0,
+      mouth: Int = 0,
+      moustache: Int = 0,
+      glasses: Int = 0
+  )
+
   case class User(
       id: UserId,
       username: UserName,
@@ -38,7 +51,8 @@ object user:
       plan: Plan,
       flair: Option[Flair] = None,
       totpSecret: Option[TotpSecret] = None,
-      marks: UserMarks = UserMarks(Nil)
+      marks: UserMarks = UserMarks(Nil),
+      avatar: Option[Avatar] = None
   ):
     import lila.core.user.UserMarks.*
     import lila.core.user.UserEnabled.*
@@ -319,6 +333,7 @@ object user:
     val marks = "marks"
     val username = "username"
     val flair = "flair"
+    val avatar = "avatar"
     val plan = "plan"
     val kid = "kid"
     val createdAt = "createdAt"

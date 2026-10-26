@@ -11,7 +11,7 @@ import lila.common.Form.{
   playerTitle,
   readonly
 }
-import lila.core.user.{ FlagCode, Profile, RealName }
+import lila.core.user.{ Avatar, FlagCode, Profile, RealName }
 
 final class UserForm:
 
@@ -52,6 +52,22 @@ final class UserForm:
 
   def flair(asMod: Boolean) = Form[Option[Flair]]:
     single(FlairApi.formPair(asMod))
+
+  def avatar(user: User) = Form:
+    mapping(
+      "skin" -> number(min = 0, max = Avatars.skinTones.size - 1),
+      "hair" -> number(min = 0, max = Avatars.hairStyles.size - 1),
+      "hairColor" -> number(min = 0, max = Avatars.hairColors.size - 1),
+      "eyebrows" -> number(min = 0, max = Avatars.eyebrows.size - 1),
+      "eyes" -> number(min = 0, max = Avatars.eyes.size - 1),
+      "nose" -> number(min = 0, max = Avatars.noses.size - 1),
+      "mouth" -> number(min = 0, max = Avatars.mouths.size - 1),
+      "moustache" -> number(min = 0, max = Avatars.moustaches.size - 1),
+      "glasses" -> number(min = 0, max = Avatars.glasses.size - 1)
+    )(Avatar.apply)(a =>
+      Some((a.skin, a.hair, a.hairColor, a.eyebrows, a.eyes, a.nose, a.mouth, a.moustache, a.glasses))
+    )
+  .fill(user.avatar | Avatar())
 
 object UserForm:
 

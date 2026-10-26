@@ -79,6 +79,7 @@ final class AccountUi(helpers: Helpers):
           a(activeCls("editProfile"), href := routes.Account.profile)(
             trans.site.editProfile()
           ),
+          a(activeCls("avatar"), href := routes.Account.avatar)("Avatar"),
           div(cls := "sep"),
           PrefCateg.values.map: categ =>
             a(activeCls(categ.slug), href := routes.Pref.form(categ.slug))(

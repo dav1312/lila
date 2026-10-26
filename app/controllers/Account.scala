@@ -63,6 +63,17 @@ final class Account(
     for realName <- env.title.api.publicTitle.realName(me.light)
     yield (env.user.forms.profileOf(me, realName), realName)
 
+  def avatar = Auth { _ ?=> me ?=>
+    Ok.page(views.avatar.edit(env.user.forms.avatar(me)))
+  }
+
+  def avatarApply = AuthBody { _ ?=> me ?=>
+    FormFuResult(env.user.forms.avatar(me))(err => renderPage(views.avatar.edit(err))): avatar =>
+      env.user.repo
+        .setAvatar(me, avatar.some)
+        .inject(Redirect(routes.User.show(me.username)).flashSuccess)
+  }
+
   def usernameApply = AuthBody { _ ?=> me ?=>
     FormFuResult(env.user.forms.username(me))(err => renderPage(pages.username(me, err))): username =>
       env.user.repo

@@ -10,7 +10,7 @@ import scalalib.model.{ Days, LangTag }
 import lila.core.LightUser
 import lila.core.email.NormalizedEmailAddress
 import lila.core.security.HashedPassword
-import lila.core.user.{ KidMode, Plan, PlayTime, Profile, RealName, RoleDbKey, TotpSecret, UserMark }
+import lila.core.user.{ Avatar, KidMode, Plan, PlayTime, Profile, RealName, RoleDbKey, TotpSecret, UserMark }
 import lila.core.userId.UserSearch
 import lila.db.dsl.{ *, given }
 
@@ -536,6 +536,9 @@ final class UserRepo(c: Coll)(using Executor) extends lila.core.user.UserRepo(c)
 
   def setFlair(user: User, flair: Option[Flair]): Funit =
     coll.updateOrUnsetField(bid(user.id), F.flair, flair).void
+
+  def setAvatar(user: User, avatar: Option[Avatar]): Funit =
+    coll.updateOrUnsetField(bid(user.id), F.avatar, avatar).void
 
   def unsetFlairs(all: Set[(UserId, Flair)]): Funit = all.nonEmpty.so:
     all.toList.sequentiallyVoid: (userId, flair) =>

@@ -3,6 +3,7 @@ package show
 
 import lila.app.UiEnv.{ *, given }
 import lila.app.mashup.UserInfo
+import lila.user.Avatars
 import lila.user.Plan.sinceDate
 import lila.user.PlayTime.*
 import lila.user.Profile.*
@@ -146,6 +147,10 @@ object header:
               views.user.perfStat.ratingHistoryContainer
             else (ctx.is(u) && u.count.game < 10).option(ui.newPlayer(u)),
             div(cls := "profile-side")(
+              u.avatar
+                .ifTrue(!muted)
+                .map(a => div(cls := "avatar-display")(raw(Avatars.svg(a)))),
+              ctx.is(u).option(a(cls := "avatar-edit", href := routes.Account.avatar)("Edit avatar")),
               div(cls := "user-infos")(
                 (u.lame && ctx.isnt(u)).option:
                   div(cls := "warning tos_warning")(

@@ -96,7 +96,31 @@ site.load.then(() => {
         e.preventDefault();
     });
   });
+
+  $('.avatar-editor').each(function (this: HTMLFormElement) {
+    initAvatarEditor(this);
+  });
 });
+
+// Keeps the live preview in step with the chosen options and colours
+function initAvatarEditor(form: HTMLFormElement) {
+  const chosen = (name: string) => form.querySelector<HTMLInputElement>(`input[name="${name}"]:checked`);
+  const colourProps: [string, string][] = [
+    ['skin', '--skin'],
+    ['hairColor', '--hair'],
+  ];
+  const update = () => {
+    colourProps.forEach(([name, prop]) => {
+      const color = chosen(name)?.dataset.color;
+      if (color) form.style.setProperty(prop, color);
+    });
+    form.querySelectorAll<SVGGElement>('.avatar-editor__preview [data-part]').forEach(el => {
+      const selected = chosen(el.dataset.part ?? '')?.value === el.dataset.option;
+      el.style.display = selected ? '' : 'none';
+    });
+  };
+  form.addEventListener('change', update);
+}
 
 function computeBitChoices($form: Cash, name: string) {
   let sum = 0;

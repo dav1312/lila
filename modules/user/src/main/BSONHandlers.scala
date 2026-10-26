@@ -6,6 +6,7 @@ import scalalib.model.LangTag
 import lila.core.plan.{ PatronColor, PatronColorChoice }
 import lila.core.security.HashedPassword
 import lila.core.user.{
+  Avatar,
   Count,
   KidMode,
   Plan,
@@ -49,6 +50,7 @@ object BSONHandlers:
 
   given playTimeHandler: BSONDocumentHandler[PlayTime] = Macros.handler[PlayTime]
   given profileHandler: BSONDocumentHandler[Profile] = Macros.handler[Profile]
+  given avatarHandler: BSONDocumentHandler[Avatar] = Macros.handler[Avatar]
   private[user] given BSONHandler[TotpSecret] = lila.db.dsl.quickHandler[TotpSecret](
     { case v: BSONBinary => new TotpSecret(v.byteArray) },
     v => BSONBinary(v.secret, Subtype.GenericBinarySubtype)
@@ -109,7 +111,8 @@ object BSONHandlers:
           case Some(f) if FlairApi.exists(f) => Option(f)
           case Some(f) => FlairApi.badFlairs.add(userId, f); None
           case None => None,
-        marks = r.getD[UserMarks](marks)
+        marks = r.getD[UserMarks](marks),
+        avatar = r.getO[Avatar](avatar)
       )
 
     def writes(w: BSON.Writer, o: User) =
@@ -130,7 +133,8 @@ object BSONHandlers:
         plan -> o.plan.nonEmpty,
         totpSecret -> o.totpSecret,
         flair -> o.flair,
-        marks -> w.zero(o.marks)
+        marks -> w.zero(o.marks),
+        avatar -> o.avatar
       )
 
   given BSONHandler[PatronColor] = lila.db.dsl.tryHandler[PatronColor](
