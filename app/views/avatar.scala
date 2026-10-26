@@ -4,7 +4,7 @@ import play.api.data.Form
 
 import lila.app.UiEnv.{ *, given }
 import lila.core.user.Avatar
-import lila.user.Avatars
+import lila.core.Avatars
 
 def edit(form: Form[Avatar])(using Context, Me) =
   val current = form.value | Avatar()

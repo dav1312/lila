@@ -499,6 +499,7 @@ object JsonView:
         )
         .add("title" -> user.title)
         .add("flair" -> user.flair)
+        .add("avatar" -> user.avatar.map(lila.core.Avatars.url))
         .add("patronColor" -> user.patronAndColor.map(_.color))
         .add("performance" -> player.performance)
         .add("withdraw" -> player.withdraw)

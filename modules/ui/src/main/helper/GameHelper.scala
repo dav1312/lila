@@ -45,6 +45,7 @@ trait GameHelper:
         .fold[Frag](trans.site.anonymous.txt()): user =>
           frag(
             titleTag(withTitle.so(user.title)),
+            avatarIcon(user.avatar),
             user.name,
             user.flair.map(userFlair),
             withRating.option(

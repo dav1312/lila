@@ -80,6 +80,7 @@ object ChatJsonView:
       .add("d" -> l.deleted)
       .add("pc" -> u.patronAndColor.map(_.color))
       .add("f" -> u.flair)
+      .add("a" -> u.avatar.map(lila.core.Avatars.url))
       .add("title" -> u.title)
 
   val playerLineWriter: OWrites[PlayerLine] = OWrites: l =>

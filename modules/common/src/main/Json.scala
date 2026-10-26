@@ -35,5 +35,6 @@ object Json:
       .obj("name" -> u.name)
       .add("title", u.title)
       .add("flair", u.flair)
+      .add("avatar", u.avatar.map(lila.core.Avatars.url))
       .add("patron", u.isPatron)
       .add("patronColor", u.patronAndColor.map(_.color))

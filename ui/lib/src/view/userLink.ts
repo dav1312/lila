@@ -8,6 +8,7 @@ export type AnyUser = {
   attrs?: Attrs;
   title?: string;
   flair?: Flair;
+  avatar?: string; // image URL of the avatar
   ratingDiff?: number;
   line?: boolean; // display i.line, true by default
   patronColor?: PatronColor; // turn i.line into a patron wing
@@ -18,7 +19,7 @@ export type AnyUser = {
 };
 
 export const userLink = (u: AnyUser): VNode =>
-  h('a', userLinkData(u), [userLine(u), ...fullName(u), u.rating && ` ${userRating(u)} `]);
+  h('a', userLinkData(u), [userAvatar(u), userLine(u), ...fullName(u), u.rating && ` ${userRating(u)} `]);
 
 export const profileUrl = (name: string): string => `/@/${name}`;
 
@@ -27,6 +28,9 @@ export const userLinkData = (u: AnyUser): VNodeData => ({
   class: { 'user-link': true, ulpt: u.name !== 'ghost', online: !!u.online },
   attrs: { href: profileUrl(u.name), ...u.attrs },
 });
+
+export const userAvatar = (u: Pick<AnyUser, 'avatar'>): VNode | undefined =>
+  u.avatar ? h('img.user-avatar', { attrs: { src: u.avatar, alt: '' } }) : undefined;
 
 export const userFlair = (u: Pick<AnyUser, 'flair'>): VNode | undefined =>
   u.flair ? h('img.uflair', { attrs: { src: site.asset.flairSrc(u.flair) } }) : undefined;

@@ -1,5 +1,6 @@
 package lila.user
 
+import lila.core.Avatars
 import lila.core.user.Avatar
 
 class AvatarsTest extends munit.FunSuite:

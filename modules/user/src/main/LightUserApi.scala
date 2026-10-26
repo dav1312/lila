@@ -4,10 +4,11 @@ import reactivemongo.api.bson.*
 
 import lila.core.LightUser
 import lila.core.plan.{ PatronColor, PatronColorChoice, PatronMonths }
-import lila.core.user.RealName
+import lila.core.user.{ Avatar, RealName }
 import lila.db.dsl.{ *, given }
 import lila.memo.{ CacheApi, Syncache }
 import lila.user.BSONFields as F
+import lila.user.BSONHandlers.avatarHandler
 
 final class LightUserApi(repo: UserRepo, cacheApi: CacheApi)(using Executor)
     extends lila.core.user.LightUserApi:
@@ -77,6 +78,7 @@ final class LightUserApi(repo: UserRepo, cacheApi: CacheApi)(using Executor)
             name = name,
             title = doc.getAsOpt[chess.PlayerTitle](F.title),
             flair = doc.getAsOpt[Flair](F.flair).filter(FlairApi.exists),
+            avatar = doc.getAsOpt[Avatar](F.avatar),
             patronMonths = patronMonths | PatronMonths.zero,
             patronColor = patronColor
           )
@@ -87,7 +89,8 @@ final class LightUserApi(repo: UserRepo, cacheApi: CacheApi)(using Executor)
       F.username -> true,
       F.title -> true,
       F.plan -> true,
-      F.flair -> true
+      F.flair -> true,
+      F.avatar -> true
     )
 
   export realNameCache.{ sync as realName, preloadMany as preloadRealNames }

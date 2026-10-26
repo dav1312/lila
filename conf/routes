@@ -854,6 +854,7 @@ GET   /account/profile                 controllers.Account.profile
 POST  /account/profile                 controllers.Account.profileApply
 GET   /account/avatar                  controllers.Account.avatar
 POST  /account/avatar                  controllers.Account.avatarApply
+GET   /avatar/:config                  controllers.User.avatar(config: String)
 GET   /account/username                controllers.Account.username
 POST  /account/username                controllers.Account.usernameApply
 GET   /account/kid                     controllers.Account.kid

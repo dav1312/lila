@@ -11,6 +11,7 @@ import lila.common.Form.{
   playerTitle,
   readonly
 }
+import lila.core.Avatars
 import lila.core.user.{ Avatar, FlagCode, Profile, RealName }
 
 final class UserForm:

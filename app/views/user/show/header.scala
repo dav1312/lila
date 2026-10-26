@@ -3,7 +3,6 @@ package show
 
 import lila.app.UiEnv.{ *, given }
 import lila.app.mashup.UserInfo
-import lila.user.Avatars
 import lila.user.Plan.sinceDate
 import lila.user.PlayTime.*
 import lila.user.Profile.*
@@ -58,7 +57,7 @@ object header:
       div(cls := "box__top user-show__header")(
         div(cls := "user-show__identity")(
           div(cls := "user-show__avatar")(
-            u.avatar.ifTrue(!(u.marks.troll && ctx.isnt(u))).map(a => raw(Avatars.svg(a))),
+            u.avatar.ifTrue(!(u.marks.troll && ctx.isnt(u))).map(avatarImg),
             ctx.is(u).option(a(href := routes.Account.avatar)("Edit avatar"))
           ),
           u.patronAndColor.match

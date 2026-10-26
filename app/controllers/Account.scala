@@ -71,7 +71,9 @@ final class Account(
     FormFuResult(env.user.forms.avatar(me))(err => renderPage(views.avatar.edit(err))): avatar =>
       env.user.repo
         .setAvatar(me, avatar.some)
-        .inject(Redirect(routes.User.show(me.username)).flashSuccess)
+        .inject:
+          env.user.lightUserApi.invalidate(me)
+          Redirect(routes.User.show(me.username)).flashSuccess
   }
 
   def usernameApply = AuthBody { _ ?=> me ?=>

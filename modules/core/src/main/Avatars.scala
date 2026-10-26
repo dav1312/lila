@@ -1,4 +1,4 @@
-package lila.user
+package lila.core
 
 import lila.core.user.Avatar
 
@@ -71,6 +71,19 @@ object Avatars:
     """<g fill="rgba(255,255,255,0.15)" stroke="#2a2a2a" stroke-width="2.5"><rect x="36" y="50" width="20" height="16" rx="3"/><rect x="64" y="50" width="20" height="16" rx="3"/><path d="M56 56H64" fill="none"/></g>""",
     """<g stroke="#2a2a2a" stroke-width="2.5"><rect x="35" y="51" width="22" height="13" rx="4" fill="#1a1a1a"/><rect x="63" y="51" width="22" height="13" rx="4" fill="#1a1a1a"/><path d="M57 55H63" fill="none"/></g>"""
   )
+
+  // The image URL of an avatar: its option indexes in part order, so the same avatar always has the same URL
+  def url(a: Avatar): String = s"/avatar/${parts.map(_.get(a)).mkString("-")}.svg"
+
+  // The inverse of url, for the image route. A malformed path gives the default avatar.
+  def fromPath(path: String): Avatar =
+    val indexes = path.stripSuffix(".svg").split('-').map(_.toIntOption.getOrElse(0)).toList
+    if indexes.size != parts.size then Avatar()
+    else
+      parts
+        .zip(indexes)
+        .foldLeft(Avatar()): (a, pi) =>
+          pi._1.set(a, pi._2)
 
   // One choice the user makes. Options are the svg pieces (or colours, for swatch parts),
   // viewBox crops a single option to just its own area in the editor.

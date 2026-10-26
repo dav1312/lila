@@ -55,6 +55,7 @@ final class JsonView(isOnline: lila.core.socket.IsOnline) extends lila.core.user
       )
       .add("title" -> u.title)
       .add("flair" -> u.flair)
+      .add("avatar" -> u.avatar.map(lila.core.Avatars.url))
       .add("tosViolation" -> (u.lame && !me.exists(_.is(u))))
       .add("patron" -> u.isPatron)
       .add("patronColor" -> u.patronAndColor.map(_.color))

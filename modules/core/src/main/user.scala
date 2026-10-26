@@ -21,7 +21,7 @@ import lila.core.userId.*
 
 object user:
 
-  // Indexes into the lists in lila.user.Avatars; 0 is the default option for every part
+  // Indexes into the lists in lila.core.Avatars; 0 is the default option for every part
   case class Avatar(
       skin: Int = 0,
       hair: Int = 0,
@@ -73,7 +73,7 @@ object user:
 
     def hasTitle: Boolean = title.exists(PlayerTitle.BOT != _)
 
-    def light = LightUser(id, username, title, flair, patronMonths, plan.color)
+    def light = LightUser(id, username, title, flair, patronMonths, plan.color, avatar)
 
     def profileOrDefault = profile | Profile.default
 

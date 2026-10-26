@@ -154,6 +154,13 @@ final class User(
                 json = gamesForLichobile(u, filter, page)
               )
 
+  // An avatar is a pure function of its URL, so the image can be cached for good
+  def avatar(config: String) = Open:
+    Ok(lila.core.Avatars.svg(lila.core.Avatars.fromPath(config)))
+      .as("image/svg+xml")
+      .headerCache(365.days)
+      .toFuccess
+
   private def EnabledUser(username: UserStr, proxy: Option[IsProxy] = none)(
       f: UserModel => Fu[Result]
   )(using ctx: Context): Fu[Result] =

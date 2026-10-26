@@ -50,6 +50,7 @@ export interface Line {
   r?: boolean; // troll
   pc?: PatronColor;
   f?: Flair;
+  a?: string; // avatar image URL
   title?: string;
 }
 

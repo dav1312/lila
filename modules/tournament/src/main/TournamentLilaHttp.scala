@@ -100,6 +100,7 @@ final class TournamentLilaHttp(
           )
           .add("title" -> light.title)
           .add("flair" -> light.flair)
+          .add("avatar" -> light.avatar.map(lila.core.Avatars.url))
           .add("patronColor" -> light.patronAndColor.map(_.color))
           .add("provisional" -> p.provisional)
           .add("withdraw" -> p.withdraw)

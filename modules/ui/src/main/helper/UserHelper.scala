@@ -5,7 +5,8 @@ import chess.{ IntRating, PlayerTitle }
 
 import scala.annotation.targetName
 
-import lila.core.LightUser
+import lila.core.{ Avatars, LightUser }
+import lila.core.user.Avatar
 import lila.core.perf.{ KeyedPerf, UserPerfs, UserWithPerfs }
 import lila.core.plan.PatronTier
 import lila.core.socket.IsOnline
@@ -72,7 +73,8 @@ trait UserHelper:
           truncate = truncate,
           params = params,
           modIcon = modIcon,
-          withPowerTip = withPowerTip
+          withPowerTip = withPowerTip,
+          avatar = if withFlair then user.avatar else none
         )
 
   def lightUserLink(
@@ -93,8 +95,15 @@ trait UserHelper:
       withOnline = withOnline,
       truncate = truncate,
       params = params,
-      modIcon = false
+      modIcon = false,
+      avatar = user.avatar
     )
+
+  // The avatar as an image. It is cached by the browser, so names only carry a short URL.
+  def avatarImg(avatar: Avatar): Tag =
+    img(cls := "user-avatar", src := Avatars.url(avatar), alt := "")
+
+  def avatarIcon(avatar: Option[Avatar]): Option[Tag] = avatar.map(avatarImg)
 
   def lightUserSpan(
       user: LightUser,
@@ -105,6 +114,7 @@ trait UserHelper:
       cls := userClass(user.id, cssClass, withOnline),
       dataHref := userUrl(user.name)
     )(
+      avatarIcon(user.avatar),
       withOnline.so(lineIcon(user.patronAndColor)),
       titleTag(user.title),
       user.name,
@@ -149,6 +159,7 @@ trait UserHelper:
       name: Option[Frag] = None,
       withFlair: Boolean = true
   )(using Translate) = frag(
+    avatarIcon(user.avatar.ifTrue(withFlair)),
     withOnline.so(lineIcon(user)),
     withTitle.option(titleTag(user.title)),
     name | user.username,
@@ -167,12 +178,14 @@ trait UserHelper:
       flair: Option[Flair],
       params: String,
       modIcon: Boolean,
-      withPowerTip: Boolean = true
+      withPowerTip: Boolean = true,
+      avatar: Option[Avatar] = None
   )(using Translate): Tag =
     a(
       cls := userClass(userId, cssClass, withOnline, withPowerTip),
       href := userUrl(username, params = params)
     )(
+      avatarIcon(avatar),
       withOnline.so(if modIcon then moderatorIcon else lineIcon(patron)),
       titleTag(title),
       truncate.fold(username.value)(username.value.take),

@@ -6,6 +6,7 @@ import scala.concurrent.ExecutionContext
 
 import lila.core.id.Flair
 import lila.core.plan.{ PatronColorChoice, PatronMonths, PatronTier }
+import lila.core.user.Avatar
 import lila.core.userId.*
 
 case class LightUser(
@@ -14,7 +15,8 @@ case class LightUser(
     title: Option[PlayerTitle],
     flair: Option[Flair],
     patronMonths: PatronMonths,
-    patronColor: Option[PatronColorChoice]
+    patronColor: Option[PatronColorChoice],
+    avatar: Option[Avatar] = None
 ):
   def titleName: String = title.fold(name.value)(_.value + " " + name)
   def isBot = title.contains(PlayerTitle.BOT)
