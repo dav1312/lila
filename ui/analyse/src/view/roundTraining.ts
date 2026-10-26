@@ -14,7 +14,7 @@ type AdviceKind = 'inaccuracy' | 'mistake' | 'blunder';
 
 interface Advice {
   kind: AdviceKind;
-  i18n: I18nPlural;
+  label: string;
   symbol: string;
 }
 
@@ -32,53 +32,57 @@ const renderPlayer = ({ data, study }: AnalyseCtrl, color: Color): VNode => {
 };
 
 const advices: Advice[] = [
-  { kind: 'inaccuracy', i18n: i18n.site.numberInaccuracies, symbol: '?!' },
-  { kind: 'mistake', i18n: i18n.site.numberMistakes, symbol: '?' },
-  { kind: 'blunder', i18n: i18n.site.numberBlunders, symbol: '??' },
+  { kind: 'inaccuracy', label: i18n.site.inaccuracy, symbol: '?!' },
+  { kind: 'mistake', label: i18n.site.mistake, symbol: '?' },
+  { kind: 'blunder', label: i18n.site.blunder, symbol: '??' },
 ];
 
 const phaseOrder: GamePhase[] = ['opening', 'middlegame', 'endgame'];
 
-function playerTable(ctrl: AnalyseCtrl, color: Color): VNode {
-  const sideData = ctrl.mainlineAnalysis![color];
-
-  return h('div.advice-summary__side', [
-    h('div.advice-summary__player', [h(`icon.is.color-icon.${color}.text`), renderPlayer(ctrl, color)]),
-    h('div.advice-summary__sections', [
-      h('div.advice-summary__acpl', [
-        ...advices.map(a => error(sideData[a.kind], color, a)),
-        h('div', [h('strong', sideData.acpl), h('span', ` ${i18n.site.averageCentipawnLoss}`)]),
-      ]),
-      h('div.advice-summary__accuracy', [...renderPhases(sideData)]),
-    ]),
-  ]);
-}
+const playerName = (ctrl: AnalyseCtrl, color: Color): VNode =>
+  h('div.advice-summary__player', [h(`icon.is.color-icon.${color}.text`), renderPlayer(ctrl, color)]);
 
 const accuracyClass = (accuracy: number): string =>
   accuracy >= 85 ? 'good' : accuracy >= 70 ? 'inaccuracy' : accuracy >= 55 ? 'mistake' : 'blunder';
-
-const renderPhases = (side: AnalysisMetaSide): VNode[] => {
-  return [
-    h(`div.advice-summary__phase`, [h('strong', [side.accuracy, '%']), h('span', i18n.site.accuracy)]),
-    ...phaseOrder
-      .filter(phase => side.phases?.[phase] !== undefined)
-      .map(phase =>
-        h(`div.advice-summary__phase.${accuracyClass(side.phases![phase]!)}`, [
-          h('strong', `${side.phases![phase]}%`),
-          h('span', i18n.site[phase]),
-        ]),
-      ),
-  ];
-};
 
 const error = (nb: number, color: Color, advice: Advice) =>
   h(
     'div.advice-summary__error' + (nb ? `.symbol.${advice.kind}` : '.no-error'),
     { attrs: nb ? { 'data-color': color, 'data-symbol': advice.symbol } : {} },
-    advice.i18n.asArray(nb, h('strong', nb)),
+    h('strong', nb),
   );
 
+const acplRows = (white: AnalysisMetaSide, black: AnalysisMetaSide): VNode[] => [
+  ...advices.flatMap(a => [
+    error(white[a.kind], 'white', a),
+    h('div.advice-summary__label', a.label),
+    error(black[a.kind], 'black', a),
+  ]),
+  h('strong', white.acpl),
+  h('div.advice-summary__label', i18n.site.averageCentipawnLoss),
+  h('strong', black.acpl),
+];
+
+const phaseCell = (side: AnalysisMetaSide, phase: GamePhase): VNode => {
+  const accuracy = side.phases?.[phase];
+  return accuracy === undefined
+    ? h('div')
+    : h(`div.advice-summary__phase.${accuracyClass(accuracy)}`, h('strong', `${accuracy}%`));
+};
+
+const accuracyRows = (white: AnalysisMetaSide, black: AnalysisMetaSide): VNode[] => [
+  h('strong', [white.accuracy, '%']),
+  h('div.advice-summary__label', i18n.site.accuracy),
+  h('strong', [black.accuracy, '%']),
+  ...phaseOrder.flatMap(phase =>
+    white.phases?.[phase] === undefined && black.phases?.[phase] === undefined
+      ? []
+      : [phaseCell(white, phase), h('div.advice-summary__label', i18n.site[phase]), phaseCell(black, phase)],
+  ),
+];
+
 const doRender = (ctrl: AnalyseCtrl): VNode => {
+  const { white, black } = ctrl.mainlineAnalysis!;
   return h(
     'div.advice-summary',
     {
@@ -89,7 +93,9 @@ const doRender = (ctrl: AnalyseCtrl): VNode => {
       }),
     },
     [
-      playerTable(ctrl, 'white'),
+      h('div.advice-summary__players', [playerName(ctrl, 'white'), h('div'), playerName(ctrl, 'black')]),
+      h('div.advice-summary__acpl', acplRows(white, black)),
+      h('div.advice-summary__accuracy', accuracyRows(white, black)),
       ctrl.study
         ? null
         : h(
@@ -101,7 +107,6 @@ const doRender = (ctrl: AnalyseCtrl): VNode => {
             },
             i18n.site.learnFromYourMistakes,
           ),
-      playerTable(ctrl, 'black'),
     ],
   );
 };

@@ -13,84 +13,97 @@
   }
 }
 
+// one three-column grid: white | label | black. The sections are subgrids so every row lines up.
 .advice-summary {
-  @extend %flex-column, %box-neat;
+  @extend %box-neat;
 
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   gap: 1em;
   color: $c-font-page;
   font-size: 0.9em;
   padding: 0.75em 0.75em 1em;
   background: $c-bg-box;
 
-  &__player {
-    font-weight: bold;
-    margin-bottom: 0.5em;
-    padding-inline: 0.85em;
-  }
+  &__players,
+  &__acpl,
+  &__accuracy {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    align-items: center;
+    row-gap: 0.4em;
 
-  &__sections {
-    @extend %flex-center;
-
-    > div {
-      @extend %flex-column;
-
-      flex: 1 0 auto;
+    // children come in triples: white value (left), label (middle), black value (right)
+    > :nth-child(3n + 1) {
+      justify-self: start;
+      text-align: start;
     }
 
-    icon,
-    strong {
-      flex: 0 1 5ch;
+    > :nth-child(3n + 2) {
       text-align: center;
     }
 
-    .symbol {
-      cursor: pointer;
+    > :nth-child(3n) {
+      justify-self: end;
+      text-align: end;
     }
+  }
 
-    .good {
-      color: $c-good;
+  &__player {
+    @extend %nowrap-ellipsis;
+
+    min-width: 0;
+    font-weight: bold;
+    padding-bottom: 0.5em;
+  }
+
+  &__label {
+    color: $c-font-dim;
+  }
+
+  > a.button {
+    grid-column: 1 / -1;
+  }
+
+  .symbol {
+    cursor: pointer;
+  }
+
+  .good {
+    color: $c-good;
+  }
+
+  .inaccuracy {
+    color: $c-inaccuracy;
+
+    &.symbol:hover {
+      color: color-mix(in oklab, $c-inaccuracy 70%, $c-font);
     }
+  }
 
-    .inaccuracy {
-      color: $c-inaccuracy;
+  .mistake {
+    color: $c-mistake;
 
-      &.symbol:hover {
-        color: color-mix(in oklab, $c-inaccuracy 70%, $c-font);
-      }
+    &.symbol:hover {
+      color: color-mix(in oklab, $c-mistake 70%, $c-font);
     }
+  }
 
-    .mistake {
-      color: $c-mistake;
+  .blunder {
+    color: $c-blunder;
 
-      &.symbol:hover {
-        color: color-mix(in oklab, $c-mistake 70%, $c-font);
-      }
+    &.symbol:hover {
+      color: color-mix(in oklab, $c-blunder 70%, $c-font);
     }
+  }
 
-    .blunder {
-      color: $c-blunder;
-
-      &.symbol:hover {
-        color: color-mix(in oklab, $c-blunder 70%, $c-font);
-      }
-    }
-
-    .no-error {
-      color: $c-font-dimmer;
-    }
+  .no-error {
+    color: $c-font-dimmer;
   }
 
   .color-icon::before {
     vertical-align: text-bottom;
-  }
-
-  &__acpl > div,
-  &__phase {
-    @extend %flex-center-nowrap;
-
-    span {
-      @extend %nowrap-ellipsis;
-    }
   }
 
   @include mq-is-col1 {

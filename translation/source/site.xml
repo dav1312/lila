@@ -149,18 +149,6 @@
   <string name="blunder">Blunder</string>
   <string name="mistake">Mistake</string>
   <string name="inaccuracy">Inaccuracy</string>
-  <plurals name="numberBlunders">
-    <item quantity="one">%s Blunder</item>
-    <item quantity="other">%s Blunders</item>
-  </plurals>
-  <plurals name="numberMistakes">
-    <item quantity="one">%s Mistake</item>
-    <item quantity="other">%s Mistakes</item>
-  </plurals>
-  <plurals name="numberInaccuracies">
-    <item quantity="one">%s Inaccuracy</item>
-    <item quantity="other">%s Inaccuracies</item>
-  </plurals>
   <string name="moveTimes">Move times</string>
   <string name="flipBoard">Flip board</string>
   <string name="toggleLocalEngine">Toggle local engine</string>
