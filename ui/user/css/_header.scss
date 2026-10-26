@@ -22,4 +22,32 @@
   .line {
     vertical-align: top;
   }
+
+  .user-show__identity {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5em;
+  }
+
+  .user-show__avatar {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 96px;
+
+    &:empty {
+      display: none;
+    }
+
+    svg {
+      width: 96px;
+      height: 96px;
+    }
+
+    a {
+      font-size: 0.85em;
+    }
+  }
 }

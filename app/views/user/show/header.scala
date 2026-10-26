@@ -56,13 +56,19 @@ object header:
     val showLinks = !possibleSeoBot(u) || isGranted(_.Shadowban)
     frag(
       div(cls := "box__top user-show__header")(
-        u.patronAndColor.match
-          case Some(p) =>
-            h1(cls := s"user-link ${if isOnline.exec(u.id) then "online" else "offline"}")(
-              a(href := routes.Plan.index())(patronIcon(p)),
-              userDom(u)
-            )
-          case None => h1(userDom(u)),
+        div(cls := "user-show__identity")(
+          div(cls := "user-show__avatar")(
+            u.avatar.ifTrue(!(u.marks.troll && ctx.isnt(u))).map(a => raw(Avatars.svg(a))),
+            ctx.is(u).option(a(href := routes.Account.avatar)("Edit avatar"))
+          ),
+          u.patronAndColor.match
+            case Some(p) =>
+              h1(cls := s"user-link ${if isOnline.exec(u.id) then "online" else "offline"}")(
+                a(href := routes.Plan.index())(patronIcon(p)),
+                userDom(u)
+              )
+            case None => h1(userDom(u))
+        ),
         div(cls := "trophies")(
           views.user.bits.perfTrophies(u, info.ranks),
           otherTrophies(info),
@@ -147,10 +153,6 @@ object header:
               views.user.perfStat.ratingHistoryContainer
             else (ctx.is(u) && u.count.game < 10).option(ui.newPlayer(u)),
             div(cls := "profile-side")(
-              u.avatar
-                .ifTrue(!muted)
-                .map(a => div(cls := "avatar-display")(raw(Avatars.svg(a)))),
-              ctx.is(u).option(a(cls := "avatar-edit", href := routes.Account.avatar)("Edit avatar")),
               div(cls := "user-infos")(
                 (u.lame && ctx.isnt(u)).option:
                   div(cls := "warning tos_warning")(
