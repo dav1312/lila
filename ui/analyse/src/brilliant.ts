@@ -24,7 +24,7 @@ const hangingPieces = (pos: Chess, color: Color, minLoss = MIN_MATERIAL_LOSS): U
     p => pos.board.get(p.square)?.color === color && p.materialLoss >= minLoss,
   );
 
-// material is counted in piece values; the exchange evaluation only decides whether a piece is hanging
+// material is counted in piece values; the size of a sacrifice is its exchange evaluation
 const valueAt = (pos: Chess, square: Square): number => {
   const role = pos.board.get(square)?.role;
   return role ? values[role] : 0;
@@ -40,9 +40,15 @@ const materialOf = (pos: Chess, color: Color): number => {
   return sum;
 };
 
-// value of the most valuable hanging piece of `color`: one recapture can win back at most one piece
-const largestHanging = (pos: Chess, color: Color): number =>
-  hangingPieces(pos, color, 0).reduce((max, p) => Math.max(max, valueAt(pos, p.square)), 0);
+// the most the mover wins back from `taker` regardless of the sacrifice: the largest exchange gain on a hanging piece
+// once the sacked piece is gone, so its own threats do not count. pawns do not offset a sacrifice
+const offsetOf = (pos: Chess, sacked: Square, taker: Color): number => {
+  const without = pos.clone();
+  without.board.take(sacked);
+  return hangingPieces(without, taker, 0)
+    .filter(p => without.board.get(p.square)?.role !== 'pawn')
+    .reduce((max, p) => Math.max(max, p.materialLoss), 0);
+};
 
 // the squares of the pieces that can capture on `square`
 const capturersOf = (pos: Chess, square: Square): Square[] => {
@@ -69,37 +75,6 @@ const everyReplyAllowsMate = (pos: Chess): boolean => {
     for (const to of tos) if (!hasMateInOne(play(pos, from, to))) return false;
   }
   return true;
-};
-
-// the capture is compensated if the taker's side can win back at least the net value of the sacrifice:
-// the sacked piece minus what the move captured.
-// a mate in one only punishes a capture the taker could safely decline: otherwise the mate is the payoff
-const isCapturePunished = (
-  afterCapture: Chess,
-  netValue: number,
-  taker: Color,
-  mateUnavoidable: () => boolean,
-): boolean => {
-  if (hasMateInOne(afterCapture) && !mateUnavoidable()) return true;
-
-  if (largestHanging(afterCapture, taker) >= netValue) return true;
-
-  // or by winning it back after an even trade. the taker can decline the recapture,
-  // so the traded piece must be worth at least the net value
-  for (const [from, tos] of afterCapture.allDests()) {
-    for (const to of tos) {
-      const traded = valueAt(afterCapture, to);
-      if (valueAt(afterCapture, from) !== traded || traded < netValue) continue;
-      const trade = play(afterCapture, from, to);
-      const recaptures = capturersOf(trade, to);
-      if (
-        recaptures.length > 0 &&
-        recaptures.every(r => largestHanging(play(trade, r, to), taker) >= netValue)
-      )
-        return true;
-    }
-  }
-  return false;
 };
 
 // sacrifices are judged with standard chess rules
@@ -146,10 +121,12 @@ export function isBrilliantMove(evals: MoveEvals): boolean {
   return candidates.some(sacked => {
     // a trapped piece left where it was is already lost, not sacrificed
     if (sacked.square !== move.to && wasTrapped(sacked.square)) return false;
-    const sackedValue = valueAt(next, sacked.square);
+    // what is sacrificed: the exchange loss, net of what the move captured and of what the mover wins back
+    if (sacked.materialLoss - captured - offsetOf(next, sacked.square, taker) < MIN_MATERIAL_LOSS)
+      return false;
+    // a mate in one only refutes a capture the taker could safely decline: otherwise the mate is the payoff
     return capturersOf(next, sacked.square).some(
-      from =>
-        !isCapturePunished(play(next, from, sacked.square), sackedValue - captured, taker, mateUnavoidable),
+      from => !hasMateInOne(play(next, from, sacked.square)) || mateUnavoidable(),
     );
   });
 }

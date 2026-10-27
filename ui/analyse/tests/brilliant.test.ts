@@ -188,15 +188,44 @@ const POSITION_CASES: PositionCase[] = [
     expected: true,
   },
   {
-    // exf6 Nxf6 Bxf6 only wins the piece back if black recaptures
+    // exf6 only wins a pawn back, and pawns do not offset a sacrifice
     name: 'Greek gift with a declinable even trade',
     fen: 'r1b1nrk1/1pq2p1p/p3pp2/3pP3/1bPB4/3B4/PP3PPP/R2Q1RK1 w - - 0 14',
     move: 'Bxh7+',
     expected: true,
   },
   {
-    // Rxh2+ after Rxf3 or Qxf3
-    name: 'Punished capture (Nf3)',
+    // the f8 rook is only attacked by the sacked knight, so it does not offset it.
+    // Bxb5 Rxb5 Rxa6 wins the knight back later, which does not count
+    name: 'Knight sacrifice with mate (Ng6+)',
+    fen: '1r1q1r1k/6pp/n4n2/1b2N3/1bBB4/4R3/2P2PPP/R2Q2K1 w - - 0 22',
+    move: 'Ng6+',
+    expected: true,
+  },
+  {
+    // the e4 knight only hangs for a pawn (Bxe4 dxe4 Qxe4)
+    name: 'Knight left en prise (Nb4)',
+    fen: '5rk1/1pp1qpp1/r1n3b1/p5Rn/P2pN2P/1P1PP2N/1Q2BP2/2KR4 b - - 3 22',
+    move: 'Nb4',
+    expected: true,
+  },
+  {
+    // the rook for the bishop is not offset by the loose h2 and a7 pawns
+    name: 'Exchange sacrifice on a capture (Rxe8)',
+    fen: '2krb1R1/ppp1n3/8/3P1nP1/8/2N1B1P1/PP5p/R6K w - - 3 29',
+    move: 'Rxe8',
+    expected: true,
+  },
+  {
+    // white's queen is protected (Bxd1 Raxd1) and so is black's (Bxd7+ Rxd7): neither side sacrifices
+    name: 'Queen offered for queen (Ba4)',
+    fen: '2kr4/pppqn1p1/6n1/3P2P1/6b1/1BN1B1P1/PP5p/R2QR2K w - - 1 23',
+    move: 'Ba4',
+    expected: false,
+  },
+  {
+    // the h2 knight hangs to Rxh2+, which offsets all but 1 of the knight
+    name: 'Knight offered for a hanging knight (Nf3)',
     fen: '4q2r/k1p5/4nP2/1p5r/pP1p2Rn/P2P4/2PBQ2N/5R1K b - - 0 1',
     move: 'Nf3',
     expected: false,
@@ -210,19 +239,20 @@ const POSITION_CASES: PositionCase[] = [
     expected: false,
   },
   {
-    // Bxd1 Rxf5 wins the queen back
-    name: 'Punished capture (Rf1)',
+    // white's queen falls to a bishop (Bxd1 Raxd1) and black's only to a rook (Rxf5 Nxf5), so white gives up 2.
+    // Bxd1 Rxf5 Bxa4 Rxf7 wins the material back later, which does not count
+    name: 'Queen left en prise for a protected queen (Rf1)',
     fen: '2kr4/ppp1n1p1/6n1/3P1qP1/B5b1/2N1B1P1/PP5p/R2QR2K w - - 3 24',
     move: 'Rf1',
-    expected: false,
+    expected: true,
   },
   {
-    // could be argued that it is brilliant
-    // Qxd6 Nxd6+ wins black's queen, Bxd6 Nxh6 wins black's rook
-    name: 'Punished capture (Rd6)',
+    // the queen is only attacked by the sacked rook, so only the h6 rook offsets it (Nxh6 gxh6).
+    // Qxd6 Nxd6+ and Bxd6 Nxg7+ win the material back later, which does not count
+    name: 'Rook sacrifice (Rd6)',
     fen: '2r1kb2/1p4p1/nBp1q2r/4pN1P/4pPQ1/4P3/P5P1/3R2K1 w - - 6 30',
     move: 'Rd6',
-    expected: false,
+    expected: true,
   },
   {
     name: 'Knight for rook',
@@ -267,8 +297,8 @@ const POSITION_CASES: PositionCase[] = [
     expected: false,
   },
   {
-    // Qxd4 Qxd4 exd4 Bxe4 and exd4 Bxe4 win the piece back
-    name: 'Even trade wins back the piece',
+    // the e4 knight hangs to Bxe4, which offsets the knight
+    name: 'Hanging piece wins back the sacrifice',
     fen: 'r2qk2r/pbp1bppp/1pn1p3/8/3PNB2/4P3/PPP1BPPP/R2Q1RK1 b kq - 0 10',
     move: 'Nxd4',
     expected: false,
