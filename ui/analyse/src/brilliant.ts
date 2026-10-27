@@ -40,14 +40,37 @@ const materialOf = (pos: Chess, color: Color): number => {
   return sum;
 };
 
-// the most the mover wins back from `taker` regardless of the sacrifice: the largest exchange gain on a hanging piece
-// once the sacked piece is gone, so its own threats do not count. pawns do not offset a sacrifice
-const offsetOf = (pos: Chess, sacked: Square, taker: Color): number => {
-  const without = pos.clone();
-  without.board.take(sacked);
-  return hangingPieces(without, taker, 0)
-    .filter(p => without.board.get(p.square)?.role !== 'pawn')
+// the most the mover wins back from `taker` after its captures: the largest exchange gain on a hanging piece.
+// the pieces that captured on `captures` are already counted by the exchange evaluation on their squares,
+// pawns do not offset a sacrifice, and pieces that were hanging before the move could be taken anyway
+const offsetOf = (pos: Chess, captures: Square[], taker: Color, looseBefore: Set<Square>): number =>
+  hangingPieces(pos, taker, 0)
+    .filter(
+      p =>
+        !captures.includes(p.square) &&
+        !looseBefore.has(p.square) &&
+        pos.board.get(p.square)?.role !== 'pawn',
+    )
     .reduce((max, p) => Math.max(max, p.materialLoss), 0);
+
+// or the mover wins it back after an even trade. the taker can decline the recapture,
+// so the traded piece must be worth enough as well
+const winsBackAfterTrade = (
+  afterCapture: Chess,
+  enough: number,
+  offset: (pos: Chess, traded: Square) => number,
+): boolean => {
+  for (const [from, tos] of afterCapture.allDests()) {
+    for (const to of tos) {
+      const traded = valueAt(afterCapture, to);
+      if (valueAt(afterCapture, from) !== traded || traded < enough) continue;
+      const trade = play(afterCapture, from, to);
+      const recaptures = capturersOf(trade, to);
+      if (recaptures.length > 0 && recaptures.every(r => offset(play(trade, r, to), to) >= enough))
+        return true;
+    }
+  }
+  return false;
 };
 
 // the squares of the pieces that can capture on `square`
@@ -115,18 +138,23 @@ export function isBrilliantMove(evals: MoveEvals): boolean {
   if (wasTrapped(move.from)) return false;
 
   const taker = next.turn;
+  const takerLooseBefore = new Set(hangingPieces(pos, taker, 0).map(p => p.square));
   // computed only when a capture allows mate in one, and then once for all of them
   let unavoidable: boolean | undefined;
   const mateUnavoidable = () => (unavoidable ??= everyReplyAllowsMate(next));
   return candidates.some(sacked => {
     // a trapped piece left where it was is already lost, not sacrificed
     if (sacked.square !== move.to && wasTrapped(sacked.square)) return false;
-    // what is sacrificed: the exchange loss, net of what the move captured and of what the mover wins back
-    if (sacked.materialLoss - captured - offsetOf(next, sacked.square, taker) < MIN_MATERIAL_LOSS)
-      return false;
-    // a mate in one only refutes a capture the taker could safely decline: otherwise the mate is the payoff
-    return capturersOf(next, sacked.square).some(
-      from => !hasMateInOne(play(next, from, sacked.square)) || mateUnavoidable(),
-    );
+    return capturersOf(next, sacked.square).some(from => {
+      const afterCapture = play(next, from, sacked.square);
+      // a mate in one only refutes a capture the taker could safely decline: otherwise the mate is the payoff
+      if (hasMateInOne(afterCapture) && !mateUnavoidable()) return false;
+      // what is sacrificed: the exchange loss, net of what the move captured and of what the mover wins back.
+      // winning back `enough` leaves less than the minimum sacrifice
+      const enough = sacked.materialLoss - captured - MIN_MATERIAL_LOSS + 1;
+      const offset = (pos: Chess, ...traded: Square[]) =>
+        offsetOf(pos, [sacked.square, ...traded], taker, takerLooseBefore);
+      return offset(afterCapture) < enough && !winsBackAfterTrade(afterCapture, enough, offset);
+    });
   });
 }

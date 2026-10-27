@@ -156,7 +156,9 @@ const POSITION_CASES: PositionCase[] = [
     expected: true,
   },
   {
-    name: 'Exchange sacrifice',
+    // Nxc1 Bxa6 Qxa6 drags the queen off the c3 bishop, so the rook is won back.
+    // the queen is what is sacrificed: Bxd2 Rxc8 Nxc8 Rxd2 gives up 2
+    name: 'Queen sacrifice behind a rook offer (Rc1)',
     fen: '2q2Nk1/4n2p/b2p2p1/p7/4pP2/2bn2P1/1R1Q1B1P/R4BK1 w - - 0 25',
     move: 'Rc1',
     expected: true,
@@ -188,22 +190,22 @@ const POSITION_CASES: PositionCase[] = [
     expected: true,
   },
   {
-    // exf6 only wins a pawn back, and pawns do not offset a sacrifice
+    // exf6 Nxf6 Bxf6 only wins the piece back if black recaptures
     name: 'Greek gift with a declinable even trade',
     fen: 'r1b1nrk1/1pq2p1p/p3pp2/3pP3/1bPB4/3B4/PP3PPP/R2Q1RK1 w - - 0 14',
     move: 'Bxh7+',
     expected: true,
   },
   {
-    // the f8 rook is only attacked by the sacked knight, so it does not offset it.
-    // Bxb5 Rxb5 Rxa6 wins the knight back later, which does not count
+    // the a6 knight was already hanging before Ng6+, so neither hxg6 nor Bxb5 Rxb5 wins it back.
+    // the f8 rook is no longer attacked after hxg6
     name: 'Knight sacrifice with mate (Ng6+)',
     fen: '1r1q1r1k/6pp/n4n2/1b2N3/1bBB4/4R3/2P2PPP/R2Q2K1 w - - 0 22',
     move: 'Ng6+',
     expected: true,
   },
   {
-    // the e4 knight only hangs for a pawn (Bxe4 dxe4 Qxe4)
+    // the e4 knight was already hanging before Nb4, so taking it does not win the knight back
     name: 'Knight left en prise (Nb4)',
     fen: '5rk1/1pp1qpp1/r1n3b1/p5Rn/P2pN2P/1P1PP2N/1Q2BP2/2KR4 b - - 3 22',
     move: 'Nb4',
@@ -217,10 +219,45 @@ const POSITION_CASES: PositionCase[] = [
     expected: true,
   },
   {
+    // the d1 rook was already hanging before Be6, so only Bxc4 offsets the queen
+    name: 'Queen sacrifice (Be6)',
+    fen: 'r3r1k1/pp3pbp/1qp3p1/2B5/2BP2b1/Q1n2N2/P4PPP/3R1K1R b - - 3 17',
+    move: 'Be6',
+    expected: true,
+  },
+  {
+    // nothing is loose after Qxc5. Re8+ and Qe6+ win the material back later, which does not count
+    name: 'Decoy sacrifice (Bc5)',
+    fen: '6k1/1b4pp/p2q4/3PR1P1/3BQ2P/1PP5/1P1K4/5r2 w - - 1 34',
+    move: 'Bc5',
+    expected: true,
+  },
+  {
     // white's queen is protected (Bxd1 Raxd1) and so is black's (Bxd7+ Rxd7): neither side sacrifices
     name: 'Queen offered for queen (Ba4)',
     fen: '2kr4/pppqn1p1/6n1/3P2P1/6b1/1BN1B1P1/PP5p/R2QR2K w - - 1 23',
     move: 'Ba4',
+    expected: false,
+  },
+  {
+    // Rxf5 leaves the e7 bishop undefended: Rxe7
+    name: 'Capture leaves a piece undefended (Bxf5)',
+    fen: 'rq4k1/1b1nbrpp/p2p4/3P1pP1/1p1B1P1P/3B1Q2/PPP5/2K1R2R w - - 1 20',
+    move: 'Bxf5',
+    expected: false,
+  },
+  {
+    // Qxe7 leaves the f5 rook undefended: Qxf5
+    name: 'Capture leaves a rook undefended (fxe5)',
+    fen: 'r4qk1/1b2R1pp/p2p4/3PnrP1/1p1BQP1P/8/PPP5/2K4R w - - 3 23',
+    move: 'fxe5',
+    expected: false,
+  },
+  {
+    // exd4 opens the e-file: Rxe7
+    name: 'Capture opens a line (Re1)',
+    fen: 'r5k1/1b2q1pp/p7/3Pp1P1/1p1B3P/5Q2/PPP5/2K4R w - - 0 27',
+    move: 'Re1',
     expected: false,
   },
   {
@@ -247,7 +284,7 @@ const POSITION_CASES: PositionCase[] = [
     expected: true,
   },
   {
-    // the queen is only attacked by the sacked rook, so only the h6 rook offsets it (Nxh6 gxh6).
+    // the h6 rook was already hanging before Rd6, and the queen is no longer attacked once the rook is taken.
     // Qxd6 Nxd6+ and Bxd6 Nxg7+ win the material back later, which does not count
     name: 'Rook sacrifice (Rd6)',
     fen: '2r1kb2/1p4p1/nBp1q2r/4pN1P/4pPQ1/4P3/P5P1/3R2K1 w - - 6 30',
@@ -297,8 +334,8 @@ const POSITION_CASES: PositionCase[] = [
     expected: false,
   },
   {
-    // the e4 knight hangs to Bxe4, which offsets the knight
-    name: 'Hanging piece wins back the sacrifice',
+    // Qxd4 Qxd4 exd4 Bxe4 and exd4 Bxe4 win the piece back
+    name: 'Even trade wins back the piece',
     fen: 'r2qk2r/pbp1bppp/1pn1p3/8/3PNB2/4P3/PPP1BPPP/R2Q1RK1 b kq - 0 10',
     move: 'Nxd4',
     expected: false,
