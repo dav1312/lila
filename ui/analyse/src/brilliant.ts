@@ -1,6 +1,6 @@
 import type { Color, Square } from 'chessops';
-import type { Chess } from 'chessops/chess';
-import { opposite } from 'chessops/util';
+import { type Chess, normalizeMove } from 'chessops/chess';
+import { opposite, parseUci } from 'chessops/util';
 
 import { povChances } from 'lib/ceval/winningChances';
 
@@ -40,18 +40,53 @@ const materialOf = (pos: Chess, color: Color): number => {
   return sum;
 };
 
+// what is already known when measuring how much the mover wins back
+interface WinBack {
+  taker: Color;
+  // the taker's pieces that were hanging before the move: the mover could take them anyway
+  looseBefore: Set<Square>;
+  // except the one the engine line takes right after the capture: then it pays for the sacrifice
+  retaken?: Square;
+  // how much of the capturer's loss the sacked piece's exchange evaluation already counts
+  counted: number;
+}
+
 // the most the mover wins back from `taker` after its captures: the largest exchange gain on a hanging piece.
-// the pieces that captured on `captures` are already counted by the exchange evaluation on their squares,
-// pawns do not offset a sacrifice, and pieces that were hanging before the move could be taken anyway
-const offsetOf = (pos: Chess, captures: Square[], taker: Color, looseBefore: Set<Square>): number =>
-  hangingPieces(pos, taker, 0)
+// `captures` are the squares the taker captured on, the sacked piece's first.
+// the capturer that takes the sacked piece counts only for what it loses beyond its exchange evaluation,
+// a piece attacked by the one that recaptures the sacked piece cannot be won as well, and pawns do not count
+const offsetOf = (pos: Chess, captures: Square[], w: WinBack): number => {
+  const hanging = hangingPieces(pos, w.taker, 0);
+  const capturer = hanging.find(p => p.square === captures[0]);
+  const recapturer = capturer?.principalAttacker;
+  return hanging
     .filter(
       p =>
         !captures.includes(p.square) &&
-        !looseBefore.has(p.square) &&
+        (!w.looseBefore.has(p.square) || p.square === w.retaken) &&
+        p.principalAttacker !== recapturer &&
         pos.board.get(p.square)?.role !== 'pawn',
     )
-    .reduce((max, p) => Math.max(max, p.materialLoss), 0);
+    .reduce(
+      (max, p) => Math.max(max, p.materialLoss),
+      Math.max(0, (capturer?.materialLoss ?? 0) - w.counted),
+    );
+};
+
+// the square of the taker's piece that the mover captures right after the taker's reply in the engine line
+const retakenInLine = (pos: Chess, uci: Uci | undefined, pv: Uci[] | undefined): Square | undefined => {
+  if (!pv || pv.length < 3 || pv[0] !== uci) return undefined;
+  const line = pos.clone();
+  for (const [i, uci] of pv.slice(0, 3).entries()) {
+    const parsed = parseUci(uci);
+    if (!parsed) return undefined;
+    const move = normalizeMove(line, parsed);
+    if (!line.isLegal(move) || !('from' in move)) return undefined;
+    if (i === 2) return line.board.get(move.to)?.color === opposite(line.turn) ? move.to : undefined;
+    line.play(move);
+  }
+  return undefined;
+};
 
 // or the mover wins it back after an even trade. the taker can decline the recapture,
 // so the traded piece must be worth enough as well
@@ -139,6 +174,7 @@ export function isBrilliantMove(evals: MoveEvals): boolean {
 
   const taker = next.turn;
   const takerLooseBefore = new Set(hangingPieces(pos, taker, 0).map(p => p.square));
+  const retaken = retakenInLine(pos, evals.uci, evals.pv);
   // computed only when a capture allows mate in one, and then once for all of them
   let unavoidable: boolean | undefined;
   const mateUnavoidable = () => (unavoidable ??= everyReplyAllowsMate(next));
@@ -152,8 +188,13 @@ export function isBrilliantMove(evals: MoveEvals): boolean {
       // what is sacrificed: the exchange loss, net of what the move captured and of what the mover wins back.
       // winning back `enough` leaves less than the minimum sacrifice
       const enough = sacked.materialLoss - captured - MIN_MATERIAL_LOSS + 1;
-      const offset = (pos: Chess, ...traded: Square[]) =>
-        offsetOf(pos, [sacked.square, ...traded], taker, takerLooseBefore);
+      const winBack: WinBack = {
+        taker,
+        looseBefore: takerLooseBefore,
+        retaken,
+        counted: valueAt(next, sacked.square) - sacked.materialLoss,
+      };
+      const offset = (pos: Chess, ...traded: Square[]) => offsetOf(pos, [sacked.square, ...traded], winBack);
       return offset(afterCapture) < enough && !winsBackAfterTrade(afterCapture, enough, offset);
     });
   });

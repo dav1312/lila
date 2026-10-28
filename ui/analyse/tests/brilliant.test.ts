@@ -65,6 +65,8 @@ interface PositionCase {
   move: string;
   eval?: ScoreInput;
   secondLineEval?: ScoreInput;
+  // the engine's main line after `move`, in SAN
+  line?: string[];
   expected: boolean;
 }
 
@@ -79,12 +81,20 @@ function buildMove(c: PositionCase): MoveEvals {
   if (!move) throw new Error(`Illegal move "${c.move}" in ${c.fen}`);
 
   const uci = makeUci(move);
+  const line = pos.value.clone();
+  const pv = [c.move, ...(c.line ?? [])].map(san => {
+    const m = parseSan(line, san);
+    if (!m) throw new Error(`Illegal line move "${san}" in ${c.fen}`);
+    line.play(m);
+    return makeUci(m);
+  });
   return {
     fen: c.fen,
     uci,
     score: parseScore(c.eval ?? 0),
     best: uci,
     second: c.secondLineEval === undefined ? undefined : parseScore(c.secondLineEval),
+    pv: c.line ? pv : undefined,
   };
 }
 
@@ -365,6 +375,43 @@ const POSITION_CASES: PositionCase[] = [
     fen: '2k5/1pp1q3/4p2p/PPr1r1p1/8/Q4P1P/8/2RR2K1 b - - 1 32',
     move: 'Rxc1',
     expected: false,
+  },
+  {
+    // Rxh6 Rxc8+ mates; Rcxh6 wins the rook on h6 or Rxc8+ the bishop, never both with the one rook
+    name: 'One piece cannot win back two pieces',
+    fen: 'k1b4r/q4p2/p1R5/b2P4/r3p2p/PR2Q3/1PP3PP/1K3B2 w - - 4 34',
+    move: 'Qh6',
+    expected: true,
+  },
+  {
+    // fxe6 hangs the f8 rook, and Qxe6 just loses the queen
+    name: 'Capturing with a piece that is then lost',
+    fen: '5r2/ppr1ppk1/1n1q2p1/3P3p/5R1P/1BP2Q2/P4PP1/4R1K1 w - - 4 20',
+    move: 'Re6',
+    expected: false,
+  },
+  {
+    // the f6 queen was hanging before Ne2+, and the engine line takes it right after the capture
+    name: 'Desperado before taking a hanging queen',
+    fen: 'r1b2rk1/pp1ppp1p/5Qp1/q7/3nP3/1BN1B3/PPP2PPP/R4RK1 b - - 0 12',
+    move: 'Ne2+',
+    line: ['Nxe2', 'exf6'],
+    expected: false,
+  },
+  {
+    name: 'Queen for two rooks',
+    fen: '4rk2/pq1r4/4PPQ1/1p6/2p2P2/8/PP3P1P/4R1K1 w - - 3 31',
+    move: 'Qxe8+',
+    line: ['Kxe8', 'exd7+'],
+    expected: false,
+  },
+  {
+    // the d8 knight was hanging before, but the engine line ignores it and mates
+    name: 'Sacrifice ignoring a hanging piece',
+    fen: 'r1bNk2r/p1pp2pp/8/1pn1p3/3n4/1BK5/PPPP1bPP/RNBQ3R b kq - 2 10',
+    move: 'Ne2+',
+    line: ['Qxe2', 'Bd4+'],
+    expected: true,
   },
 ];
 

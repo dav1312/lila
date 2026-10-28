@@ -184,6 +184,8 @@ export class LocalAnalysisEngine {
           score: parent.eval,
           best: parent.eval?.best,
           second: parent.eval?.pvs[1],
+          // not `lines[i]`, which is emptied when the move played is the best one
+          pv: parent.eval?.pvs[0]?.moves.split(' '),
         };
         if (detectBrilliant && isBrilliantMove(evals)) bad.glyphs = [brilliantGlyph];
         return;

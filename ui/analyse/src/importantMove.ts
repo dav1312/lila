@@ -15,6 +15,7 @@ export interface MoveEvals {
   score?: EvalScore; // the score of `fen`
   best?: Uci; // the engine's best move in `fen`
   second?: EvalScore; // the score of the engine's second line in `fen`
+  pv?: Uci[]; // the engine's main line in `fen`, starting with `best`
 }
 
 export interface ImportantMove {

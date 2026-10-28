@@ -34,6 +34,7 @@ export default class LiveAnnotate {
           score: parent.ceval,
           best: parent.ceval.bestmove,
           second: parent.ceval.pvs[1],
+          pv: parent.ceval.pvs[0]?.moves,
         })
         ? glyphs.brilliant
         : undefined;
