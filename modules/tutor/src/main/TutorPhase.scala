@@ -40,7 +40,7 @@ private object TutorPhases:
   private val awarenessQuestion = Question(InsightDimension.Phase, InsightMetric.Awareness)
   private val phases = InsightDimension.valuesOf(InsightDimension.Phase).toList
   private def phasesOf(perfType: PerfType) = perfType match
-    case PerfType.Crazyhouse => phases.filter(_ != Phase.End)
+    case PerfType.Crazyhouse | PerfType.Bughouse => phases.filter(_ != Phase.End)
     case _ => phases
 
   private type PhaseGet = Phase => Option[Double]

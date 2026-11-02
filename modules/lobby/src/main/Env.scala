@@ -48,4 +48,6 @@ final class Env(
 
   private lazy val biter = wire[Biter]
 
+  lazy val bughouseMaker = wire[BughouseMaker]
+
   val socket = wire[LobbySocket]

@@ -27,6 +27,7 @@ trait I18nHelper:
       case chess.variant.Atomic => I18nKey.variant.atomic
       case chess.variant.Horde => I18nKey.variant.horde
       case chess.variant.Crazyhouse => I18nKey.variant.crazyhouse
+      case chess.variant.Bughouse => I18nKey.variant.bughouse
       case chess.variant.RacingKings => I18nKey.variant.racingKings
       case _ => I18nKey.variant.standard
     def variantTitleTrans: I18nKey = v match
@@ -37,6 +38,7 @@ trait I18nHelper:
       case chess.variant.Atomic => I18nKey.variant.atomicTitle
       case chess.variant.Horde => I18nKey.variant.hordeTitle
       case chess.variant.Crazyhouse => I18nKey.variant.crazyhouseTitle
+      case chess.variant.Bughouse => I18nKey.variant.bughouseTitle
       case chess.variant.RacingKings => I18nKey.variant.racingKingsTitle
       case _ => I18nKey.variant.standardTitle
 

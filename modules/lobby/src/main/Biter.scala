@@ -90,15 +90,17 @@ final private class Biter(
     .start
 
   def canJoin(hook: Hook, user: Option[LobbyUser]): Boolean =
-    hook.isAuth == user.isDefined && user.forall: u =>
-      u.marks.lame == hook.lame &&
-        !hook.userId.contains(u.id) &&
-        !hook.userId.so(u.blocking.value.contains) &&
-        !hook.user.so(_.blocking).value.contains(u.id) &&
-        hook.ratingRangeOrDefault.contains(u.ratingAt(hook.perfType))
+    !hook.realVariant.bughouse &&
+      hook.isAuth == user.isDefined && user.forall: u =>
+        u.marks.lame == hook.lame &&
+          !hook.userId.contains(u.id) &&
+          !hook.userId.so(u.blocking.value.contains) &&
+          !hook.user.so(_.blocking).value.contains(u.id) &&
+          hook.ratingRangeOrDefault.contains(u.ratingAt(hook.perfType))
 
   def canJoin(seek: Seek, user: LobbyUser): Boolean =
-    seek.user.id != user.id &&
+    !seek.realVariant.bughouse &&
+      seek.user.id != user.id &&
       (user.marks.lame == seek.user.marks.lame) &&
       !(user.blocking.value contains seek.user.id) &&
       !(seek.user.blocking.value contains user.id) &&

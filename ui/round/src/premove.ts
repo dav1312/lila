@@ -10,7 +10,7 @@ export class Premove {
     readonly variant: VariantKey,
     readonly rookCastle: boolean,
   ) {
-    this.unrestrictedPremoves = ['atomic', 'crazyhouse'].includes(variant);
+    this.unrestrictedPremoves = ['atomic', 'crazyhouse', 'bughouse'].includes(variant);
   }
 
   private readonly isDestOccupiedByFriendly = (ctx: cg.MobilityContext): boolean =>

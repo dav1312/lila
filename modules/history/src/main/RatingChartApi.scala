@@ -52,6 +52,7 @@ object RatingChartApi:
     Classical,
     Correspondence,
     Crazyhouse,
+    Bughouse,
     Chess960,
     KingOfTheHill,
     ThreeCheck,

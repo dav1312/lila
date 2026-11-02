@@ -9,7 +9,7 @@ import { pubsub } from 'lib/pubsub';
 import { wsConnect, wsDestroy } from 'lib/socket';
 import { storage } from 'lib/storage';
 import { alert } from 'lib/view';
-import { text as xhrText } from 'lib/xhr';
+import { json as xhrJson, text as xhrText } from 'lib/xhr';
 
 import RoundController from './ctrl';
 import type { RoundData, RoundOpts, SocketInEvents } from './interfaces';
@@ -114,6 +114,8 @@ async function boot(
   const ctrl = await roundMain(opts);
   const round = { socketReceive: ctrl.socket.receive, moveOn: ctrl.moveOn };
 
+  if (data.bughousePartner) watchBughousePartner(data);
+
   if (chat) {
     if (data.tournament?.top) {
       chat.plugin = tourStandingCtrl(data.tournament.top, data.tournament.team, i18n.site.standings);
@@ -157,6 +159,39 @@ async function boot(
     wsDestroy();
   }
   return ctrl;
+}
+
+// the other board of a bughouse match is shown as a spectator: the player plays on this board only
+function watchBughousePartner(data: RoundData): Promise<RoundController> {
+  return xhrJson(`/game/${data.game.id}${data.player.id}/bughouse-partner`).then(
+    async (partner: RoundData) => {
+      const element = document.createElement('div');
+      element.className = 'round__app round__app--partner';
+      const main = document.querySelector('.round__app');
+      if (main) {
+        const wrap = document.createElement('div');
+        wrap.className = 'round__bughouse';
+        main.replaceWith(wrap);
+        wrap.append(main, element);
+      }
+
+      const partner_ = {} as { ctrl?: RoundController };
+      const socketSend = wsConnect(
+        `/watch/${partner.game.id}/${partner.player.color}/v6`,
+        partner.player.version,
+        {
+          receive<K extends keyof SocketInEvents>(t: K, d: Parameters<SocketInEvents[K]>) {
+            partner_.ctrl?.socket.receive(t, d);
+          },
+        },
+      ).send;
+
+      partner_.ctrl = await app({ data: partner, element, socketSend, onChange: () => {} });
+      // snabbdom replaces the placeholder element with the rendered board, so tag the new board by its position
+      document.querySelector('.round__bughouse')?.lastElementChild?.classList.add('round__app--partner');
+      return partner_.ctrl;
+    },
+  );
 }
 
 const startsWithPrefix = (t: string, prefix: string) =>

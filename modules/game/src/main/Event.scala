@@ -330,6 +330,11 @@ object Event:
     def apply(clock: chess.CorrespondenceClock): CorrespondenceClock =
       CorrespondenceClock(clock.whiteTime, clock.blackTime)
 
+  // a bughouse board received a piece from its partner's board, to be dropped
+  case class Pocket(crazyData: Crazyhouse.Data) extends Event:
+    def typ = "pocket"
+    def data = Json.obj("crazyhouse" -> crazyData)
+
   case class CheckCount(white: Int, black: Int) extends Event:
     def typ = "checkCount"
     def data =

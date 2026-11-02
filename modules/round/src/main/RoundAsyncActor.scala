@@ -189,6 +189,10 @@ final private class RoundAsyncActor(
       p.promise.foreach(_.completeWith(res))
       res
 
+    case RoundBus.BughousePass(piece) =>
+      handle: game =>
+        player.bughousePass(game, piece)
+
     case RoundBus.FishnetPlay(uci, hash) =>
       handle: game =>
         player.fishnet(game, hash, uci)

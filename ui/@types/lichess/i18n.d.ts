@@ -6521,6 +6521,10 @@ interface I18n {
     atomic: string;
     /** Nuke your opponent's king to win. */
     atomicTitle: string;
+    /** Bughouse */
+    bughouse: string;
+    /** Two linked boards. Pieces you capture go to your partner, who can drop them on the other board. */
+    bughouseTitle: string;
     /** Chess960 */
     chess960: string;
     /** The starting position of the home rank pieces is randomised. */

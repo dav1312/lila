@@ -82,6 +82,7 @@ final class UserShowSide(helpers: Helpers):
           showPerf(u.perfs.correspondence, PerfKey.correspondence),
           u.hasVariantRating.option(hr),
           showNonEmptyPerf(u.perfs.crazyhouse, PerfKey.crazyhouse),
+          showNonEmptyPerf(u.perfs.bughouse, PerfKey.bughouse),
           showNonEmptyPerf(u.perfs.chess960, PerfKey.chess960),
           showNonEmptyPerf(u.perfs.kingOfTheHill, PerfKey.kingOfTheHill),
           showNonEmptyPerf(u.perfs.threeCheck, PerfKey.threeCheck),

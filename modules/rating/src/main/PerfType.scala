@@ -153,6 +153,15 @@ enum PerfType(
         descKey = I18nKey.variant.crazyhouseTitle
       )
 
+  case Bughouse
+      extends PerfType(
+        PerfId(19),
+        key = PerfKey.bughouse,
+        icon = Icon.Crazyhouse,
+        nameKey = I18nKey.variant.bughouse,
+        descKey = I18nKey.variant.bughouseTitle
+      )
+
   case Puzzle
       extends PerfType(
         PerfId(20),
@@ -166,8 +175,8 @@ object PerfType:
 
   // all but standard and puzzle
   type GamePerf = Bullet.type | Blitz.type | Rapid.type | Classical.type | UltraBullet.type |
-    Correspondence.type | Crazyhouse.type | Chess960.type | KingOfTheHill.type | ThreeCheck.type |
-    Antichess.type | Atomic.type | Horde.type | RacingKings.type
+    Correspondence.type | Crazyhouse.type | Bughouse.type | Chess960.type | KingOfTheHill.type |
+    ThreeCheck.type | Antichess.type | Atomic.type | Horde.type | RacingKings.type
 
   def gamePerf(pt: PerfType): Option[GamePerf] = pt match
     case gp: GamePerf => Some(gp)
@@ -212,6 +221,7 @@ object PerfType:
   val variants: List[PerfKey] =
     List(
       PerfKey.crazyhouse,
+      PerfKey.bughouse,
       PerfKey.chess960,
       PerfKey.kingOfTheHill,
       PerfKey.threeCheck,
@@ -230,6 +240,7 @@ object PerfType:
     case PerfKey.atomic => variant.Atomic
     case PerfKey.horde => variant.Horde
     case PerfKey.racingKings => variant.RacingKings
+    case PerfKey.bughouse => variant.Bughouse
     case _ => variant.Standard
 
   def apply(variant: chess.variant.Variant, speed: Speed): PerfType = PerfType(PerfKey(variant, speed))

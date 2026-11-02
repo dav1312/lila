@@ -391,3 +391,39 @@ final class Challenge(env: Env) extends LilaController(env):
 
   private def anonSecretFromCookieOrMobileSri(using RequestHeader) =
     req.sid.map(_.value) orElse lila.security.Mobile.LichessMobileUa.sriFromUA.map(_.value)
+
+  // dev only: a bughouse match between four test accounts, given as ?w1=&b1=&w2=&b2=
+  // board 1: w1 (white) vs b1 (black); board 2: w2 (white) vs b2 (black); partners are w1-b2 and b1-w2
+  def devBughouse = Open:
+    if env.mode.isProd then notFound
+    else
+      List("w1", "b1", "w2", "b2").flatMap(getUserStr) match
+        case List(w1, b1, w2, b2) =>
+          for
+            users <- List(w1, b1, w2, b2).traverse(u =>
+              env.user.api.byIdWithPerf(u.id, lila.rating.PerfType.Bughouse)
+            )
+            res <- users match
+              case List(Some(_), Some(_), Some(_), Some(_)) =>
+                env.lobby.bughouseMaker
+                  .boards(
+                    users,
+                    Some(
+                      _root_.chess.Clock
+                        .Config(_root_.chess.Clock.LimitSeconds(180), _root_.chess.Clock.IncrementSeconds(0))
+                    ),
+                    None,
+                    _root_.chess.Rated.No
+                  )
+                  .map: (game1, game2) =>
+                    Ok(
+                      List(
+                        s"board 1, w1 (white): /game/${game1.fullIdOf(_root_.chess.White)}",
+                        s"board 1, b1 (black): /game/${game1.fullIdOf(_root_.chess.Black)}",
+                        s"board 2, w2 (white): /game/${game2.fullIdOf(_root_.chess.White)}",
+                        s"board 2, b2 (black): /game/${game2.fullIdOf(_root_.chess.Black)}"
+                      ).mkString("\n")
+                    )
+              case _ => fuccess(BadRequest("unknown user"))
+          yield res
+        case _ => fuccess(BadRequest("usage: /dev/bughouse?w1=<user>&b1=<user>&w2=<user>&b2=<user>"))

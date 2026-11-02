@@ -306,7 +306,7 @@ function boardEventsHook(ctx: RoundNvuiContext, el: HTMLElement): void {
   });
 
   $board.on('keydown.nvui', 'button', (e: KeyboardEvent) => {
-    const isZh = ctrl.data.game.variant.key === 'crazyhouse';
+    const isZh = ['crazyhouse', 'bughouse'].includes(ctrl.data.game.variant.key);
     if (e.shiftKey && /^[ad]$/i.test(e.key)) nextOrPrev(ctrl)(e);
     else if (e.shiftKey && e.key === 'H') {
       e.preventDefault();
@@ -530,7 +530,7 @@ const inputCommands: InputCommand[] = [
           : 'Command only available in crazyhouse',
       );
     },
-    invalid: ctrl => ctrl.data.game.variant.key !== 'crazyhouse',
+    invalid: ctrl => !['crazyhouse', 'bughouse'].includes(ctrl.data.game.variant.key),
   },
   {
     cmd: 'help',

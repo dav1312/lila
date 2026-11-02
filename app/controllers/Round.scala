@@ -79,6 +79,20 @@ final class Round(
         _.filter: pov =>
           pov.gameId != game.id && pov.game.isSwitchable && pov.game.isSimul == game.isSimul
 
+  // the other board of a bughouse match, as a spectator view: only for a player of this board
+  def bughousePartner(fullId: GameFullId) = Open:
+    Found(env.round.proxyRepo.pov(fullId)): pov =>
+      pov.game.metadata.bughousePartnerId
+        .so(env.round.proxyRepo.gameIfPresentOrFetch)
+        .flatMap:
+          case None => notFound
+          case Some(partner) =>
+            val partnerPov = Pov(partner, !pov.color)
+            for
+              users <- env.user.api.gamePlayers(partner.userIdPair, partner.perfKey)
+              data <- env.api.roundApi.watcher(partnerPov, users, tour = None, tv = None, details = false)
+            yield Ok(data)
+
   def whatsNext(fullId: GameFullId) = Open:
     Found(env.round.proxyRepo.pov(fullId)): currentPov =>
       if currentPov.isMyTurn

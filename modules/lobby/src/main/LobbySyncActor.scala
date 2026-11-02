@@ -10,6 +10,7 @@ import lila.mon.extensions.*
 final private class LobbySyncActor(
     seekApi: SeekApi,
     biter: Biter,
+    bughouseMaker: BughouseMaker,
     gameApi: lila.core.game.GameApi,
     hasCurrentPlayban: lila.core.playban.HasCurrentPlayban,
     poolApi: lila.core.pool.PoolApi,
@@ -23,6 +24,9 @@ final private class LobbySyncActor(
 
   private var remoteDisconnectAllAt = nowInstant
 
+  // bughouse seeks waiting for three more players, kept in memory until a match starts
+  private var bughouseSeeks = List.empty[Seek]
+
   private var socket: SyncActor = new SyncActor:
     val process = { case msg =>
       println(s"stub trouper received: $msg")
@@ -32,6 +36,16 @@ final private class LobbySyncActor(
 
     // solve circular reference
     case SetSocket(actor) => socket = actor
+
+    // bughouse hooks are not bitten one by one: they wait until four seats are queued, then start a match
+    case msg @ SetupBus.AddHook(hook) if hook.realVariant.bughouse =>
+      if hook.isAuth then
+        hookRepo.bySri(hook.sri).foreach(remove)
+        hook.sid.so: sid =>
+          hookRepo.bySid(sid).foreach(remove)
+        hookRepo.save(hook)
+        socket ! msg
+        startBughouseIfFull(hook)
 
     case msg @ SetupBus.AddHook(hook) =>
       lila.mon.lobby.hook.create.increment()
@@ -45,6 +59,12 @@ final private class LobbySyncActor(
         case None =>
           hookRepo.save(msg.hook)
           socket ! msg
+
+    case msg @ SetupBus.AddSeek(seek) if seek.realVariant.bughouse =>
+      seekApi.insert(seek)
+      socket ! msg
+      bughouseSeeks = bughouseSeeks :+ seek
+      startBughouseSeeksIfFull(seek)
 
     case msg @ SetupBus.AddSeek(seek) =>
       lila.mon.lobby.seek.create.increment()
@@ -89,6 +109,21 @@ final private class LobbySyncActor(
       seekApi.archive(seek, game.id)
       socket ! msg
       socket ! RemoveSeek(seek.id)
+
+    case BughouseStarted(joins) =>
+      joins.foreach(join => socket ! join)
+
+    case BughouseFailed(seats) =>
+      seats.foreach(hookRepo.save)
+
+    case BughouseSeeksStarted(joins) =>
+      joins.foreach: join =>
+        seekApi.archive(join.seek, join.game.id)
+        socket ! join
+        socket ! RemoveSeek(join.seek.id)
+
+    case BughouseSeeksFailed(seeks) =>
+      bughouseSeeks = seeks ++ bughouseSeeks
 
     case LeaveAll => remoteDisconnectAllAt = nowInstant
 
@@ -147,6 +182,30 @@ final private class LobbySyncActor(
       biter(hook, sri, user).foreach(this.!)
     }
 
+  private def startBughouseSeeksIfFull(seek: Seek): Unit =
+    val seats = bughouseSeeks
+      .filter(s => s.daysPerTurn == seek.daysPerTurn && s.rated == seek.rated)
+      .distinctBy(_.user.id)
+      .take(4)
+    if seats.sizeIs == 4 then
+      bughouseSeeks = bughouseSeeks.filterNot(seats.contains)
+      val started = bughouseMaker.startSeeks(seats)
+      started.foreach(joins => this ! BughouseSeeksStarted(joins))
+      started.failed.foreach(_ => this ! BughouseSeeksFailed(seats))
+
+  private def startBughouseIfFull(hook: Hook): Unit =
+    val seats = hookRepo
+      .filter(h => h.realVariant.bughouse && h.clock == hook.clock && h.rated == hook.rated)
+      .toList
+      .sortBy(_.createdAt)
+      .distinctBy(_.userId)
+      .take(4)
+    if seats.sizeIs == 4 then
+      seats.foreach(remove)
+      val started = bughouseMaker.start(seats)
+      started.foreach(joins => this ! BughouseStarted(joins))
+      started.failed.foreach(_ => this ! BughouseFailed(seats))
+
   private def findCompatible(hook: Hook): Option[Hook] =
     hookRepo.filter(_.compatibleWith(hook)).find { existing =>
       biter.canJoin(existing, hook.user) &&
@@ -186,6 +245,11 @@ final private class LobbySyncActor(
     Bus.publishDyn(RemoveHook(hook.id), s"hookRemove:${hook.id}")
 
 private object LobbySyncActor:
+
+  private case class BughouseStarted(joins: List[JoinHook])
+  private case class BughouseFailed(seats: List[Hook])
+  private case class BughouseSeeksStarted(joins: List[JoinSeek])
+  private case class BughouseSeeksFailed(seeks: List[Seek])
 
   case class SetSocket(actor: SyncActor)
 

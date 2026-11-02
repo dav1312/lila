@@ -11,6 +11,9 @@ import type { ClientEval, Glyph, TreeNodeLite, TreePath } from 'lib/tree/types';
 import AnalyseCtrl from '../ctrl';
 import type { AnalysisUpdate, AnalysisEngineInfo, AnalysisMeta, Division } from '../interfaces';
 
+// chessops does not know bughouse; bughouse games are not analysed locally, so use crazyhouse rules
+const rulesOf = (variant: VariantKey) => lichessRules(variant === 'bughouse' ? 'crazyhouse' : variant);
+
 // modules/tree/.../Analysis.scala
 export interface ServerAnalysisDocument {
   id: string;
@@ -127,7 +130,7 @@ export class LocalAnalysisEngine {
   private async review(division: Division): Promise<LocalAnalysisResult> {
     const lines = this.nodes.slice(0, -1).map((parent, i) => {
       const chess = setupPosition(
-        lichessRules(this.ctrl.variantKey),
+        rulesOf(this.ctrl.variantKey),
         co.fen.parseFen(parent.fen).unwrap(),
       ).unwrap();
       const ucis = parent.eval!.pvs[0].moves.split(' ').slice(0, 12);
@@ -182,7 +185,7 @@ export class LocalAnalysisEngine {
       parent.children.push(
         ucisToNodes(
           lines[i].ucis,
-          setupPosition(lichessRules(this.ctrl.variantKey), co.fen.parseFen(parent.fen).unwrap()).unwrap(),
+          setupPosition(rulesOf(this.ctrl.variantKey), co.fen.parseFen(parent.fen).unwrap()).unwrap(),
           bad.ply,
           { comp: true, clock: bad.clock, eval: undefined },
         )[0],
@@ -213,7 +216,7 @@ export class LocalAnalysisEngine {
 
 function serverEvalScore(variant: VariantKey, node: TreeNodeLite): ServerEvalScore {
   if (node.eval?.cp !== undefined || node.eval?.mate) return { cp: node.eval.cp, mate: node.eval.mate };
-  const pos = setupPosition(lichessRules(variant), co.fen.parseFen(node.fen).unwrap()).unwrap();
+  const pos = setupPosition(rulesOf(variant), co.fen.parseFen(node.fen).unwrap()).unwrap();
   const outcome = pos.outcome();
   if (!outcome) return {};
   return outcome.winner ? { mate: 0, mateGiven: outcome.winner === pos.turn } : { cp: 0 };

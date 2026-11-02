@@ -422,6 +422,8 @@ GET   /embed/game/$gameId<\w{8}>/$color<white|black>  controllers.Analyse.embedR
 
 GET   /round-next/$gameId<\w{8}>                 controllers.Round.next(gameId: GameId)
 GET   /whats-next/$fullId<\w{12}>                controllers.Round.whatsNext(fullId: GameFullId)
+GET   /game/$fullId<\w{12}>/bughouse-partner        controllers.Round.bughousePartner(fullId: GameFullId)
+GET   /dev/bughouse                                  controllers.Challenge.devBughouse
 GET   /round/help                                controllers.Round.help
 GET   /round/minis                               controllers.Round.minis(ids: String)
 

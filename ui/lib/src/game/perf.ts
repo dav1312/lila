@@ -10,6 +10,7 @@ export const variants: VariantKey[] = [
   'horde',
   'racingKings',
   'crazyhouse',
+  'bughouse',
 ];
 
 export const perfIsVariant = (perf: Speed | VariantKey): perf is VariantKey =>

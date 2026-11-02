@@ -60,7 +60,7 @@ object SetupForm:
 
   def hook(using me: Option[Me]) = Form:
     mapping(
-      "variant" -> variantWithVariants,
+      "variant" -> variantForHook,
       "timeMode" -> timeMode,
       "time" -> time,
       "increment" -> increment,

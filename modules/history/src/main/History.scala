@@ -14,6 +14,7 @@ case class History(
     horde: RatingsMap,
     racingKings: RatingsMap,
     crazyhouse: RatingsMap,
+    bughouse: RatingsMap,
     ultraBullet: RatingsMap,
     bullet: RatingsMap,
     blitz: RatingsMap,
@@ -39,6 +40,7 @@ case class History(
       case PerfKey.horde => horde
       case PerfKey.racingKings => racingKings
       case PerfKey.crazyhouse => crazyhouse
+      case PerfKey.bughouse => bughouse
       case PerfKey.puzzle => puzzle
       case PerfKey.ultraBullet => ultraBullet
 
@@ -68,6 +70,7 @@ object History:
         horde = ratingsMap("horde"),
         racingKings = ratingsMap("racingKings"),
         crazyhouse = ratingsMap("crazyhouse"),
+        bughouse = ratingsMap("bughouse"),
         ultraBullet = ratingsMap("ultraBullet"),
         bullet = ratingsMap("bullet"),
         blitz = ratingsMap("blitz"),

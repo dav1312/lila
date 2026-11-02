@@ -2,7 +2,7 @@ package lila.round
 package ui
 
 import chess.Square
-import chess.variant.{ Crazyhouse, Variant }
+import chess.variant.Variant
 
 import lila.ui.*
 import lila.ui.ScalatagsTemplate.{ *, given }
@@ -12,7 +12,7 @@ final class RoundUi(helpers: Helpers, gameUi: lila.game.ui.GameUi):
 
   def RoundPage(variant: Variant, title: String)(using ctx: Context) =
     Page(title)
-      .css(if variant == Crazyhouse then "round.zh" else "round")
+      .css(if variant.hasPockets then "round.zh" else "round")
       .css(ctx.pref.hasKeyboardMove.option("keyboardMove"))
       .css(ctx.pref.hasVoice.option("voice"))
       .css(ctx.blind.option("round.nvui"))

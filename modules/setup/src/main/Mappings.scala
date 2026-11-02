@@ -16,6 +16,7 @@ private object Mappings:
   val variantWithFen = typeIn(Config.variantsWithFen.toSet)
   val aiVariants = typeIn(Config.aiVariants.toSet)
   val variantWithVariants = typeIn(Config.variantsWithVariants.toSet)
+  val variantForHook = typeIn(Config.variantsForHook.toSet)
   val variantWithFenAndVariants = typeIn(Config.variantsWithFenAndVariants.toSet)
   val boardApiVariants = V.Variant.list.all.view.filterNot(_.fromPosition).map(_.key).toSet
   val boardApiVariantKeys = typeIn(boardApiVariants)

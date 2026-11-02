@@ -225,10 +225,11 @@ describe('premoves', () => {
       'horde',
       'racingKings',
       'crazyhouse',
+      'bughouse',
     ];
     for (const variant of variants) {
       const expectedPremoves = structuredClone(baseExpectedPremoves);
-      if (['atomic', 'crazyhouse'].includes(variant)) {
+      if (['atomic', 'crazyhouse', 'bughouse'].includes(variant)) {
         ['e1', 'f1', 'g1', 'h1'].forEach(sq => expectedPremoves.get('a1')?.add(sq as cg.Key));
         ['e1', 'd1', 'c1', 'b1', 'a1'].forEach(sq => expectedPremoves.get('h1')?.add(sq as cg.Key));
       }

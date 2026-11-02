@@ -99,6 +99,7 @@ export interface SocketInEvents {
   crowd: (o: ByColor<boolean>) => void;
   endData: (end: ApiEnd) => void;
   checkCount: (d: ByColor<number>) => void;
+  pocket: (d: { crazyhouse: NodeCrazy }) => void;
   simulPlayerMove: (gameId: string) => void;
   simulEnd: (d: { id: string; name: string }) => void;
   // From lila-ws
@@ -117,6 +118,7 @@ export interface RoundData extends GameData {
   forecastCount?: number;
   opponentSignal?: number;
   crazyhouse?: NodeCrazy;
+  bughousePartner?: string; // id of the game on the other board of a bughouse match
   correspondence?: CorresClockData;
   tv?: Tv;
   userTv?: {

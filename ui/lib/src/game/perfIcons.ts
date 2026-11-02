@@ -16,6 +16,7 @@ const perfIcons: Record<VariantKey | Speed, LiconValue> = {
   horde: licon.Keypad,
   racingKings: licon.FlagRacingKings,
   crazyhouse: licon.Crazyhouse,
+  bughouse: licon.Crazyhouse,
   fromPosition: licon.Pencil,
 };
 

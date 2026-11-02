@@ -28,6 +28,7 @@ object perf:
     val horde: PerfKey = "horde"
     val racingKings: PerfKey = "racingKings"
     val crazyhouse: PerfKey = "crazyhouse"
+    val bughouse: PerfKey = "bughouse"
     val puzzle: PerfKey = "puzzle"
     val list: List[PerfKey] = List(
       bullet,
@@ -45,6 +46,7 @@ object perf:
       horde,
       racingKings,
       crazyhouse,
+      bughouse,
       puzzle
     )
     val all: Set[PerfKey] = list.toSet
@@ -64,6 +66,7 @@ object perf:
       horde -> 16,
       racingKings -> 17,
       crazyhouse -> 18,
+      bughouse -> 19,
       puzzle -> 20
     )
 
@@ -89,6 +92,7 @@ object perf:
       case ChessVariant.Atomic => atomic.some
       case ChessVariant.Horde => horde.some
       case ChessVariant.RacingKings => racingKings.some
+      case ChessVariant.Bughouse => bughouse.some
 
     def standardBySpeed(speed: Speed): PerfKey = speed match
       case Speed.Bullet => bullet
@@ -139,6 +143,7 @@ object perf:
       horde: Perf,
       racingKings: Perf,
       crazyhouse: Perf,
+      bughouse: Perf,
       ultraBullet: Perf,
       puzzle: Perf,
       storm: PuzPerf,
@@ -161,6 +166,7 @@ object perf:
       case "horde" => horde
       case "racingKings" => racingKings
       case "crazyhouse" => crazyhouse
+      case "bughouse" => bughouse
       case "puzzle" => puzzle
       // impossible because PerfKey can't be instantiated with arbitrary values
       case key => sys.error(s"Unknown perf key: $key")
@@ -183,6 +189,7 @@ object perf:
       case "horde" => this.focus(_.horde)
       case "racingKings" => this.focus(_.racingKings)
       case "crazyhouse" => this.focus(_.crazyhouse)
+      case "bughouse" => this.focus(_.bughouse)
       case "puzzle" => this.focus(_.puzzle)
       // impossible because PerfKey can't be instantiated with arbitrary values
       case key => sys.error(s"Unknown perf key: $key")

@@ -225,6 +225,6 @@ def reasonableMinimumNumberOfMoves(variant: Variant): Int =
   import _root_.chess.variant.*
   variant.match
     case Standard | Chess960 | Horde => 20
-    case Antichess | Crazyhouse | KingOfTheHill => 15
+    case Antichess | Crazyhouse | Bughouse | KingOfTheHill => 15
     case ThreeCheck | Atomic | RacingKings => 10
     case _ => 15 // from position

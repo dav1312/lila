@@ -152,7 +152,7 @@ object BSONHandlers:
               val counts = r.intsD(F.checkCount)
               CheckCount(~counts.headOption, ~counts.lastOption)
             else emptyCheckCount,
-            crazyData = light.variant.crazyhouse.option(r.get[Crazyhouse.Data](F.crazyData))
+            crazyData = light.variant.hasPockets.option(r.get[Crazyhouse.Data](F.crazyData))
           ),
           variant = light.variant,
           color = turnColor
@@ -196,6 +196,7 @@ object BSONHandlers:
           tournamentId = r.getO[TourId](F.tournamentId),
           swissId = r.getO[SwissId](F.swissId),
           simulId = r.getO[SimulId](F.simulId),
+          bughousePartnerId = r.getO[GameId](F.bughousePartnerId),
           analysed = r.boolD(F.analysed),
           drawOffers = r.getD(F.drawOffers, emptyDrawOffers),
           rules = r.getD(F.rules, Set.empty)
@@ -237,6 +238,7 @@ object BSONHandlers:
         F.tournamentId -> o.metadata.tournamentId,
         F.swissId -> o.metadata.swissId,
         F.simulId -> o.metadata.simulId,
+        F.bughousePartnerId -> o.metadata.bughousePartnerId,
         F.analysed -> w.boolO(o.metadata.analysed),
         F.rules -> o.metadata.nonEmptyRules,
         F.abortedBy -> o.abortedBy

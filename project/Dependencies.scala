@@ -10,6 +10,8 @@ object Dependencies:
   val jitpack = "jitpack".at("https://jitpack.io")
   val lilaMaven = "lila-maven".at("https://raw.githubusercontent.com/lichess-org/lila-maven/master")
   val sonashots = "sonashots".at("https://oss.sonatype.org/content/repositories/snapshots")
+  // scalachess snapshots published from the mounted repos/scalachess checkout (see `sbt publish`)
+  val scalachessLocal = "scalachess-local".at("file:///scalachess/.local-repo")
 
   val cats = "org.typelevel" %% "cats-core" % "2.13.0"
   val alleycats = "org.typelevel" %% "alleycats-core" % "2.13.0"
@@ -41,7 +43,7 @@ object Dependencies:
     val bundle = Seq(munit)
 
   object chess:
-    val version = "18.0.1"
+    val version = "18.1.0-SNAPSHOT"
     val org = "com.github.lichess-org.scalachess"
     // val org = "org.lichess" // for publishLocal
     val core = org %% "scalachess" % version

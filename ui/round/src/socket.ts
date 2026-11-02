@@ -4,6 +4,7 @@ import { throttle } from 'lib/async';
 import { type Simul, setOnGame, isPlayerTurn, plyColor } from 'lib/game';
 import { pubsub } from 'lib/pubsub';
 import { wsSign, wsVersion } from 'lib/socket';
+import type { NodeCrazy } from 'lib/tree/types';
 import { domDialog } from 'lib/view';
 
 import type RoundController from './ctrl';
@@ -15,6 +16,7 @@ import type {
   Reloads,
   ReloadEvent,
 } from './interfaces';
+import { setPocket } from './util';
 import { reload as xhrReload } from './xhr';
 
 type Handlers = SocketInEvents & Reloads;
@@ -138,6 +140,10 @@ export function make(send: RoundSocketSend, ctrl: RoundController): RoundSocket 
     checkCount(e: { white: number; black: number }) {
       ctrl.data.player.checks = ctrl.data.player.color === 'white' ? e.white : e.black;
       ctrl.data.opponent.checks = ctrl.data.opponent.color === 'white' ? e.white : e.black;
+      ctrl.redraw();
+    },
+    pocket(o: { crazyhouse: NodeCrazy }) {
+      setPocket(ctrl.data, o.crazyhouse);
       ctrl.redraw();
     },
     simulPlayerMove(gameId: string) {

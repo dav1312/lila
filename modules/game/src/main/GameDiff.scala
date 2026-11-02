@@ -72,7 +72,7 @@ object GameDiff:
           _.history.checkCount,
           (o: CheckCount) => o.nonEmpty.so(BSONHandlers.checkCountWriter.writeOpt(o))
         )
-      if a.variant.crazyhouse then
+      if a.variant.hasPockets then
         dOpt(
           crazyData,
           _.position.crazyData,

@@ -130,6 +130,8 @@ trait BaseConfig:
       chess.variant.RacingKings.id
   val variantsWithFenAndVariants =
     variantsWithVariants :+ FromPosition.id
+  // bughouse needs four players, so it is only offered when creating a lobby game
+  val variantsForHook = variantsWithVariants :+ chess.variant.Bughouse.id
 
   val speeds = Speed.all.map(_.id)
 

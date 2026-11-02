@@ -275,7 +275,7 @@ object Root:
     Root(
       ply = Ply.initial,
       fen = variant.initialFen,
-      crazyData = variant.crazyhouse.option(Crazyhouse.Data.init)
+      crazyData = variant.hasPockets.option(Crazyhouse.Data.init)
     )
 
 case class Clock(centis: Centis, trust: Option[Boolean] = none):

@@ -30,6 +30,7 @@ object UserPerfsExt:
       PerfKey.horde -> p.horde,
       PerfKey.racingKings -> p.racingKings,
       PerfKey.crazyhouse -> p.crazyhouse,
+      PerfKey.bughouse -> p.bughouse,
       PerfKey.puzzle -> p.puzzle
     )
 
@@ -108,6 +109,7 @@ object UserPerfs:
       p,
       p,
       p,
+      p,
       puzPerfDefault,
       puzPerfDefault,
       puzPerfDefault
@@ -166,6 +168,7 @@ object UserPerfs:
         horde = perf("horde"),
         racingKings = perf("racingKings"),
         crazyhouse = perf("crazyhouse"),
+        bughouse = perf("bughouse"),
         ultraBullet = perf("ultraBullet"),
         bullet = perf("bullet"),
         blitz = perf("blitz"),
@@ -192,6 +195,7 @@ object UserPerfs:
         "horde" -> notNew(o.horde),
         "racingKings" -> notNew(o.racingKings),
         "crazyhouse" -> notNew(o.crazyhouse),
+        "bughouse" -> notNew(o.bughouse),
         "ultraBullet" -> notNew(o.ultraBullet),
         "bullet" -> notNew(o.bullet),
         "blitz" -> notNew(o.blitz),

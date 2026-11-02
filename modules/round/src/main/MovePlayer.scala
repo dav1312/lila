@@ -1,7 +1,8 @@
 package lila.round
 
 import chess.format.{ Fen, Uci }
-import chess.{ Centis, Clock, ErrorStr, MoveMetrics, MoveOrDrop, Status }
+import chess.variant.{ Bughouse, Crazyhouse }
+import chess.{ Centis, Clock, ErrorStr, Move, MoveMetrics, MoveOrDrop, Piece, Status }
 
 import java.util.concurrent.TimeUnit
 
@@ -71,6 +72,7 @@ final private class MovePlayer(
   )(using GameProxy): Fu[Events] =
     if pov.game.hasAi then uciMemo.add(pov.game, moveOrDrop)
     notifyMove(moveOrDrop, progress.game)
+    handoff(progress.game, moveOrDrop)
     if progress.game.finished then moveFinish(progress.game).dmap(progress.events ::: _)
     else
       if progress.game.playableByAi then requestFishnet(progress.game, round)
@@ -79,6 +81,23 @@ final private class MovePlayer(
       if progress.game.forecastable then round ! ForecastPlay(moveOrDrop)
       scheduleExpiration.exec(progress.game)
       fuccess(progress.events)
+
+  // in bughouse a captured piece is not kept: it goes to the partner, playing the same color on the other board
+  private def handoff(game: Game, moveOrDrop: MoveOrDrop): Unit =
+    moveOrDrop match
+      case move: Move if game.variant.bughouse =>
+        for
+          partnerId <- game.metadata.bughousePartnerId
+          piece <- Bughouse.outgoing(move)
+        do Bus.pub(Tell(partnerId, RoundBus.BughousePass(piece)))
+      case _ =>
+
+  private[round] def bughousePass(game: Game, piece: Piece)(using proxy: GameProxy): Fu[Events] =
+    if game.finished || !game.variant.bughouse then fuccess(Nil)
+    else
+      val after = game.copy(chess = game.chess.copy(position = Bughouse.receive(game.chess.position, piece)))
+      val event = lila.game.Event.Pocket(after.chess.position.crazyData.getOrElse(Crazyhouse.Data.init))
+      proxy.save(Progress(game, after, List(event))).inject(List(event))
 
   private[round] def fishnet(game: Game, sign: String, uci: Uci)(using proxy: GameProxy): Fu[Events] =
     if game.playable && game.player.isAi then

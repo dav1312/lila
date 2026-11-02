@@ -27,6 +27,7 @@ export function insufficientMaterial(variant: VariantKey, fullFen: FEN): boolean
     variant === 'kingOfTheHill' ||
     variant === 'racingKings' ||
     variant === 'crazyhouse' ||
+    variant === 'bughouse' ||
     variant === 'atomic' ||
     variant === 'antichess' ||
     variant === 'threeCheck'

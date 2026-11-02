@@ -162,3 +162,19 @@
     grid-area: board;
   }
 }
+
+// two boards of a bughouse match, stacked so that neither covers the other
+.round__bughouse {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  > .round__app {
+    min-width: 0;
+  }
+
+  // the partner's board is for watching only, so it is dimmed to keep it apart from the player's own board
+  > .round__app--partner {
+    opacity: 0.6;
+  }
+}

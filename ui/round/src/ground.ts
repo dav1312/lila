@@ -80,7 +80,7 @@ export function makeConfig(ctrl: RoundController): CgConfig {
       additionalPremoveRequirements: premove.additionalPremoveRequirements,
     },
     predroppable: {
-      enabled: data.pref.enablePremove && data.game.variant.key === 'crazyhouse',
+      enabled: data.pref.enablePremove && ['crazyhouse', 'bughouse'].includes(data.game.variant.key),
       events: {
         set: hooks.onPredrop,
         unset() {

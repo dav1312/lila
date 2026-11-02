@@ -1,3 +1,5 @@
+import type { NodeCrazy } from 'lib/tree/types';
+
 import type { EncodedDests, RoundData, Step } from './interfaces';
 
 export function parsePossibleMoves(dests?: EncodedDests): Dests {
@@ -19,10 +21,16 @@ export const lastStep = (d: RoundData): Step => d.steps[d.steps.length - 1];
 
 export const plyStep = (d: RoundData, ply: number): Step => d.steps[ply - firstPly(d)];
 
+// pockets handed over by the partner board (bughouse) apply to the current position
+export const setPocket = (d: RoundData, crazyhouse: NodeCrazy): void => {
+  d.crazyhouse = crazyhouse;
+  lastStep(d).crazy = crazyhouse;
+};
+
 export const upgradeServerData = (d: RoundData): void => {
   if (d.correspondence) d.correspondence.showBar = d.pref.clockBar;
 
-  if (['horde', 'crazyhouse'].includes(d.game.variant.key)) d.pref.showCaptured = false;
+  if (['horde', 'crazyhouse', 'bughouse'].includes(d.game.variant.key)) d.pref.showCaptured = false;
 
   if (d.expiration) d.expiration.movedAt = Date.now() - d.expiration.idleMillis;
 };

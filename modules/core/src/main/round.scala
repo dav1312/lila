@@ -2,7 +2,7 @@ package lila.core
 package round
 
 import _root_.chess.format.{ Fen, Uci }
-import _root_.chess.{ Color, MoveOrDrop }
+import _root_.chess.{ Color, MoveOrDrop, Piece }
 import play.api.libs.json.{ JsArray, JsObject }
 import scalalib.bus.NotBuseable
 
@@ -18,6 +18,7 @@ case class Berserk(gameId: GameId, userId: UserId)
 enum RoundBus extends NotBuseable:
   case Abort(playerId: GamePlayerId)
   case AbortForce
+  case BughousePass(piece: Piece)
   case BotConnected(color: Color, v: Boolean)
   case BotPlay(playerId: GamePlayerId, uci: Uci, promise: Option[Promise[Unit]] = None)
   case Draw(playerId: GamePlayerId, draw: Boolean)
