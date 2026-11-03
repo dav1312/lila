@@ -1,3 +1,4 @@
+export { boardRules } from './rules';
 import type { GameData, Player } from './interfaces';
 import { finished, aborted, status } from './status';
 

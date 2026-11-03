@@ -1,9 +1,10 @@
 import { type Position, parseUci, makeSquare } from 'chessops';
-import { chessgroundDests, lichessRules, scalachessCharPair } from 'chessops/compat';
+import { chessgroundDests, scalachessCharPair } from 'chessops/compat';
 import { parseFen } from 'chessops/fen';
 import { setupPosition } from 'chessops/variant';
 
 import { memoize } from '@/common';
+import { boardRules } from '@/game';
 
 import type { PositionResult, TreeNode, TreeNodeBase } from './types';
 
@@ -14,9 +15,7 @@ export const completeNode =
     const node = from as TreeNode;
     node.id ||= node.uci ? scalachessCharPair(parseUci(node.uci)!) : '';
     node.children ||= [];
-    node.pos ||= memoize(() =>
-      parseFen(node.fen).chain(setup => setupPosition(lichessRules(variant), setup)),
-    );
+    node.pos ||= memoize(() => parseFen(node.fen).chain(setup => setupPosition(boardRules(variant), setup)));
     node.dests = memoize(() => computeDests(node.pos(), variant === 'chess960'));
     node.drops = memoize(() => computeDrops(variant, node.pos()));
     node.check = memoize(() => computeCheck(node.pos()));

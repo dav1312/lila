@@ -1,10 +1,10 @@
 import { files } from '@lichess-org/chessground/types';
-import { chessgroundDests, lichessRules } from 'chessops/compat';
+import { chessgroundDests } from 'chessops/compat';
 import { parseFen } from 'chessops/fen';
 import { charToRole, opposite, parseUci } from 'chessops/util';
 import { setupPosition } from 'chessops/variant';
 
-import { destsToUcis, sanToUci, sanWriter } from '@/game';
+import { boardRules, destsToUcis, sanToUci, sanWriter } from '@/game';
 
 import { renderPieceStr, keyFromAttrs, isKey, pieceStr } from './render';
 import type { PieceStyle, PrefixStyle } from './setting';
@@ -246,7 +246,7 @@ export function possibleMovesHandler(
     // if it is your turn
     const playThroughToFinalDests = (): Dests => {
       {
-        const fromSetup = setupPosition(lichessRules(variant), parseFen(steps[0].fen).unwrap()).unwrap();
+        const fromSetup = setupPosition(boardRules(variant), parseFen(steps[0].fen).unwrap()).unwrap();
         steps.forEach(s => {
           if (s.uci) {
             const move = parseUci(s.uci);

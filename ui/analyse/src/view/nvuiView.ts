@@ -1,6 +1,5 @@
 import { Chessground as makeChessground } from '@lichess-org/chessground';
 import { COLORS } from 'chessops';
-import { lichessRules } from 'chessops/compat';
 import { parseFen } from 'chessops/fen';
 import { makeSan } from 'chessops/san';
 import { charToRole, opposite, parseUci } from 'chessops/util';
@@ -10,7 +9,7 @@ import { defined } from 'lib';
 import { view as cevalView, renderEval } from 'lib/ceval';
 import { renderChat } from 'lib/chat/renderChat';
 import { isTouchDevice } from 'lib/device';
-import { type Player, plyOpponentColor } from 'lib/game';
+import { boardRules, type Player, plyOpponentColor } from 'lib/game';
 import { plyToTurn } from 'lib/game/chess';
 import {
   renderSan,
@@ -381,7 +380,7 @@ function renderBestMove({ ctrl, moveStyle }: AnalyseNvuiContext): string {
     setup.turn = opposite(setup.turn);
     if (setup.turn === 'white') setup.fullmoves += 1;
   } else if (node.ceval) pvs = node.ceval.pvs;
-  const pos = setupPosition(lichessRules(ctrl.ceval.opts.variant.key), setup);
+  const pos = setupPosition(boardRules(ctrl.ceval.opts.variant.key), setup);
   if (pos.isOk && pvs.length > 0 && pvs[0].moves.length > 0) {
     const uci = pvs[0].moves[0];
     const san = makeSan(pos.unwrap(), parseUci(uci)!);

@@ -1,11 +1,11 @@
 import { COLORS } from 'chessops';
-import { lichessRules } from 'chessops/compat';
 import { makeBoardFen, makeFen, parseFen } from 'chessops/fen';
 import { defaultPosition } from 'chessops/variant';
 import type { LichessEditor } from 'editor';
 import { chess960IdToFEN, randomPositionId } from 'editor/chess960';
 
 import { defined, prop, type Prop, toggle } from 'lib';
+import { boardRules } from 'lib/game';
 import { licon } from 'lib/licon';
 import { pubsub } from 'lib/pubsub';
 import { storedProp } from 'lib/storage';
@@ -55,7 +55,7 @@ export const modeChoices = [
 export const fieldValue = (e: Event, id: string) =>
   ((e.target as HTMLElement).querySelector('#chapter-' + id) as HTMLInputElement)?.value;
 
-const startFen = (variant: VariantKey): FEN => makeFen(defaultPosition(lichessRules(variant)).toSetup());
+const startFen = (variant: VariantKey): FEN => makeFen(defaultPosition(boardRules(variant)).toSetup());
 
 const boardFen = (fen: FEN): string | undefined =>
   parseFen(fen).unwrap(

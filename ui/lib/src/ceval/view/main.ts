@@ -3,7 +3,6 @@
 import { Chessground as makeChessground } from '@lichess-org/chessground';
 import { uciToMove } from '@lichess-org/chessground/util';
 import type { Position } from 'chessops/chess';
-import { lichessRules } from 'chessops/compat';
 import { parseFen, makeBoardFen } from 'chessops/fen';
 import { makeSanAndPlay } from 'chessops/san';
 import { opposite, parseUci } from 'chessops/util';
@@ -11,6 +10,7 @@ import { setupPosition } from 'chessops/variant';
 import { h } from 'snabbdom';
 
 import { isTouchDevice } from '@/device';
+import { boardRules } from '@/game';
 import { blurIfPrimaryClick, defined, notNull, requestIdleCallbackSafe } from '@/index';
 import { licon } from '@/licon';
 import type { ClientEval, LocalEval, PvData } from '@/tree/types';
@@ -356,7 +356,7 @@ export function renderPvs(ctrl: CevalHandler): VNode | undefined {
     setup.turn = opposite(setup.turn);
     if (setup.turn === 'white') setup.fullmoves += 1;
   }
-  const pos = setupPosition(lichessRules(ceval.opts.variant.key), setup);
+  const pos = setupPosition(boardRules(ceval.opts.variant.key), setup);
 
   const resetPvIndexAndBoard = () => {
     ceval.setPvBoard(null);

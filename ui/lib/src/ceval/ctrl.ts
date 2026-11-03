@@ -1,7 +1,6 @@
 // no side effects allowed due to re-export by index.ts
 
 import { isStandardMaterial } from 'chessops/chess';
-import { lichessRules } from 'chessops/compat';
 import { parseFen } from 'chessops/fen';
 import { type Rules } from 'chessops/types';
 import { setupPosition } from 'chessops/variant';
@@ -9,6 +8,7 @@ import { setupPosition } from 'chessops/variant';
 import { clamp } from '@/algo';
 import { throttleWithFlush } from '@/async';
 import { isTouchDevice } from '@/device';
+import { boardRules } from '@/game';
 import { pubsub } from '@/pubsub';
 import { storedIntProp, storedStringProp, storage, storedMap } from '@/storage';
 import type { ClientEval, LocalEval, TreePath } from '@/tree/types';
@@ -112,7 +112,7 @@ export class CevalCtrl {
   init(opts?: CevalOpts): void {
     if (opts) this.opts = opts;
     this.reset();
-    this.rules = lichessRules(this.opts.variant.key);
+    this.rules = boardRules(this.opts.variant.key);
     const pos = this.opts.initialFen
       ? parseFen(this.opts.initialFen).chain(x => setupPosition(this.rules, x))
       : undefined;
