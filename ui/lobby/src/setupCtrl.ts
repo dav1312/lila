@@ -217,6 +217,8 @@ export default class SetupController {
     !this.root.me ||
     this.timeControl.mode() === 'unlimited' ||
     (this.variant() === 'fromPosition' && this.fen() !== INITIAL_FEN) ||
+    // bughouse is casual only for now
+    this.variant() === 'bughouse' ||
     // variants with very low time cannot be rated
     (this.variant() !== 'standard' && this.timeControl.notForRatedVariant());
 

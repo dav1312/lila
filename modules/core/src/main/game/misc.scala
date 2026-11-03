@@ -204,10 +204,13 @@ object BSONFields:
   val pgnImport = "pgni"
   val playingUids = "pl"
 
+// bughouse is casual only for now
 def allowRated(variant: Variant, clock: Option[Clock.Config]) =
-  variant.standard || clock.exists: c =>
-    c.estimateTotalTime >= Centis(3000) &&
-      c.limitSeconds > 0 || c.incrementSeconds > 1
+  !variant.bughouse && {
+    variant.standard || clock.exists: c =>
+      c.estimateTotalTime >= Centis(3000) &&
+        c.limitSeconds > 0 || c.incrementSeconds > 1
+  }
 
 def isBoardCompatible(clock: Clock.Config): Boolean = Speed(clock) >= Speed.Rapid
 def isBotCompatible(clock: Clock.Config): Boolean = Speed(clock) >= Speed.Bullet

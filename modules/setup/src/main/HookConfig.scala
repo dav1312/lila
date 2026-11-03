@@ -70,7 +70,7 @@ case class HookConfig(
             Seek.make(
               variant = variant,
               daysPerTurn = makeDaysPerTurn,
-              rated = rated,
+              rated = if variant.bughouse then Rated.No else rated,
               user = u,
               blocking = blocking,
               ratingRange = ratingRange
