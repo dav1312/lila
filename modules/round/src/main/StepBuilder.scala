@@ -1,9 +1,9 @@
 package lila.round
 
-import chess.format.pgn.SanStr
+import chess.format.pgn.{ Parser, SanStr }
 import chess.format.{ Fen, Uci }
-import chess.variant.Variant
-import chess.{ Check, Ply, Square }
+import chess.variant.{ Bughouse, Variant }
+import chess.{ Check, ErrorStr, Position, Ply, Square }
 import play.api.libs.json.*
 
 case class Step(
@@ -67,20 +67,40 @@ object StepBuilder:
       crazyData = setup.position.crazyData
     ).toJson
 
-    val error = setup.position.foreach(sans, setup.ply): step =>
-      moveSteps(step.ply.value - setup.ply.value) = Step(
-        ply = step.ply,
-        move = Uci.WithSan(step.move.toUci, step.move.toSanStr).some,
-        fen = Fen.write(step.next, step.ply.fullMoveNumber),
-        check = step.next.check,
-        dests = None,
-        drops = None,
-        crazyData = step.next.crazyData
-      ).toJson
+    @annotation.tailrec
+    def replay(position: Position, ply: Ply, index: Int): Option[ErrorStr] =
+      if index > sans.size then none
+      else
+        playOrReceive(position, sans(index - 1), variant) match
+          case Left(error) => error.some
+          case Right(played) =>
+            val nextPly = ply.next
+            moveSteps(index) = Step(
+              ply = nextPly,
+              move = Uci.WithSan(played.move.toUci, played.move.toSanStr).some,
+              fen = Fen.write(played.next, nextPly.fullMoveNumber),
+              check = played.next.check,
+              dests = None,
+              drops = None,
+              crazyData = played.next.crazyData
+            ).toJson
+            replay(played.next, nextPly, index + 1)
 
-    error.foreach(logChessError(id.value))
+    replay(setup.position, setup.ply, 1).foreach(logChessError(id.value))
 
-    JsArray(moveSteps)
+    // if a move cannot be played, the steps from there on are left out instead of being sent as nulls
+    JsArray(moveSteps.toIndexedSeq.takeWhile(_ != null))
+
+  // a bughouse drop can use a piece the partner board handed over, which the moves do not record,
+  // so the piece is received first when the drop is not playable from the pocket alone
+  private def playOrReceive(position: Position, san: SanStr, variant: Variant) =
+    position.play(san) match
+      case Left(error) =>
+        Parser.san(san) match
+          case Right(drop: chess.format.pgn.Drop) if variant.bughouse =>
+            Bughouse.receive(position, position.color - drop.role).play(san)
+          case _ => Left(error)
+      case played => played
 
   private val logChessError = (id: String) =>
     (err: chess.ErrorStr) =>
