@@ -24,7 +24,9 @@ export const bothPlayersHavePlayed = (data: GameData): boolean => playedTurns(da
 export const abortable = (data: GameData): boolean =>
   playable(data) && !bothPlayersHavePlayed(data) && !mandatory(data) && !data.game.rules?.includes('noAbort');
 
-export const rematchable = (data: GameData): boolean => !data.game.rules?.includes('noRematch');
+// bughouse rematches are disabled for now
+export const rematchable = (data: GameData): boolean =>
+  !data.game.rules?.includes('noRematch') && data.game.variant.key !== 'bughouse';
 
 export const takebackable = (data: GameData): boolean =>
   playable(data) &&

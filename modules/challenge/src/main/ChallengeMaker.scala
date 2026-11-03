@@ -34,14 +34,17 @@ final class ChallengeMaker(
               dest <- userApi.withPerf(dest, game.perfKey)
             yield Data(game, challenger, orig, dest).some
 
+  // bughouse rematches are disabled for now
   private[challenge] def makeRematchOf(game: Game, challenger: User): Fu[Option[Challenge]] =
-    Pov(game, challenger.id).so: pov =>
-      pov.opponent.userId.so(userApi.byIdWithPerf(_, game.perfKey)).flatMapz { dest =>
-        for
-          challenger <- userApi.withPerf(challenger, game.perfKey)
-          rematch <- makeRematch(pov, challenger.some, dest)
-        yield rematch.some
-      }
+    Pov(game, challenger.id)
+      .filterNot(_ => game.variant.bughouse)
+      .so: pov =>
+        pov.opponent.userId.so(userApi.byIdWithPerf(_, game.perfKey)).flatMapz { dest =>
+          for
+            challenger <- userApi.withPerf(challenger, game.perfKey)
+            rematch <- makeRematch(pov, challenger.some, dest)
+          yield rematch.some
+        }
 
   // pov of the challenger
   private def makeRematch(pov: Pov, challenger: GameUser, dest: WithPerf): Fu[Challenge] =

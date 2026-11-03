@@ -39,9 +39,11 @@ final private class Rematcher(
   def apply(pov: Pov, confirm: Boolean): Fu[Events] =
     if confirm then yes(pov) else no(pov)
 
+  // bughouse rematches would need the other partners to agree too, so they are disabled for now
   private def couldRematch(g: Game): Boolean =
     g.finishedOrAborted &&
       g.nonMandatory &&
+      !g.variant.bughouse &&
       !g.hasRule(_.noRematch) &&
       !g.boosted &&
       !(g.hasAi && g.variant == FromPosition && g.clock.exists(_.config.limitSeconds < 60))
