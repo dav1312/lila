@@ -2,7 +2,7 @@ package lila.core
 package game
 
 import _root_.chess.format.pgn.PgnStr
-import _root_.chess.{ ByColor, Centis, Color, Ply }
+import _root_.chess.{ ByColor, Centis, Color, Piece, Ply }
 
 import lila.core.id.{ GameId, SimulId, SwissId, TourId }
 import lila.core.userId.UserId
@@ -14,6 +14,7 @@ case class GameMetadata(
     swissId: Option[SwissId],
     simulId: Option[SimulId],
     bughousePartnerId: Option[GameId],
+    bughouseReceipts: List[BughouseReceipt],
     analysed: Boolean,
     drawOffers: GameDrawOffers,
     rules: Set[GameRule]
@@ -23,9 +24,38 @@ case class GameMetadata(
   def hasRule(rule: GameRule.type => GameRule) = rules(rule(GameRule))
   def nonEmptyRules = rules.nonEmpty.option(rules)
 
+/** A piece a bughouse board received from its partner board, after `ply` plies on this board. */
+case class BughouseReceipt(ply: Ply, piece: Piece)
+
+object BughouseReceipt:
+
+  // "12P 14n": the ply each piece arrived at, followed by the piece as in FEN
+  def encodeAll(receipts: List[BughouseReceipt]): String =
+    receipts.map(r => s"${r.ply.value}${r.piece.forsyth}").mkString(" ")
+
+  def decodeAll(s: String): List[BughouseReceipt] =
+    s.split(' ')
+      .toList
+      .flatMap: token =>
+        for
+          ply <- token.dropRight(1).toIntOption
+          piece <- token.lastOption.flatMap(Piece.fromChar)
+        yield BughouseReceipt(Ply(ply), piece)
+
 val emptyDrawOffers = GameDrawOffers(Set.empty, Set.empty)
 val emptyMetadata =
-  GameMetadata(None, None, None, None, None, None, analysed = false, emptyDrawOffers, rules = Set.empty)
+  GameMetadata(
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    bughouseReceipts = Nil,
+    analysed = false,
+    emptyDrawOffers,
+    rules = Set.empty
+  )
 
 def newMetadata(source: Source) = emptyMetadata.copy(source = source.some)
 

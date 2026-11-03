@@ -95,7 +95,12 @@ final private class MovePlayer(
   private[round] def bughousePass(game: Game, piece: Piece)(using proxy: GameProxy): Fu[Events] =
     if game.finished || !game.variant.bughouse then fuccess(Nil)
     else
-      val after = game.copy(chess = game.chess.copy(position = Bughouse.receive(game.chess.position, piece)))
+      val after = game.copy(
+        chess = game.chess.copy(position = Bughouse.receive(game.chess.position, piece)),
+        metadata = game.metadata.copy(
+          bughouseReceipts = game.metadata.bughouseReceipts :+ lila.core.game.BughouseReceipt(game.ply, piece)
+        )
+      )
       val event = lila.game.Event.Pocket(after.chess.position.crazyData.getOrElse(Crazyhouse.Data.init))
       proxy.save(Progress(game, after, List(event))).inject(List(event))
 

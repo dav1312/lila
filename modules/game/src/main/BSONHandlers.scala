@@ -197,6 +197,7 @@ object BSONHandlers:
           swissId = r.getO[SwissId](F.swissId),
           simulId = r.getO[SimulId](F.simulId),
           bughousePartnerId = r.getO[GameId](F.bughousePartnerId),
+          bughouseReceipts = r.strO(F.bughouseReceipts).fold(Nil)(lila.core.game.BughouseReceipt.decodeAll),
           analysed = r.boolD(F.analysed),
           drawOffers = r.getD(F.drawOffers, emptyDrawOffers),
           rules = r.getD(F.rules, Set.empty)
@@ -239,6 +240,7 @@ object BSONHandlers:
         F.swissId -> o.metadata.swissId,
         F.simulId -> o.metadata.simulId,
         F.bughousePartnerId -> o.metadata.bughousePartnerId,
+        F.bughouseReceipts -> w.strO(lila.core.game.BughouseReceipt.encodeAll(o.metadata.bughouseReceipts)),
         F.analysed -> w.boolO(o.metadata.analysed),
         F.rules -> o.metadata.nonEmptyRules,
         F.abortedBy -> o.abortedBy

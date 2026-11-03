@@ -91,6 +91,11 @@ object GameDiff:
         }
     )
     dTry(drawOffers, _.drawOffers, BSONHandlers.gameDrawOffersHandler.writeTry)
+    dOpt(
+      bughouseReceipts,
+      _.metadata.bughouseReceipts,
+      (o: List[lila.core.game.BughouseReceipt]) => w.strO(lila.core.game.BughouseReceipt.encodeAll(o))
+    )
     for i <- 0 to 1 do
       import lila.game.Player.BSONFields.*
       val name = s"p$i."

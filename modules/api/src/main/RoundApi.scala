@@ -198,7 +198,8 @@ final private[api] class RoundApi(
       id = pov.gameId,
       sans = pov.game.sans,
       variant = pov.game.variant,
-      initialFen = initialFen | pov.game.variant.initialFen
+      initialFen = initialFen | pov.game.variant.initialFen,
+      receipts = pov.game.metadata.bughouseReceipts
     ))
 
   private def withNote(note: String)(json: JsObject) =

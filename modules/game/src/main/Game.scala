@@ -313,6 +313,7 @@ object Game:
     val swissId = "iid"
     val simulId = "sid"
     val bughousePartnerId = "bpi"
+    val bughouseReceipts = "bpr"
     val tvAt = "tv"
     val winnerColor = "w"
     val initialFen = "if"
