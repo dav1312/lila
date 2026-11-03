@@ -1,10 +1,9 @@
-package lila.game
+package lila.core
+package game
 
-import chess.format.pgn.{ Parser, SanStr }
-import chess.variant.Bughouse
-import chess.{ ErrorStr, MoveOrDrop, Ply, Position }
-
-import lila.core.game.BughouseReceipt
+import _root_.chess.format.pgn.{ Parser, SanStr }
+import _root_.chess.variant.Bughouse
+import _root_.chess.{ ErrorStr, MoveOrDrop, Ply, Position }
 
 /** Replays the moves of a bughouse board. The pieces the partner board handed over are not moves, so they are
   * put in the pocket from their receipts, at the ply they arrived at.
@@ -40,7 +39,7 @@ object BughouseReplay:
     position.play(san) match
       case Left(error) =>
         Parser.san(san) match
-          case Right(drop: chess.format.pgn.Drop) if position.variant.bughouse =>
+          case Right(drop: _root_.chess.format.pgn.Drop) if position.variant.bughouse =>
             Bughouse.receive(position, position.color - drop.role).play(san)
           case _ => Left(error)
       case played => played

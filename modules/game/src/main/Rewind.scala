@@ -4,6 +4,8 @@ import chess.{ ErrorStr, Ply }
 import chess.format.Fen
 import monocle.syntax.all.*
 
+import lila.core.game.BughouseReplay
+
 object Rewind:
 
   def apply(game: CoreGame, initialFen: Option[Fen.Full]): Either[ErrorStr, Progress] =

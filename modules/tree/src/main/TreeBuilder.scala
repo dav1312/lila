@@ -3,6 +3,7 @@ package lila.tree
 import chess.format.pgn.Comment
 import chess.format.{ Fen, Uci }
 import chess.{ Centis, Ply, Position }
+import lila.core.game.BughouseReplay
 
 object TreeBuilder:
 
@@ -18,7 +19,9 @@ object TreeBuilder:
     val withClocks: Option[Vector[Centis]] = withFlags.clocks.so(game.bothClockStates)
     val drawOfferPlies = game.drawOffers.normalizedPlies
     val setup = chess.Position.AndFullMoveNumber(game.variant, initialFen)
-    val fen = Fen.write(setup)
+    val replay = BughouseReplay(setup.position, setup.ply, game.sans, game.metadata.bughouseReceipts)
+    val start = replay.played.head
+    val fen = Fen.write(start.position, setup.fullMoveNumber)
     val infos: Vector[Info] = analysis.so(_.infos.toVector)
     val advices: Map[Ply, Advice] = analysis.so(_.advices.mapBy(_.ply))
 
@@ -28,12 +31,12 @@ object TreeBuilder:
       clock = withFlags.clocks.so:
         game.clock.map(c => Centis.ofSeconds(c.limitSeconds.value)).map(Clock(_))
       ,
-      crazyData = setup.position.crazyData,
+      crazyData = start.position.crazyData,
       eval = analysis.flatMap(_.initialScore).map(evals.fromScore)
     )
 
-    def makeBranch(move: chess.MoveOrDrop, ply: Ply): Branch =
-      val fen = Fen.write(move.after, ply.fullMoveNumber)
+    def makeBranch(move: chess.MoveOrDrop, position: Position, ply: Ply): Branch =
+      val fen = Fen.write(position, ply.fullMoveNumber)
       val index = (ply - setup.ply - 1).value
       val info = infos.lift(index)
       val advice = advices.get(ply)
@@ -43,7 +46,7 @@ object TreeBuilder:
         move = Uci.WithSan(move.toUci, move.toSanStr),
         fen = fen,
         clock = withClocks.flatMap(_.lift(index)).map(Clock(_)),
-        crazyData = move.after.crazyData,
+        crazyData = position.crazyData,
         eval = info.map(_.eval),
         glyphs = Node.Glyphs.fromBase(
           chess.format.pgn.Glyphs.fromList(advice.map(_.judgment.glyph).toList),
@@ -66,19 +69,17 @@ object TreeBuilder:
           withAnalysisChild(
             game.id,
             branch,
-            move.after,
+            position,
             ply,
             logChessError
           )(adv.info)
 
-    val (result, error) = setup.position.foldRight(game.sans, setup.ply)(
-      none[Branch],
-      (step, acc) =>
-        inline def branch = makeBranch(step.move, step.ply)
+    val result = replay.played.foldRight(none[Branch]): (played, acc) =>
+      played.move.fold(acc): move =>
+        val branch = makeBranch(move, played.position, played.ply)
         acc.fold(branch)(branch.prependChildUnchecked).some
-    )
 
-    error.foreach(err => logChessError(formatError(game.id, err)))
+    replay.error.foreach(err => logChessError(formatError(game.id, err)))
     result.fold(root)(root.prependChildUnchecked)
 
   private def makeLichessComment(c: Comment, comp: Boolean = false): Node.Comment =

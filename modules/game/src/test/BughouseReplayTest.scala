@@ -4,7 +4,7 @@ import chess.format.pgn.SanStr
 import chess.variant.Bughouse
 import chess.{ Piece, Ply }
 
-import lila.core.game.BughouseReceipt
+import lila.core.game.{ BughouseReceipt, BughouseReplay }
 
 class BughouseReplayTest extends munit.FunSuite:
 

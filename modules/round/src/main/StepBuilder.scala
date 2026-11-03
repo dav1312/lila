@@ -7,7 +7,7 @@ import chess.{ Check, Ply, Square }
 import play.api.libs.json.*
 
 import lila.core.game.BughouseReceipt
-import lila.game.BughouseReplay
+import lila.core.game.BughouseReplay
 
 case class Step(
     ply: Ply,
