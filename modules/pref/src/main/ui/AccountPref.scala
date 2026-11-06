@@ -182,6 +182,11 @@ final class AccountPref(helpers: Helpers, helper: PrefHelper, bits: AccountUi):
               "snapArrowsToValidMoves"
             )(cls := "arrow-snap"),
             setting(
+              trp.drawKnightArrowsAsL(),
+              radios(form("behavior.knightArrowL"), booleanChoices),
+              "drawKnightArrowsAsL"
+            ),
+            setting(
               trp.sayGgWpAfterLosingOrDrawing(),
               radios(form("behavior.sayGG"), translatedSayGGChoices),
               "sayGG"

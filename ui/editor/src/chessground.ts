@@ -7,7 +7,7 @@ import resizeHandle from 'lib/chessgroundResize';
 import { isSafari } from 'lib/device';
 import { ShowResizeHandle } from 'lib/prefs';
 import { pubsub } from 'lib/pubsub';
-import { storage } from 'lib/storage';
+import { knightArrowStyle, storage } from 'lib/storage';
 import { onInsert } from 'lib/view';
 
 import type EditorCtrl from './ctrl';
@@ -132,6 +132,7 @@ function makeConfig(ctrl: EditorCtrl): CgConfig {
     drawable: {
       enabled: ctrl.selected() === 'pointer',
       defaultSnapToValidMove: storage.boolean('arrow.snap').getOrDefault(true),
+      knightArrowStyle: knightArrowStyle(),
     },
     draggable: {
       showGhost: true,

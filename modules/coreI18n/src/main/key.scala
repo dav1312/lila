@@ -1375,6 +1375,7 @@ object I18nKey:
     val `inputMovesWithTheKeyboard`: I18nKey = "preferences:inputMovesWithTheKeyboard"
     val `inputMovesWithVoice`: I18nKey = "preferences:inputMovesWithVoice"
     val `snapArrowsToValidMoves`: I18nKey = "preferences:snapArrowsToValidMoves"
+    val `drawKnightArrowsAsL`: I18nKey = "preferences:drawKnightArrowsAsL"
     val `sayGgWpAfterLosingOrDrawing`: I18nKey = "preferences:sayGgWpAfterLosingOrDrawing"
     val `yourPreferencesHaveBeenSaved`: I18nKey = "preferences:yourPreferencesHaveBeenSaved"
     val `scrollOnTheBoardToReplayMoves`: I18nKey = "preferences:scrollOnTheBoardToReplayMoves"

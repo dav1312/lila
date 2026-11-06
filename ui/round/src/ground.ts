@@ -9,7 +9,7 @@ import { plyColor } from 'lib/game/chess';
 import { endgameShapes } from 'lib/game/endgame';
 import { finished } from 'lib/game/status';
 import { ShowResizeHandle, Coords, MoveEvent } from 'lib/prefs';
-import { storage } from 'lib/storage';
+import { knightArrowStyle, storage } from 'lib/storage';
 import { onInsert } from 'lib/view';
 
 import type RoundController from './ctrl';
@@ -98,6 +98,7 @@ export function makeConfig(ctrl: RoundController): CgConfig {
     drawable: {
       enabled: true,
       defaultSnapToValidMove: storage.boolean('arrow.snap').getOrDefault(true),
+      knightArrowStyle: knightArrowStyle(),
       autoShapes: endgameShapesForStep(ctrl, step),
     },
     disableContextMenu: true,

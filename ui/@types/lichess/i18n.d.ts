@@ -2603,6 +2603,8 @@ interface I18n {
     displayBoardResizeHandle: string;
     /** Drag a piece */
     dragPiece: string;
+    /** Draw knight move arrows as an L */
+    drawKnightArrowsAsL: string;
     /** Except in-game */
     exceptInGame: string;
     /** Can be disabled during a game with the board menu */

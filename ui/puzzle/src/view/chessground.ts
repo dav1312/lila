@@ -4,7 +4,7 @@ import { h, type VNode } from 'snabbdom';
 import resizeHandle from 'lib/chessgroundResize';
 import { isSafari } from 'lib/device';
 import { Coords, ShowResizeHandle } from 'lib/prefs';
-import { storage } from 'lib/storage';
+import { knightArrowStyle, storage } from 'lib/storage';
 import { onInsert } from 'lib/view';
 
 import type PuzzleCtrl from '../ctrl';
@@ -61,6 +61,7 @@ export function makeConfig(ctrl: PuzzleCtrl): CgConfig {
     drawable: {
       enabled: true,
       defaultSnapToValidMove: storage.boolean('arrow.snap').getOrDefault(true),
+      knightArrowStyle: knightArrowStyle(),
     },
     highlight: {
       lastMove: ctrl.pref.highlight,

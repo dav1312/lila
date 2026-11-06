@@ -5,6 +5,10 @@ import { defined, notNull, type Prop, withEffect } from './common';
 export const storage: LichessStorageHelper = builder(window.localStorage);
 export const tempStorage: LichessStorageHelper = builder(window.sessionStorage);
 
+// draw knight-move arrows as an L instead of a straight line (see the account preferences)
+export const knightArrowStyle = (): 'straight' | 'elbow' =>
+  storage.boolean('arrow.knightL').getOrDefault(false) ? 'elbow' : 'straight';
+
 export interface StoredProp<V> extends Prop<V> {
   (replacement?: V): V;
 }

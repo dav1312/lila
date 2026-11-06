@@ -5,7 +5,7 @@ import { h } from 'snabbdom';
 
 import resizeHandle from 'lib/chessgroundResize';
 import { ShowResizeHandle, Coords, MoveEvent } from 'lib/prefs';
-import { storage } from 'lib/storage';
+import { knightArrowStyle, storage } from 'lib/storage';
 import { initMiniBoard, onInsert } from 'lib/view';
 
 import type { Board } from './chess';
@@ -85,6 +85,7 @@ export function initialGround(ctrl: PlayCtrl): CgConfig {
     drawable: {
       enabled: true,
       defaultSnapToValidMove: storage.boolean('arrow.snap').getOrDefault(true),
+      knightArrowStyle: knightArrowStyle(),
     },
     disableContextMenu: true,
   };

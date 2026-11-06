@@ -5,7 +5,7 @@ import { h, type VNode } from 'snabbdom';
 import resizeHandle from 'lib/chessgroundResize';
 import { isSafari } from 'lib/device';
 import * as Prefs from 'lib/prefs';
-import { storage } from 'lib/storage';
+import { knightArrowStyle, storage } from 'lib/storage';
 import { onInsert } from 'lib/view';
 
 import type AnalyseCtrl from './ctrl';
@@ -70,6 +70,7 @@ export function makeConfig(ctrl: AnalyseCtrl): CgConfig {
       enabled: true,
       eraseOnMovablePieceClick: !ctrl.opts.study || !!ctrl.opts.practice,
       defaultSnapToValidMove: storage.boolean('arrow.snap').getOrDefault(true),
+      knightArrowStyle: knightArrowStyle(),
     },
     highlight: {
       lastMove: pref.highlight,

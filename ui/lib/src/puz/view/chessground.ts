@@ -1,7 +1,7 @@
 import resizeHandle from '@/chessgroundResize';
 import { isSafari } from '@/device';
 import { ShowResizeHandle, Coords } from '@/prefs';
-import { storage } from '@/storage';
+import { knightArrowStyle, storage } from '@/storage';
 
 import type { PuzPrefs, UserMove } from '../interfaces';
 
@@ -43,6 +43,7 @@ export function makeConfig(opts: CgConfig, pref: PuzPrefs, userMove: UserMove): 
     drawable: {
       enabled: true,
       defaultSnapToValidMove: storage.boolean('arrow.snap').getOrDefault(true),
+      knightArrowStyle: knightArrowStyle(),
     },
     highlight: {
       lastMove: pref.highlight,
