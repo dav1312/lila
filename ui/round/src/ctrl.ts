@@ -127,6 +127,7 @@ export default class RoundController implements MoveRootCtrl {
       this.redraw,
       () => d.game.variant.key,
       d.pref.autoQueen,
+      () => (this.isPlaying() && this.ply === this.lastPly() ? this.data.player.color : undefined),
     );
 
     this.setQuietMode();
@@ -887,6 +888,17 @@ export default class RoundController implements MoveRootCtrl {
 
   setChessground = (cg: CgApi): void => {
     this.chessground = cg;
+    // with a pawn selected or held, the pointer on its promotion rank previews the queen
+    const board = cg.state.dom.elements.board;
+    const onPointer = (e: PointerEvent, redraw: boolean) => {
+      const key = cg.getKeyAtDomPos([e.clientX, e.clientY]);
+      this.promotion.setHover(key && (key[1] === '1' || key[1] === '8') ? key : undefined);
+      if (redraw) this.redraw();
+    };
+    board.addEventListener('pointermove', e => onPointer(e, false));
+    board.addEventListener('pointerdown', e => onPointer(e, true));
+    board.addEventListener('pointerup', e => onPointer(e, true));
+    board.addEventListener('pointerleave', () => this.promotion.setHover(undefined));
     const up = { fen: this.stepAt(this.ply).fen, canMove: this.canMove(), cg };
     pubsub.on('board.change', (is3d: boolean) => {
       this.chessground.state.addPieceZIndex = is3d;

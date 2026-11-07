@@ -18,6 +18,7 @@ import { renderTable } from './table';
 export function main(ctrl: RoundController): VNode {
   if (ctrl.nvui) return ctrl.nvui.render();
 
+  ctrl.promotion.syncGhost();
   const d = ctrl.data;
   const topColor = d[ctrl.flip ? 'player' : 'opponent'].color;
   const bottomColor = d[ctrl.flip ? 'opponent' : 'player'].color;

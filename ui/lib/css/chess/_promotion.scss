@@ -39,3 +39,15 @@
     transform: none;
   }
 }
+
+// ghost queen previewed on hover when autoqueen will promote the pawn under the pointer
+.promotion-ghost {
+  position: absolute;
+  width: 12.5%;
+  height: 12.5%;
+  opacity: 0.5;
+  pointer-events: none;
+
+  // above opponent pieces, below a held piece (z-index 204)
+  z-index: $z-cg__promotion_ghost-203;
+}
