@@ -32,6 +32,11 @@
       margin-inline-start: 4px;
     }
 
+    // Moves that continue an earlier line beyond what the engine reports for this bound line
+    .pv-faded {
+      opacity: 0.5;
+    }
+
     .pv-wrap-toggle {
       @include inline-end(0);
 

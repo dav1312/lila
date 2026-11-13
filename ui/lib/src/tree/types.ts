@@ -38,6 +38,8 @@ export interface PvDataServer extends EvalScore {
 
 export interface PvData extends EvalScore {
   moves: string[];
+  // Index of the first move that is only a continuation of an earlier line, shown faded.
+  fadeFrom?: number;
 }
 
 export interface TablebaseHit {

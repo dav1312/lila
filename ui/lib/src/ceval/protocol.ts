@@ -5,11 +5,15 @@ import type { LocalEval } from '@/tree/types';
 import { defined } from '../index';
 import type { Work, EngineInfo } from './types';
 
+const MAX_HISTORY = 300;
+
 export class Protocol {
   public engineName?: string;
 
   private work?: Work;
   private currentEval?: LocalEval;
+  // Moves of every line shown in the current search, oldest first.
+  private history: string[][] = [];
   private gameId?: string;
   private nextWork?: Work;
   private send: ((cmd: string) => void) | undefined;
@@ -89,6 +93,7 @@ export class Protocol {
       let multiPv = 1;
       let millis;
       let isMate = false;
+      let isBound = false;
       let povEv;
       let moves: string[] = [];
       for (let i = 1; i < parts.length; i++) {
@@ -108,6 +113,7 @@ export class Protocol {
           case 'score':
             isMate = parts[++i] === 'mate';
             povEv = parseInt(parts[++i]);
+            if (parts[i + 1] === 'lowerbound' || parts[i + 1] === 'upperbound') isBound = true;
             break;
           case 'pv':
             moves = parts.slice(++i);
@@ -124,12 +130,18 @@ export class Protocol {
       const pivot = this.work.threatMode ? 0 : 1;
       const ev = this.work.ply % 2 === pivot ? -povEv : povEv;
 
+      // A bound line may show only a ply or two. If an earlier line of this search
+      // continues with the same moves, show that continuation and fade the added moves.
+      const continuation = isBound ? this.findContinuation(moves) : undefined;
+      const shown = continuation ?? moves;
       const pvData = {
-        moves,
+        moves: shown,
         cp: isMate ? undefined : ev,
         mate: isMate ? ev : undefined,
         depth,
+        ...(continuation && { fadeFrom: moves.length }),
       };
+      this.addToHistory(shown);
 
       // Show the most recent line for each multipv slot. Bounds and depth are not used
       // to filter lines: every line replaces the previous line in its slot.
@@ -169,6 +181,22 @@ export class Protocol {
       console.warn(`SF: ${command}`);
   }
 
+  // The most recent earlier line that starts with `moves` and continues beyond it.
+  private findContinuation(moves: string[]): string[] | undefined {
+    if (moves.length === 0) return undefined;
+    for (let i = this.history.length - 1; i >= 0; i--) {
+      const line = this.history[i];
+      if (line.length > moves.length && moves.every((move, j) => line[j] === move)) return line;
+    }
+    return undefined;
+  }
+
+  private addToHistory(moves: string[]): void {
+    this.history.push(moves);
+    // Bound the history so long infinite analysis does not grow without limit.
+    if (this.history.length > MAX_HISTORY) this.history.splice(0, this.history.length - MAX_HISTORY);
+  }
+
   uciVariant(key: Rules): string {
     return this.variantMap?.(key) ?? key;
   }
@@ -194,6 +222,7 @@ export class Protocol {
 
     if (this.work) {
       this.currentEval = undefined;
+      this.history = [];
 
       this.setOption('UCI_Variant', this.uciVariant(this.work.variant));
       this.setOption('Threads', this.work.threads);

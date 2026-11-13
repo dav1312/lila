@@ -433,7 +433,7 @@ function renderPv(threat: boolean, multiPv: number, pv?: PvData, pos?: Position)
   if (pv) {
     if (!threat) data.attrs = { 'data-uci': pv.moves[0] };
     if (multiPv > 1) children.push(hl('strong', defined(pv.mate) ? '#' + pv.mate : renderEval(pv.cp!)));
-    if (pos) children.push(...renderPvMoves(pos.clone(), pv.moves.slice(0, MAX_NUM_MOVES)));
+    if (pos) children.push(...renderPvMoves(pos.clone(), pv.moves.slice(0, MAX_NUM_MOVES), pv.fadeFrom));
   }
   return div('.pv.pv--nowrap', data, children);
 }
@@ -454,20 +454,27 @@ function renderPvWrapToggle(): VNode {
   });
 }
 
-function renderPvMoves(pos: Position, pv: Uci[]): VNode[] {
+function renderPvMoves(pos: Position, pv: Uci[], fadeFrom?: number): VNode[] {
   const vnodes: VNode[] = [];
   let key = makeBoardFen(pos.board);
   for (let i = 0; i < pv.length; i++) {
+    const faded = fadeFrom !== undefined && i >= fadeFrom;
     let text;
     if (pos.turn === 'white') text = `${pos.fullmoves}.`;
     else if (i === 0) text = `${pos.fullmoves}...`;
-    if (text) vnodes.push(span({ key: text }, text));
+    if (text) vnodes.push(faded ? span('.pv-faded', { key: text }, text) : span({ key: text }, text));
     const uci = pv[i];
     const san = makeSanAndPlay(pos, parseUci(uci)!);
     const fen = makeBoardFen(pos.board); // Chessground uses only board fen
     if (san === '--') break;
     key += '|' + uci;
-    vnodes.push(span('.pv-san', { key, 'data-move-index': i, 'data-board': `${fen}|${uci}` }, san));
+    vnodes.push(
+      span(
+        faded ? '.pv-san.pv-faded' : '.pv-san',
+        { key, 'data-move-index': i, 'data-board': `${fen}|${uci}` },
+        san,
+      ),
+    );
   }
   return vnodes;
 }

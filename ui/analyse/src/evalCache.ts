@@ -39,7 +39,11 @@ function toPutData(variant: VariantKey, ev: ClientEval, engineId: string): EvalP
       return {
         cp: pv.cp,
         mate: pv.mate,
-        moves: pv.moves.slice(0, evalPutMaxMoves).join(' '),
+        // faded moves continue an earlier line, so they are not part of this engine output
+        moves: pv.moves
+          .slice(0, pv.fadeFrom ?? pv.moves.length)
+          .slice(0, evalPutMaxMoves)
+          .join(' '),
       };
     }),
   };
