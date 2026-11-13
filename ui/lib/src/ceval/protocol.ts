@@ -11,7 +11,6 @@ export class Protocol {
   private work?: Work;
   private currentEval?: LocalEval;
   private gameId?: string;
-  private expectedPvs = 1;
   private nextWork?: Work;
   private send: ((cmd: string) => void) | undefined;
   private options: Map<string, string | number> = new Map<string, string>();
@@ -89,7 +88,6 @@ export class Protocol {
       let nodes;
       let multiPv = 1;
       let millis;
-      let evalType;
       let isMate = false;
       let povEv;
       let moves: string[] = [];
@@ -110,7 +108,6 @@ export class Protocol {
           case 'score':
             isMate = parts[++i] === 'mate';
             povEv = parseInt(parts[++i]);
-            if (parts[i + 1] === 'lowerbound' || parts[i + 1] === 'upperbound') evalType = parts[++i];
             break;
           case 'pv':
             moves = parts.slice(++i);
@@ -122,17 +119,10 @@ export class Protocol {
       // Sometimes we get #0. Let's just skip it.
       if (isMate && !povEv) return;
 
-      // Track max pv index to determine when pv prints are done.
-      if (this.expectedPvs < multiPv) this.expectedPvs = multiPv;
-
       if (!defined(nodes) || !defined(millis) || !defined(isMate) || !defined(povEv)) return;
 
       const pivot = this.work.threatMode ? 0 : 1;
       const ev = this.work.ply % 2 === pivot ? -povEv : povEv;
-
-      // For now, ignore most upperbound/lowerbound messages.
-      // However non-primary pvs may only have an upperbound.
-      if (evalType && multiPv === 1) return;
 
       const pvData = {
         moves,
@@ -141,27 +131,36 @@ export class Protocol {
         depth,
       };
 
-      if (multiPv === 1) {
-        if (depth === (this.currentEval?.depth ?? 0) + 1) {
-          // ignore skipped depth info lines before bestmove.
-          this.currentEval = {
-            fen: this.work.currentFen,
-            depth,
-            nodes,
-            millis,
-            cp: isMate ? undefined : ev,
-            mate: isMate ? ev : undefined,
-            pvs: [pvData],
-            engineId: this.info.id,
-          };
-        }
-      } else if (this.currentEval) {
-        if (this.currentEval.pvs.length < multiPv) this.currentEval.pvs.push(pvData);
-        else this.currentEval.pvs[multiPv - 1] = pvData;
-        this.currentEval.depth = Math.min(this.currentEval.depth, depth);
+      // Show the most recent line for each multipv slot. Bounds and depth are not used
+      // to filter lines: every line replaces the previous line in its slot.
+      if (!this.currentEval) {
+        // The primary line starts a new evaluation; other slots wait for it.
+        if (multiPv !== 1) return;
+        this.currentEval = {
+          fen: this.work.currentFen,
+          depth,
+          nodes,
+          millis,
+          cp: pvData.cp,
+          mate: pvData.mate,
+          pvs: [],
+          engineId: this.info.id,
+        };
       }
 
-      if (multiPv === this.expectedPvs) this.emit();
+      // Never leave a gap in pvs: skip a line whose earlier slot has not arrived yet.
+      if (multiPv > this.currentEval.pvs.length + 1) return;
+
+      this.currentEval.pvs[multiPv - 1] = pvData;
+      if (multiPv === 1) {
+        this.currentEval.depth = depth;
+        this.currentEval.nodes = nodes;
+        this.currentEval.millis = millis;
+        this.currentEval.cp = pvData.cp;
+        this.currentEval.mate = pvData.mate;
+      }
+
+      this.emit();
     } else if (
       command &&
       !['Stockfish', 'id', 'option', 'info'].includes(parts[0]) &&
@@ -195,7 +194,6 @@ export class Protocol {
 
     if (this.work) {
       this.currentEval = undefined;
-      this.expectedPvs = 1;
 
       this.setOption('UCI_Variant', this.uciVariant(this.work.variant));
       this.setOption('Threads', this.work.threads);
