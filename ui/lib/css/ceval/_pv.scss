@@ -42,6 +42,8 @@
 
       position: absolute;
       top: 0;
+      // above faded moves: opacity makes them stacking contexts that would otherwise paint over the toggle
+      z-index: 1;
       padding: 0 4px;
       margin: 0;
       cursor: pointer;
