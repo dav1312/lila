@@ -190,11 +190,3 @@ button#microphone-button {
   }
 }
 
-.voice-choices__device {
-  flex-flow: row nowrap;
-
-  select {
-    width: 0;
-    flex: 1;
-  }
-}

@@ -57,9 +57,6 @@
       background: $c-good;
       transform-origin: left;
 
-      .with-expiration & {
-        display: none;
-      }
     }
 
     &-top .bar {

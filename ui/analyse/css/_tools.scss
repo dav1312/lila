@@ -24,22 +24,6 @@
     }
   }
 
-  .comp-off__hint {
-    @extend %metal-bg;
-
-    opacity: 0.8;
-    padding: 0.3em 1em;
-    text-align: center;
-
-    button {
-      margin-inline-start: 1em;
-      color: $c-link;
-
-      &:hover {
-        color: $c-link-hover;
-      }
-    }
-  }
 }
 
 .analyse__moves {

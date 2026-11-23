@@ -89,12 +89,6 @@
     height: auto;
     border-radius: calc($box-radius-size - 1px) calc($box-radius-size - 1px) 0 0;
 
-    &.ublog-post-image-default {
-      background-image: url('../images/placeholder-margin.png');
-      background-size: cover;
-      background-position: center;
-    }
-
     @include broken-img(calc(16 / 10));
   }
 

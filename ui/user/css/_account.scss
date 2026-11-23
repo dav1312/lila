@@ -336,13 +336,4 @@
     margin-bottom: 3em;
   }
 
-  .raw-text {
-    @extend %box-radius, %break-word;
-
-    font-family: monospace;
-    background: $c-bg-page;
-    padding: 1em 2em;
-    overflow: hidden;
-    white-space: pre-wrap;
-  }
 }

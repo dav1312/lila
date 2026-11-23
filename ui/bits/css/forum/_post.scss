@@ -119,16 +119,6 @@
     }
   }
 
-  &.postip {
-    margin-inline-start: 1rem;
-    max-width: 50vw;
-    overflow: hidden;
-    display: none;
-
-    @media (min-width: at-least($small)) {
-      display: block;
-    }
-  }
 }
 
 .forum-post__message {

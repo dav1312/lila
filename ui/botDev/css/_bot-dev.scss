@@ -188,10 +188,6 @@ main.round {
       }
     }
 
-    .select-bot {
-      width: 60%;
-    }
-
     .stats {
       @extend %flex-column;
 
@@ -237,10 +233,6 @@ main.round {
 
   .num-games {
     width: 50px;
-  }
-
-  .results-action {
-    flex: auto;
   }
 
   .board-action::before {
@@ -396,20 +388,6 @@ main.round {
   }
 }
 
-.fancy-bot {
-  @extend %flex-center;
-
-  img {
-    width: 80px;
-  }
-
-  span {
-    @extend %flex-center-nowrap;
-
-    margin-inline-end: auto;
-  }
-}
-
 #main-wrap.paused cg-container::after {
   content: 'PAUSED';
   cursor: pointer;
@@ -429,39 +407,3 @@ main.round {
   text-align: center;
 }
 
-#bot-content .fancy-bot {
-  &:nth-child(odd) {
-    background: $c-bg-box;
-  }
-
-  &:nth-child(even) {
-    background: $c-bg-zebra;
-  }
-
-  &:hover {
-    background: color-mix(in oklab, $c-primary 15%, $c-bg);
-  }
-
-  img {
-    width: 96px;
-  }
-
-  h2 {
-    font-size: 1.4em;
-    font-weight: bold;
-    color: $c-font-clearer;
-  }
-
-  p {
-    margin-left: 1em;
-  }
-
-  .overview {
-    padding: 1em;
-    display: flex;
-    justify-content: space-around;
-    align-self: stretch;
-    flex: auto;
-    flex-flow: column;
-  }
-}

@@ -7,10 +7,6 @@
     }
   }
 
-  .goto-current {
-    float: right;
-  }
-
   #comment-text {
     @extend %box-shadow;
     @include backdrop-blur-if-transparent;

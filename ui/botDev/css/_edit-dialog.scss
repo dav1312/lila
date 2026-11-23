@@ -201,17 +201,6 @@
     padding: 1em;
   }
 
-  .bot-info {
-    justify-content: space-between;
-    text-align: center;
-
-    #info_name {
-      max-width: 50%;
-      flex: 1 1 auto;
-      padding: 0;
-    }
-  }
-
   .setting {
     @extend %flex-center-nowrap;
 
